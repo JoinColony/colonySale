@@ -1,0 +1,22 @@
+{
+  "name": "colony-sale",
+  "version": "0.0.1",
+  "description": "Token contracts for the Colony crowdsale",
+  "author": "",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JoinColony/colonySale.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JoinColony/colonySale/issues"
+  },
+  "homepage": "https://github.com/JoinColony/colonySale#readme",
+  "dependencies": {}
+}
