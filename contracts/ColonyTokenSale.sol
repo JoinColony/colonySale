@@ -2,7 +2,7 @@ pragma solidity^0.4.9;
 
 import "./CLNY.sol";
 
-contract ColonyTokenSale is SafeMath {
+contract ColonyTokenSale {
   // Block number in which the sale starts. Inclusive. sale will be opened at initial block.
   uint public initialBlock;
   // Number of CLNY tokens for 1 wei, at the start of the sale
