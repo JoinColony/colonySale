@@ -1,18 +1,28 @@
 pragma solidity^0.4.10;
 
 import "./CLNY.sol";
+import "./DSMath.sol";
 
-contract ColonyTokenSale {
+contract ColonyTokenSale is DSMath {
   // Block number in which the sale starts. Inclusive. sale will be opened at initial block.
   uint public initialBlock = 4000000;
-  // Number of CLNY tokens for 1 wei, at the start of the sale
-  uint public initialPrice;
+  // CLNY token wei price, at the start of the sale
+  uint public initialPrice = 1 finney;
+  // Minimum contribution amount
+  uint constant public minimumInvestment = 1 finney;
+  // Total amount raised
+  uint public totalRaised = 0 ether;
   // Sale soft cap
   uint public softCap = 200000 ether;
   // The address to hold the funds donated
   address public colonyMultisig;
   // The address of the Colony Network Token
   CLNY public tokenTracker;
+
+  modifier ether_cap_not_reached {
+      assert(add(totalRaised, msg.value) <= softCap);
+      _;
+  }
 
   /*
     price ^
@@ -38,5 +48,9 @@ contract ColonyTokenSale {
 
   function getBlockNumber() constant returns (uint) {
     return block.number;
+  }
+
+  function () public payable {
+    return;
   }
 }
