@@ -18,5 +18,8 @@
     "url": "https://github.com/JoinColony/colonySale/issues"
   },
   "homepage": "https://github.com/JoinColony/colonySale#readme",
-  "dependencies": {}
+  "dependencies": {},
+  "devDependencies": {
+    "truffle": "3.2.5"
+  }
 }
