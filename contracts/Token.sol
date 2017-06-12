@@ -1,6 +1,7 @@
 pragma solidity ^0.4.11;
 
 import "./DSMath.sol";
+import "./ERC20.sol";
 
 contract Token is DSMath {
   event Transfer( address indexed from, address indexed to, uint value);
