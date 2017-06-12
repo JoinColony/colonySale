@@ -1,7 +1,7 @@
 pragma solidity^0.4.11;
 
 import "./Token.sol";
-import "./DSMath.sol";
+import "./math.sol";
 
 
 contract ColonyTokenSale is DSMath {
