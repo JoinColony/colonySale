@@ -9,10 +9,10 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
 
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.11;
 
 contract DSMath {
-    
+
     /*
     standard uint256 functions
      */

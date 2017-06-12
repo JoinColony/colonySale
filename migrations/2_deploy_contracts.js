@@ -1,15 +1,17 @@
 var DSMath = artifacts.require("./DSMath.sol");
-var CLNY = artifacts.require("./CLNY.sol");
 var ColonyTokenSale = artifacts.require("./ColonyTokenSale.sol");
 const Token = artifacts.require('./Token.sol');
 const Resolver = artifacts.require('./Resolver.sol');
+const EtherRouter = artifacts.require('./EtherRouter.sol');
 
 module.exports = function(deployer) {
+  // Deploy external imports
   deployer.deploy(DSMath);
-  deployer.deploy(CLNY);
-  deployer.deploy(ColonyTokenSale);
 
-  // Deploy the fixed token and router
-  deployer.deploy([Resolver]);
-  deployer.deploy([Token]);
+  // Deploy token and router
+  deployer.deploy(Resolver);
+  deployer.deploy(Token);
+
+  // Deploy main token sale
+  deployer.deploy(ColonyTokenSale);
 };

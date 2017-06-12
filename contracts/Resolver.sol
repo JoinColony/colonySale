@@ -4,14 +4,11 @@ contract Resolver {
   struct Pointer { address destination; uint outsize; }
   mapping (bytes4 => Pointer) public pointers;
 
-  event lookUpPerformed(bytes4 signature);
-
   function Resolver() {
   }
 
   // Public API
   function lookup(bytes4 sig) returns(address, uint) {
-    lookUpPerformed(sig);
     return (destination(sig), outsize(sig));
   }
 

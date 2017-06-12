@@ -1,6 +1,6 @@
-pragma solidity^0.4.10;
+pragma solidity^0.4.11;
 
-import "./CLNY.sol";
+import "./Token.sol";
 import "./DSMath.sol";
 
 
@@ -18,7 +18,7 @@ contract ColonyTokenSale is DSMath {
   // The address to hold the funds donated
   address public colonyMultisig;
   // The address of the Colony Network Token
-  CLNY public tokenTracker;
+  Token public tokenTracker;
 
   modifier etherCapNotReached {
       assert(add(totalRaised, msg.value) <= softCap);

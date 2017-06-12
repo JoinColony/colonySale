@@ -1,30 +1,24 @@
 pragma solidity ^0.4.11;
 
-import "./Resolver.sol";
+import "./DSMath.sol";
 
-// Basic Colony token implementation purely to satisfy ERC20 standard
-// Used for the purposes of an immutable structure used by clients and exchanges for managing tokens
-contract Token {
-  Resolver public resolver;
+contract Token is DSMath {
+  event Transfer( address indexed from, address indexed to, uint value);
+  event Approval( address indexed owner, address indexed spender, uint value);
 
-  function setResolver(address _resolver) {
-    resolver = Resolver(_resolver);
+  address resolver;
+  uint256 _supply;
+  mapping (address => uint256) _balances;
+  mapping (address => mapping (address => uint256)) _approvals;
+
+  function Token(){
   }
 
-  function totalSupply() returns (uint) {
-    uint r;
+  function totalSupply() constant returns (uint256) {
+    return _supply;
+  }
 
-    var (destination, outsize) = resolver.lookup(msg.sig);
-
-    assembly {
-      calldatacopy(mload(0x40), 0, calldatasize)
-      r := call(sub(gas, 700), destination, msg.value, mload(0x40), calldatasize, mload(0x40), outsize)
-    }
-
-    if (r != 1) { throw;}
-
-    assembly {
-      return(mload(0x40), outsize)
-    }
-  } 
+  function balanceOf(address src) constant returns (uint256) {
+    return _balances[src];
+  }
 }

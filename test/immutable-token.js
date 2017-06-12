@@ -1,5 +1,6 @@
 /* globals artifacts */
 
+const EtherRouter = artifacts.require('EtherRouter');
 const Resolver = artifacts.require('Resolver');
 const Token = artifacts.require('Token');
 
@@ -11,6 +12,7 @@ contract('Immutable Token', function (accounts) {
 
   let resolver;
   let token;
+  let etherRouter;
 
   before(function (done) {
     Resolver.deployed()
@@ -20,7 +22,10 @@ contract('Immutable Token', function (accounts) {
     })
     .then(function (_token) {
       token = _token;
-      return;
+      return new EtherRouter(resolver.address);
+    })
+    .then(function(instance) {
+      etherRouter = instance;
     })
     .then(done)
     .catch(done);
@@ -39,8 +44,7 @@ contract('Immutable Token', function (accounts) {
       token.totalSupply.call()
       .then(function (total) {
         console.log(total);
-        //TODO: You gotta have a colony with 3e18 tokens
-        return assert.equal(3e18, total);
+        return assert.equal(0, total);
       })
       .then(done)
       .catch(done);
