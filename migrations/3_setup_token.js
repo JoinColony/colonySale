@@ -31,7 +31,7 @@ module.exports = function (deployer) {
     return resolverDeployed.register('totalSupply()', tokenDeployed.address, 32);
   })
   .then(function() {
-    return resolverDeployed.lookup.call(0x18160ddd);
+    return resolverDeployed.lookup.call('0x18160ddd');
   })
   .then(function(response) {
     // Check `totalSupply` function is registered successfully
@@ -40,16 +40,52 @@ module.exports = function (deployer) {
     return resolverDeployed.register('balanceOf(address)', tokenDeployed.address, 32);
   })
   .then(function() {
-    return resolverDeployed.lookup.call(0x70a08231);
+    return resolverDeployed.lookup.call('0x70a08231');
   })
   .then(function(response) {
     // Check `balanceOf` function is registered successfully
     assert.equal(response[0], tokenDeployed.address);
     assert.equal(response[1], 32);
+    return resolverDeployed.register('allowance(address,address)', tokenDeployed.address, 32);
+  })
+  .then(function() {
+    return resolverDeployed.lookup.call('0xdd62ed3e');
+  })
+  .then(function(response) {
+    // Check `allowance` function is registered successfully
+    assert.equal(response[0], tokenDeployed.address);
+    assert.equal(response[1], 32);
+    return resolverDeployed.register('transfer(address,uint256)', tokenDeployed.address, 32);
+  })
+  .then(function() {
+    return resolverDeployed.lookup.call('0xa9059cbb');
+  })
+  .then(function(response) {
+    // Check `transfer` function is registered successfully
+    assert.equal(response[0], tokenDeployed.address);
+    assert.equal(response[1], 32);
+    return resolverDeployed.register('transferFrom(address,address,uint256)', tokenDeployed.address, 32);
+  })
+  .then(function() {
+    return resolverDeployed.lookup.call('0x23b872dd');
+  })
+  .then(function(response) {
+    // Check `transferFrom` function is registered successfully
+    assert.equal(response[0], tokenDeployed.address);
+    assert.equal(response[1], 32);
+    return resolverDeployed.register('approve(address,uint256)', tokenDeployed.address, 32);
+  })
+  .then(function() {
+    return resolverDeployed.lookup.call('0x095ea7b3');
+  })
+  .then(function(response) {
+    // Check `approve` function is registered successfully
+    assert.equal(response[0], tokenDeployed.address);
+    assert.equal(response[1], 32);
     return resolverDeployed.register('mint(uint128)', tokenDeployed.address, 0);
   })
   .then(function() {
-    return resolverDeployed.lookup.call(0x69d3e20e);
+    return resolverDeployed.lookup.call('0x69d3e20e');
   })
   .then(function(response) {
     // Check `mint` function is registered successfully
