@@ -11,21 +11,23 @@ contract('Immutable Token', function (accounts) {
   const GAS_TO_SPEND = 4700000;
 
   let resolver;
-  let token;
   let etherRouter;
+  let token;
 
-  before(function (done) {
+  beforeEach(function (done) {
     Resolver.deployed()
     .then(function (_resolver) {
       resolver = _resolver;
-      return Token.deployed();
-    })
-    .then(function (_token) {
-      token = _token;
-      return new EtherRouter(resolver.address);
+      return EtherRouter.new(resolver.address);
     })
     .then(function(instance) {
       etherRouter = instance;
+      console.log('Test EtherRouter at', etherRouter.address);
+      return Token.at(etherRouter.address);
+    })
+    .then(function (instance) {
+      token = instance;
+      return;
     })
     .then(done)
     .catch(done);
@@ -39,15 +41,47 @@ contract('Immutable Token', function (accounts) {
   //function transferFrom(address from, address to, uint value) returns (bool ok);
   //function approve(address spender, uint value) returns (bool ok);
   describe('when working with ERC20 functions', function () {
-    it('should allow users to get total supply', function (done) {
+    beforeEach('mint 1500000 tokens', (done) => {
+      token.mint(1500000)
+      .then(function(){done();})
+      .catch(done);
+    });
 
+    it('should allow users to get total supply', function (done) {
       token.totalSupply.call()
       .then(function (total) {
-        console.log(total);
-        return assert.equal(0, total);
+        return assert.equal(1500000, total.toNumber());
       })
       .then(done)
       .catch(done);
+    });
+  });
+
+  describe('when working with mint and burn functions', function () {
+    it('should be able to mint new tokens', function (done) {
+      token.mint(1500000)
+      .then(function () {
+        return token.totalSupply.call();
+      })
+      .then(function(totalSupply) {
+        assert.equal(1500000, totalSupply.toNumber());
+        return token.balanceOf.call(MAIN_ACCOUNT);
+      })
+      .then(function (balance) {
+        assert.equal(1500000, balance.toNumber());
+        token.mint(1);
+      })
+      .then(function () {
+        return token.totalSupply.call();
+      })
+      .then(function(totalSupply) {
+        assert.equal(1500001, totalSupply.toNumber());
+        return token.balanceOf.call(MAIN_ACCOUNT);
+      })
+      .then(function (balance) {
+        assert.equal(1500001, balance.toNumber());
+      })
+      .then(done);
     });
   });
 });
