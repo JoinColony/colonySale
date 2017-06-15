@@ -2,7 +2,8 @@ var ColonyTokenSale = artifacts.require("./ColonyTokenSale.sol");
 
 contract('ColonyTokenSale', function(accounts) {
   describe('Contract initialisation', () => {
-    it("should return correct current block number", function() {
+    // TODO: ensure the following execute on the same block
+    it.skip("should return correct current block number", function() {
       let currentBlockReportedByContract;
       ColonyTokenSale.new()
       .then(function(instance) {
