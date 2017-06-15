@@ -2,3 +2,4 @@ node_modules
 installed_contracts
 imports
 build
+keys/*
