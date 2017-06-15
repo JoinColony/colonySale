@@ -5,3 +5,4 @@ build
 keys/*
 parity-genesis.json
 parityPassword
+test-results.xml

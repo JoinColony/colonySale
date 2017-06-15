@@ -14,6 +14,7 @@ pragma solidity ^0.4.11;
 import "./erc20.sol";
 import "./math.sol";
 
+
 contract Token is ERC20, DSMath {
     address resolver;
     uint256 _supply;

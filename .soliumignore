@@ -4,6 +4,6 @@ migrations
 test
 installed_contracts
 contracts/Migrations.sol
-contracts/CLNY.sol
-contracts/DSMath.sol
+contracts/erc20.sol
+contracts/math.sol
 contracts/EtherRouter.sol

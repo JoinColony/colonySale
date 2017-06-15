@@ -1,5 +1,6 @@
 pragma solidity ^0.4.11;
 
+
 contract Resolver {
   struct Pointer { address destination; uint outsize; }
   mapping (bytes4 => Pointer) public pointers;
