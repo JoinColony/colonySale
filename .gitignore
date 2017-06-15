@@ -3,3 +3,5 @@ installed_contracts
 imports
 build
 keys/*
+parity-genesis.json
+parityPassword
