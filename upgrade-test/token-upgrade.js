@@ -29,6 +29,14 @@ contract('CLNY Token', function (accounts) {
     })
     .then(function (instance) {
       token = instance;
+      return UpdatedToken.new();
+    })
+    .then(function (instance) {
+      updatedToken = UpdatedToken.at(instance.address);
+      return updatedToken.isUpdated.call();
+    })
+    .then(function (isUpdated) {
+      assert.equal(isUpdated, true);
       return UpdatedToken.at(etherRouter.address);
     })
     .then(function (instance) {
@@ -40,13 +48,13 @@ contract('CLNY Token', function (accounts) {
   });
 
   describe('when upgrading Token contract', function () {
-    beforeEach('mint 100 tokens', async() => {
+    beforeEach('setup the Token contract with some data', async() => {
       await token.mint(100);
       await token.transfer(ACCOUNT_TWO, 20);
       await token.transfer(ACCOUNT_THREE, 30);
-      await token.approve(ACCOUNT_THREE, 10, { from: ACCOUNT_TWO });
-      await token.approve(ACCOUNT_THREE, 5, { from: COINBASE_ACCOUNT });
       await token.approve(ACCOUNT_TWO, 15, { from: COINBASE_ACCOUNT });
+      await token.approve(ACCOUNT_THREE, 5, { from: COINBASE_ACCOUNT });
+      await token.approve(ACCOUNT_THREE, 10, { from: ACCOUNT_TWO });
     });
 
     it('should return correct total supply of tokens', async function () {
@@ -56,14 +64,22 @@ contract('CLNY Token', function (accounts) {
       assert.equal(100, updatedTokenTotal.toNumber());
     });
 
-    it.skip('should return correct token balances', async function () {
-      var total = await token.balanceOf.call(COINBASE_ACCOUNT);
-      assert.equal(1500000, total.toNumber());
+    it('should return correct token balances', async function () {
+      const totalAccount1 = await updatedToken.balanceOf.call(COINBASE_ACCOUNT);
+      assert.equal(50, totalAccount1.toNumber());
+      const totalAccount2 = await updatedToken.balanceOf.call(ACCOUNT_TWO);
+      assert.equal(20, totalAccount2.toNumber());
+      const totalAccount3 = await updatedToken.balanceOf.call(ACCOUNT_THREE);
+      assert.equal(30, totalAccount3.toNumber());
     });
 
-    it.skip('should return correct token allowances', async function () {
-      var total = await token.totalSupply.call();
-      assert.equal(1500000, total.toNumber());
+    it('should return correct token allowances', async function () {
+      const allowance1 = await updatedToken.allowance.call(COINBASE_ACCOUNT, ACCOUNT_TWO);
+      assert.equal(15, allowance1.toNumber());
+      const allowance2 = await updatedToken.allowance.call(COINBASE_ACCOUNT, ACCOUNT_THREE);
+      assert.equal(5, allowance2.toNumber());
+      const allowance3 = await updatedToken.allowance.call(ACCOUNT_TWO, ACCOUNT_THREE);
+      assert.equal(10, allowance3.toNumber());
     });
   });
 });
