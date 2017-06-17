@@ -1,12 +1,9 @@
 pragma solidity ^0.4.11;
 import "./Resolver.sol";
+import "./Ownable.sol";
 
-contract EtherRouter {
+contract EtherRouter is Ownable{
   Resolver public resolver;
-
-  function EtherRouter(Resolver _resolver) {
-    resolver = _resolver;
-  }
 
   function() payable {
     uint r;
@@ -27,5 +24,11 @@ contract EtherRouter {
     assembly {
       return(mload(0x40), outsize)
     }
+  }
+
+  function setResolver(Resolver _resolver)
+  onlyOwner
+  {
+    resolver = _resolver;
   }
 }

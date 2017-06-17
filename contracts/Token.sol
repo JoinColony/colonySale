@@ -13,9 +13,10 @@ pragma solidity ^0.4.11;
 
 import "./erc20.sol";
 import "./math.sol";
+import "./Ownable.sol";
 
 
-contract Token is ERC20, DSMath {
+contract Token is ERC20, DSMath, Ownable {
     address resolver;
     uint256 _supply;
     mapping (address => uint256) _balances;

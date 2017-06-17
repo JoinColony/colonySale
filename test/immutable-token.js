@@ -1,5 +1,6 @@
 /* globals artifacts */
 
+const Ownable = artifacts.require('Ownable');
 const EtherRouter = artifacts.require('EtherRouter');
 const Resolver = artifacts.require('Resolver');
 const Token = artifacts.require('Token');
@@ -7,29 +8,31 @@ const Token = artifacts.require('Token');
 contract('CLNY Token', function (accounts) {
   const COINBASE_ACCOUNT = accounts[0];
   const ACCOUNT_TWO = accounts[1];
-  // this value must be high enough to certify that the failure was not due to the amount of gas but due to a exception being thrown
-  const GAS_TO_SPEND = 4700000;
+  const ACCOUNT_THREE = accounts[2];
 
-  let resolver;
   let etherRouter;
+  let resolver;
   let token;
 
-  beforeEach(function (done) {
-    Resolver.deployed()
-    .then(function (_resolver) {
-      resolver = _resolver;
-      return EtherRouter.new(resolver.address);
-    })
-    .then(function(instance) {
-      etherRouter = instance;
-      return Token.at(etherRouter.address);
-    })
-    .then(function (instance) {
-      token = instance;
-      return;
-    })
-    .then(done)
-    .catch(done);
+  beforeEach(async function () {
+    resolver = await Resolver.deployed();
+    etherRouter = await EtherRouter.new();
+    await etherRouter.setResolver(resolver.address);
+    token = await Token.at(etherRouter.address);
+  });
+
+  describe('when initialising the token', function () {
+    it('should throw if non-owner tries to change the Resolver on EtherRouter', async function () {
+      const tx = await etherRouter.setResolver('0xb3e2b6020926af4763d706b5657446b95795de57', { from: ACCOUNT_TWO, gas: 4700000 });
+      assert.equal(tx.receipt.gasUsed, 4700000);
+      const _resolver = await etherRouter.resolver.call();
+      assert.equal(_resolver, resolver.address);
+    });
+
+    it('should throw if non-owner tries to register functions on the Resolver', async function () {
+      const tx = await resolver.register('illegalFunction()', '0xb3e2b6020926af4763d706b5657446b95795de57', 32, { from: ACCOUNT_TWO, gas: 4700000 });
+      assert.equal(tx.receipt.gasUsed, 4700000);
+    });
   });
 
   describe('when working with ERC20 functions', function () {

@@ -1,7 +1,9 @@
 pragma solidity ^0.4.11;
 
+import "./Ownable.sol";
 
-contract Resolver {
+
+contract Resolver is Ownable {
   struct Pointer { address destination; uint outsize; }
   mapping (bytes4 => Pointer) public pointers;
 
@@ -14,7 +16,9 @@ contract Resolver {
   }
 
   // Admin API
-  function register(string signature, address destination, uint outsize) {
+  function register(string signature, address destination, uint outsize)
+  onlyOwner
+  {
     pointers[stringToSig(signature)] = Pointer(destination, outsize);
   }
 

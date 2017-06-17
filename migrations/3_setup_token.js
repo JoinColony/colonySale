@@ -19,11 +19,13 @@ module.exports = function (deployer) {
   })
   .then(function (instance) {
     tokenDeployed = instance;
-    return EtherRouter.new(resolverDeployed.address);
+    return EtherRouter.deployed();
   })
   .then(function (instance) {
     etherRouterDeployed = instance;
-    console.log('EtherRouter deployed at', etherRouterDeployed.address);
+    return etherRouterDeployed.setResolver(resolverDeployed.address);
+  })
+  .then(function () {
     return etherRouterDeployed.resolver.call();
   })
   .then(function(_registeredResolver) {

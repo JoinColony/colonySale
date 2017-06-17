@@ -5,46 +5,22 @@ const Resolver = artifacts.require('Resolver');
 const Token = artifacts.require('Token');
 const UpdatedToken = artifacts.require('UpdatedToken');
 
-contract('CLNY Token', function (accounts) {
+contract('Token contract upgrade', function (accounts) {
   const COINBASE_ACCOUNT = accounts[0];
   const ACCOUNT_TWO = accounts[1];
   const ACCOUNT_THREE = accounts[2];
-  // this value must be high enough to certify that the failure was not due to the amount of gas but due to a exception being thrown
-  const GAS_TO_SPEND = 4700000;
 
   let resolver;
   let etherRouter;
   let token;
   let updatedToken;
 
-  beforeEach(function (done) {
-    Resolver.deployed()
-    .then(function (_resolver) {
-      resolver = _resolver;
-      return EtherRouter.new(resolver.address);
-    })
-    .then(function(instance) {
-      etherRouter = instance;
-      return Token.at(etherRouter.address);
-    })
-    .then(function (instance) {
-      token = instance;
-      return UpdatedToken.new();
-    })
-    .then(function (instance) {
-      updatedToken = UpdatedToken.at(instance.address);
-      return updatedToken.isUpdated.call();
-    })
-    .then(function (isUpdated) {
-      assert.equal(isUpdated, true);
-      return UpdatedToken.at(etherRouter.address);
-    })
-    .then(function (instance) {
-      updatedToken = instance;
-      return;
-    })
-    .then(done)
-    .catch(done);
+  beforeEach(async function () {
+    resolver = await Resolver.deployed();
+    etherRouter = await EtherRouter.new();
+    await etherRouter.setResolver(resolver.address);
+    token = await Token.at(etherRouter.address);
+    updatedToken = await UpdatedToken.at(etherRouter.address);
   });
 
   describe('when upgrading Token contract', function () {
