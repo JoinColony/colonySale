@@ -5,8 +5,8 @@ const Resolver = artifacts.require('Resolver');
 const Token = artifacts.require('Token');
 
 contract('CLNY Token', function (accounts) {
-  const MAIN_ACCOUNT = accounts[0];
-  const OTHER_ACCOUNT = accounts[1];
+  const COINBASE_ACCOUNT = accounts[0];
+  const ACCOUNT_TWO = accounts[1];
   // this value must be high enough to certify that the failure was not due to the amount of gas but due to a exception being thrown
   const GAS_TO_SPEND = 4700000;
 
@@ -43,51 +43,51 @@ contract('CLNY Token', function (accounts) {
     });
 
     it('should be able to get token balance', async function () {
-      var balance = await token.balanceOf.call(MAIN_ACCOUNT);
+      var balance = await token.balanceOf.call(COINBASE_ACCOUNT);
       assert.equal(1500000, balance.toNumber());
     });
 
     it('should be able to get allowance for address', async function () {
-      await token.approve(OTHER_ACCOUNT, 200000);
-      var allowance = await token.allowance.call(MAIN_ACCOUNT, OTHER_ACCOUNT);
+      await token.approve(ACCOUNT_TWO, 200000);
+      var allowance = await token.allowance.call(COINBASE_ACCOUNT, ACCOUNT_TWO);
       assert.equal(200000, allowance.toNumber());
     });
 
     it('should be able to transfer tokens from own address', async function () {
-      const success = await token.transfer.call(OTHER_ACCOUNT, 300000);
+      const success = await token.transfer.call(ACCOUNT_TWO, 300000);
       assert.equal(true, success);
 
-      var tx = await token.transfer(OTHER_ACCOUNT, 300000);
+      var tx = await token.transfer(ACCOUNT_TWO, 300000);
       assert.equal(tx.logs[0].event, 'Transfer');
-      const balanceAccount1 = await token.balanceOf.call(MAIN_ACCOUNT);
+      const balanceAccount1 = await token.balanceOf.call(COINBASE_ACCOUNT);
       assert.equal(1200000, balanceAccount1.toNumber());
-      const balanceAccount2 = await token.balanceOf.call(OTHER_ACCOUNT);
+      const balanceAccount2 = await token.balanceOf.call(ACCOUNT_TWO);
       assert.equal(300000, balanceAccount2.toNumber());
     });
 
     it('should be able to transfer pre-approved tokens from address different than own', async function () {
-      await token.approve(OTHER_ACCOUNT, 300000);
-      const success = await token.transferFrom.call(MAIN_ACCOUNT, OTHER_ACCOUNT, 300000, { from: OTHER_ACCOUNT });
+      await token.approve(ACCOUNT_TWO, 300000);
+      const success = await token.transferFrom.call(COINBASE_ACCOUNT, ACCOUNT_TWO, 300000, { from: ACCOUNT_TWO });
       assert.equal(true, success);
 
-      var tx = await token.transferFrom(MAIN_ACCOUNT, OTHER_ACCOUNT, 300000, { from: OTHER_ACCOUNT });
+      var tx = await token.transferFrom(COINBASE_ACCOUNT, ACCOUNT_TWO, 300000, { from: ACCOUNT_TWO });
       assert.equal(tx.logs[0].event, 'Transfer');
-      const balanceAccount1 = await token.balanceOf.call(MAIN_ACCOUNT);
+      const balanceAccount1 = await token.balanceOf.call(COINBASE_ACCOUNT);
       assert.equal(1200000, balanceAccount1.toNumber());
-      const balanceAccount2 = await token.balanceOf.call(OTHER_ACCOUNT);
+      const balanceAccount2 = await token.balanceOf.call(ACCOUNT_TWO);
       assert.equal(300000, balanceAccount2.toNumber());
-      var allowance = await token.allowance.call(MAIN_ACCOUNT, OTHER_ACCOUNT);
+      var allowance = await token.allowance.call(COINBASE_ACCOUNT, ACCOUNT_TWO);
       assert.equal(0, allowance.toNumber());
     });
 
     it('should be able to approve token transfer for other accounts', async function () {
-      const success = await token.approve.call(OTHER_ACCOUNT, 200000);
+      const success = await token.approve.call(ACCOUNT_TWO, 200000);
       assert.equal(true, success);
 
-      const tx = await token.approve(OTHER_ACCOUNT, 200000);
+      const tx = await token.approve(ACCOUNT_TWO, 200000);
       assert.equal(tx.logs[0].event, 'Approval');
 
-      var allowance = await token.allowance.call(MAIN_ACCOUNT, OTHER_ACCOUNT);
+      var allowance = await token.allowance.call(COINBASE_ACCOUNT, ACCOUNT_TWO);
       assert.equal(200000, allowance.toNumber());
     });
   });
@@ -98,7 +98,7 @@ contract('CLNY Token', function (accounts) {
       var totalSupply = await token.totalSupply.call();
       assert.equal(1500000, totalSupply.toNumber());
 
-      var balance = await token.balanceOf.call(MAIN_ACCOUNT);
+      var balance = await token.balanceOf.call(COINBASE_ACCOUNT);
       assert.equal(1500000, balance.toNumber());
 
       // Mint some more tokens
@@ -106,7 +106,7 @@ contract('CLNY Token', function (accounts) {
       totalSupply = await token.totalSupply.call();
       assert.equal(1500001, totalSupply.toNumber());
 
-      balance = await token.balanceOf.call(MAIN_ACCOUNT);
+      balance = await token.balanceOf.call(COINBASE_ACCOUNT);
       assert.equal(1500001, balance.toNumber());
     });
   });

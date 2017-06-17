@@ -78,7 +78,7 @@ gulp.task('test:contracts', 'Run contract tests', ['deploy:contracts', 'lint:con
 });
 
 gulp.task('test:contracts:upgrade', 'Run contract upgrade tests', ['deploy:contracts', 'generate:contracts:integration'], () => {
-  const cmd = makeCmd(`truffle test ./upgrade-test/test/*`);
+  const cmd = makeCmd(`truffle test ./upgrade-test/*`);
   return execute(cmd).then(cleanUpgradeTempContracts);
 });
 
