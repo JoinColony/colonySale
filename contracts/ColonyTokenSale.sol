@@ -24,24 +24,7 @@ contract ColonyTokenSale is DSMath {
       assert(add(totalRaised, msg.value) <= softCap);
       _;
   }
-
-  /*
-    price ^
-          |
-          |
-          |
-  Initial |      +------------+
-  price   |      |            |
-          |      |            |
-  Final   |      |            +------------------+
-  price   |      |            |                  |
-          |      |            |                  |
-          |      |            |                  |
-          |      |            |     24 hours     |
-          +------+------------+------------------+------->
-            Initial        Soft cap             Final    time
-            block          reached              block
-  */
+  
   function ColonyTokenSale () {
       if (initialBlock < getBlockNumber())
         throw;

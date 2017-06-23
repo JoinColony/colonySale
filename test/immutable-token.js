@@ -28,11 +28,6 @@ contract('CLNY Token', function (accounts) {
       const _resolver = await etherRouter.resolver.call();
       assert.equal(_resolver, resolver.address);
     });
-
-    it('should throw if non-owner tries to register functions on the Resolver', async function () {
-      const tx = await resolver.register('illegalFunction()', '0xb3e2b6020926af4763d706b5657446b95795de57', 32, { from: ACCOUNT_TWO, gas: 4700000 });
-      assert.equal(tx.receipt.gasUsed, 4700000);
-    });
   });
 
   describe('when working with ERC20 functions', function () {
