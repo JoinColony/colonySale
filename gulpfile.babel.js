@@ -38,7 +38,9 @@ gulp.task('generate:contracts:integration', ['deploy:contracts'], async () => {
   .then(execute(`cp Resolver.sol UpdatedResolver.sol`, { cwd: './contracts' }))
   .then(execute(`sed -ie'' s/'Token'/'UpdatedToken'/g UpdatedToken.sol`, { cwd: './contracts' }))
   .then(execute(`sed -ie'' s/'Resolver'/'UpdatedResolver'/g UpdatedResolver.sol`, { cwd: './contracts' }))
-  .then(execute(`sed -ie'' s/'function mint'/'function isUpdated() constant returns(bool) {return true;} function mint'/g UpdatedToken.sol`, { cwd: './contracts' }));
+  .then(execute(`sed -ie'' s/'function mint'/'function isUpdated() constant returns(bool) {return true;} function mint'/g UpdatedToken.sol`, { cwd: './contracts' }))
+  .then(execute(`sed -ie'' s/'function stringToSig'/'function isUpdated() constant returns(bool) {return true;} function stringToSig'/g UpdatedResolver.sol`, { cwd: './contracts' }))
+  .then(execute(`sed -ie'' s/'Pointer(destination, 0);'/'Pointer(destination, 0); pointers[stringToSig("isUpdated()")] = Pointer(destination, 32);'/g UpdatedResolver.sol`, { cwd: './contracts' }));
 });
 
 gulp.task('parity', async () => {
@@ -78,7 +80,7 @@ gulp.task('test:contracts', 'Run contract tests', ['deploy:contracts', 'lint:con
 });
 
 gulp.task('test:contracts:upgrade', 'Run contract upgrade tests', ['deploy:contracts', 'generate:contracts:integration'], () => {
-  const cmd = makeCmd(`truffle test ./upgrade-test/*`);
+  const cmd = makeCmd(`truffle test ./upgrade-test/* --network integration`);
   return execute(cmd).then(cleanUpgradeTempContracts);
 });
 
