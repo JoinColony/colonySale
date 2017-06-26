@@ -77,5 +77,17 @@ module.exports = function (deployer, network, accounts) {
     assert.equal(response[0], tokenDeployed.address);
     assert.equal(response[1], 0);
     console.log('### Contracts registered successfully ###');
+    return MultiSigWallet.new([COINBASE_ACCOUNT], 1);
+  })
+  .then(function(instance) {
+    routerOwnerMultiSig = instance;
+    return etherRouterDeployed.changeOwner(instance.address);
+  })
+  .then(function () {
+    return etherRouterDeployed.owner.call();
+  })
+  .then(function(routerOwner) {
+    assert.equal(routerOwner, routerOwnerMultiSig.address);
+    console.log('### EtherRouter owner set to MultiSig', routerOwnerMultiSig.address);
   });
 };
