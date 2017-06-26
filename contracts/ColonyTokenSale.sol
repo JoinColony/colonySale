@@ -1,7 +1,7 @@
 pragma solidity^0.4.11;
 
 import "./Token.sol";
-import "./math.sol";
+import "./dappsys/math.sol";
 
 
 contract ColonyTokenSale is DSMath {
@@ -24,7 +24,7 @@ contract ColonyTokenSale is DSMath {
       assert(add(totalRaised, msg.value) <= softCap);
       _;
   }
-  
+
   function ColonyTokenSale () {
       if (initialBlock < getBlockNumber())
         throw;
