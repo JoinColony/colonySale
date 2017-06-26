@@ -22,15 +22,6 @@ contract('CLNY Token', function (accounts) {
     token = await Token.at(etherRouter.address);
   });
 
-  describe('when initialising the token', function () {
-    it('should throw if non-owner tries to change the Resolver on EtherRouter', async function () {
-      const tx = await etherRouter.setResolver('0xb3e2b6020926af4763d706b5657446b95795de57', { from: ACCOUNT_TWO, gas: 4700000 });
-      assert.equal(tx.receipt.gasUsed, 4700000);
-      const _resolver = await etherRouter.resolver.call();
-      assert.equal(_resolver, resolver.address);
-    });
-  });
-
   describe('when working with ERC20 functions', function () {
     beforeEach('mint 1500000 tokens', async() => {
       await token.mint(1500000);
