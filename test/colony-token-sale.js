@@ -13,11 +13,11 @@ contract('ColonyTokenSale', function(accounts) {
   });
 
   describe('Sale initialisation', () => {
-    // TODO: ensure the following execute on the same block
-    it.skip("should return correct current block number", async function () {
-      let currentBlockReportedByContract;
+    it("should return correct current block number", async function () {
+      await testHelper.stopMining.call();
       const currentBlock = await colonySale.getBlockNumber.call();
       const currentActualBlock = web3.eth.blockNumber;
+      await testHelper.startMining.call();
       assert.equal(currentActualBlock, currentBlock.toNumber());
     });
 
