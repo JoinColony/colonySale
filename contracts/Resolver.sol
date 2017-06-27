@@ -5,17 +5,19 @@ contract Resolver {
   struct Pointer { address destination; uint outsize; }
   mapping (bytes4 => Pointer) public pointers;
 
-  function Resolver() {
+  function Resolver(address destination) {
+    pointers[stringToSig("totalSupply()")] = Pointer(destination, 32);
+    pointers[stringToSig("balanceOf(address)")] = Pointer(destination, 32);
+    pointers[stringToSig("allowance(address,address)")] = Pointer(destination, 32);
+    pointers[stringToSig("transfer(address,uint256)")] = Pointer(destination, 32);
+    pointers[stringToSig("transferFrom(address,address,uint256)")] = Pointer(destination, 32);
+    pointers[stringToSig("approve(address,uint256)")] = Pointer(destination, 32);
+    pointers[stringToSig("mint(uint128)")] = Pointer(destination, 0);
   }
 
   // Public API
   function lookup(bytes4 sig) returns(address, uint) {
     return (destination(sig), outsize(sig));
-  }
-
-  // Admin API
-  function register(string signature, address destination, uint outsize) {
-    pointers[stringToSig(signature)] = Pointer(destination, outsize);
   }
 
   // Helpers

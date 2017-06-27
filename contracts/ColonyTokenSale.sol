@@ -1,7 +1,7 @@
-pragma solidity^0.4.10;
+pragma solidity^0.4.11;
 
-import "./CLNY.sol";
-import "./DSMath.sol";
+import "./Token.sol";
+import "./dappsys/math.sol";
 
 
 contract ColonyTokenSale is DSMath {
@@ -18,30 +18,13 @@ contract ColonyTokenSale is DSMath {
   // The address to hold the funds donated
   address public colonyMultisig;
   // The address of the Colony Network Token
-  CLNY public tokenTracker;
+  Token public tokenTracker;
 
   modifier etherCapNotReached {
       assert(add(totalRaised, msg.value) <= softCap);
       _;
   }
 
-  /*
-    price ^
-          |
-          |
-          |
-  Initial |      +------------+
-  price   |      |            |
-          |      |            |
-  Final   |      |            +------------------+
-  price   |      |            |                  |
-          |      |            |                  |
-          |      |            |                  |
-          |      |            |     24 hours     |
-          +------+------------+------------------+------->
-            Initial        Soft cap             Final    time
-            block          reached              block
-  */
   function ColonyTokenSale () {
       if (initialBlock < getBlockNumber())
         throw;

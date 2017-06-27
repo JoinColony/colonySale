@@ -11,10 +11,12 @@
 
 pragma solidity ^0.4.11;
 
-import "./DSMath.sol";
+import "./dappsys/erc20.sol";
+import "./dappsys/math.sol";
+import "./Ownable.sol";
 
 
-contract Token is DSMath {
+contract Token is ERC20, DSMath, Ownable {
     address resolver;
     uint256 _supply;
     mapping (address => uint256) _balances;
@@ -41,6 +43,8 @@ contract Token is DSMath {
         _balances[msg.sender] = sub(_balances[msg.sender], wad);
         _balances[dst] = add(_balances[dst], wad);
 
+        Transfer(msg.sender, dst, wad);
+
         return true;
     }
 
@@ -52,11 +56,15 @@ contract Token is DSMath {
         _balances[src] = sub(_balances[src], wad);
         _balances[dst] = add(_balances[dst], wad);
 
+        Transfer(src, dst, wad);
+
         return true;
     }
 
     function approve(address guy, uint256 wad) returns (bool) {
         _approvals[msg.sender][guy] = wad;
+
+        Approval(msg.sender, guy, wad);
 
         return true;
     }

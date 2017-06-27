@@ -1,7 +1,9 @@
 node_modules
-installed_contracts
 imports
 build
 keys/*
 parity-genesis.json
 parityPassword
+test-results.xml
+contracts/Updated*.sol
+*.sole

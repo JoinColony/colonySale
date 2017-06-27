@@ -4,6 +4,5 @@ migrations
 test
 installed_contracts
 contracts/Migrations.sol
-contracts/CLNY.sol
-contracts/DSMath.sol
 contracts/EtherRouter.sol
+contracts/dappsys
