@@ -17,11 +17,7 @@ JSONStream@^1.0.3, JSONStream@^1.0.4:
     jsonparse "^1.2.0"
     through ">=2.2.7 <3"
 
-abbrev@1:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.0.tgz#d0554c2256636e2f56e7c2e5ad183f859428d81f"
-
-abbrev@1.0.x:
+abbrev@1, abbrev@1.0.x:
   version "1.0.9"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.0.9.tgz#91b4792588a7738c25f35dd6f63752a2f8776135"
 
@@ -3334,17 +3330,7 @@ ethereumjs-account@^2.0.3, ethereumjs-account@^2.0.4, ethereumjs-account@~2.0.4:
     ethereumjs-util "^4.0.1"
     rlp "^2.0.0"
 
-ethereumjs-block@^1.2.2, ethereumjs-block@^1.4.0, ethereumjs-block@^1.5.0:
-  version "1.5.1"
-  resolved "https://registry.yarnpkg.com/ethereumjs-block/-/ethereumjs-block-1.5.1.tgz#ffb9f636f2e7d4db4b8060df98f08e9d688dc660"
-  dependencies:
-    async "^2.0.1"
-    ethereum-common "0.0.18"
-    ethereumjs-tx "^1.2.2"
-    ethereumjs-util "^5.0.0"
-    merkle-patricia-tree "^2.1.2"
-
-ethereumjs-block@~1.2.2:
+ethereumjs-block@^1.2.2, ethereumjs-block@~1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/ethereumjs-block/-/ethereumjs-block-1.2.2.tgz#2ec7534a59021b8ec9b83c30e49690c6ebaedda1"
   dependencies:
@@ -3352,6 +3338,16 @@ ethereumjs-block@~1.2.2:
     ethereum-common "0.0.16"
     ethereumjs-tx "^1.0.0"
     ethereumjs-util "^4.0.1"
+    merkle-patricia-tree "^2.1.2"
+
+ethereumjs-block@^1.4.0, ethereumjs-block@^1.5.0:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/ethereumjs-block/-/ethereumjs-block-1.5.1.tgz#ffb9f636f2e7d4db4b8060df98f08e9d688dc660"
+  dependencies:
+    async "^2.0.1"
+    ethereum-common "0.0.18"
+    ethereumjs-tx "^1.2.2"
+    ethereumjs-util "^5.0.0"
     merkle-patricia-tree "^2.1.2"
 
 "ethereumjs-testrpc-sc@https://github.com/sc-forks/testrpc-sc.git":
@@ -4166,7 +4162,7 @@ glob@3.2.11:
     inherits "2"
     minimatch "0.3"
 
-glob@7.1.1, glob@^7.0.3, glob@^7.0.5, glob@^7.1.1:
+glob@7.1.1, glob@^7.0.0, glob@^7.0.5:
   version "7.1.1"
   resolved "https://registry.yarnpkg.com/glob/-/glob-7.1.1.tgz#805211df04faaf1c63a3600306cdf5ade50b2ec8"
   dependencies:
@@ -4206,7 +4202,7 @@ glob@^6.0.1:
     once "^1.3.0"
     path-is-absolute "^1.0.0"
 
-glob@^7.0.0, glob@^7.1.2, glob@~7.1.2:
+glob@^7.0.3, glob@^7.1.1, glob@^7.1.2, glob@~7.1.2:
   version "7.1.2"
   resolved "https://registry.yarnpkg.com/glob/-/glob-7.1.2.tgz#c19c9df9a028702d678612384a6552404c636d15"
   dependencies:
@@ -9384,7 +9380,7 @@ sol-explore@^1.6.1, sol-explore@^1.6.2:
   version "1.6.2"
   resolved "https://registry.yarnpkg.com/sol-explore/-/sol-explore-1.6.2.tgz#43ae8c419fd3ac056a05f8a9d1fb1022cd41ecc2"
 
-solc@0.4.11, solc@^0.4.2:
+solc@0.4.11:
   version "0.4.11"
   resolved "https://registry.yarnpkg.com/solc/-/solc-0.4.11.tgz#2522eb43e7c0419bac2060b96e20a2593bfb5e8b"
   dependencies:
@@ -9394,7 +9390,7 @@ solc@0.4.11, solc@^0.4.2:
     semver "^5.3.0"
     yargs "^4.7.1"
 
-solc@0.4.6:
+solc@0.4.6, solc@^0.4.2:
   version "0.4.6"
   resolved "https://registry.yarnpkg.com/solc/-/solc-0.4.6.tgz#afa929a1ceafc0252cfbb4217c8e2b1dab139db7"
   dependencies:
@@ -9417,15 +9413,7 @@ solc@0.4.6:
     sol-explore "^1.6.2"
     solidity-parser "git+https://github.com/sc-forks/solidity-parser.git"
 
-solidity-parser@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/solidity-parser/-/solidity-parser-0.3.0.tgz#cab04f8e406bdc1f3c16512eec6aa87a1072f8b9"
-  dependencies:
-    mocha "^2.4.5"
-    pegjs "^0.10.0"
-    yargs "^4.6.0"
-
-"solidity-parser@git+https://github.com/sc-forks/solidity-parser.git":
+solidity-parser@^0.3.0, "solidity-parser@git+https://github.com/sc-forks/solidity-parser.git":
   version "0.3.0"
   resolved "git+https://github.com/sc-forks/solidity-parser.git#ba174c8897e632a197e536e73ccfd05c44b18155"
   dependencies:
@@ -9557,11 +9545,7 @@ split@~0.3.0:
   dependencies:
     through "2"
 
-sprintf-js@^1.0.3:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.1.1.tgz#36be78320afe5801f6cea3ee78b6e5aab940ea0c"
-
-sprintf-js@~1.0.2:
+sprintf-js@^1.0.3, sprintf-js@~1.0.2:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
 
