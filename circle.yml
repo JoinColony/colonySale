@@ -33,5 +33,6 @@ test:
   override:
     - gulp test:contracts
     - gulp test:contracts:upgrade
+    - gulp test:coverage:contracts
   post:
     - mv ./test-results.xml $CIRCLE_TEST_REPORTS/truffle.xml
