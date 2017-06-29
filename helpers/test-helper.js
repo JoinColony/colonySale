@@ -6,6 +6,34 @@ import _ from 'lodash';
 import shortid from 'shortid';
 
 module.exports = {
+  ifUsingTestRPC(err) {
+    // Make sure this is a throw we expect.
+    if (err.message.indexOf('VM Exception while processing transaction: out of gas') == 0
+  && err.message.indexOf('VM Exception while processing transaction: invalid JUMP') == 0
+  && err.message.indexOf('VM Exception while processing transaction: invalid opcode') == 0) {
+    throw err;
+  }
+    // Okay, so, there is a discrepancy between how testrpc handles
+    // OOG errors (throwing an exception all the way up to these tests) and
+    // how geth handles them (still making a valid transaction and returning
+    // a txid). For the explanation of why, see
+    //
+    // See https://github.com/ethereumjs/testrpc/issues/39
+    //
+    // Obviously, we want our tests to pass on both, so this is a
+    // bit of a problem. We have to have this special function that we use to catch
+    // the error. I've named it so that it reads well in the tests below - i.e.
+    // .catch(ifUsingTestRPC)
+    // Note that it just swallows the error - open to debate on whether this is
+    // the best thing to do, or it should log it even though it's expected, in
+    // case we get an error that is unexpected...
+    // console.log('Error:',err)
+
+    // Note also the solc updates to error handling 
+    // https://github.com/ethereum/solidity/blob/develop/docs/control-structures.rst#error-handling-assert-require-revert-and-exceptions
+    const block = web3.eth.getBlock('latest', true);
+    return block.transactions[0].hash;
+  },
   checkAllGasSpent(gasAmount, txid) {
     const receipt = web3.eth.getTransactionReceipt(txid);
     // When a transaction throws, all the gas sent is spent. So let's check that

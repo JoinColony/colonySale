@@ -15,7 +15,7 @@ const gulp = gulpHelp(originalGulp, {
 });
 const options = minimist(process.argv.slice(2));
 
-const gethClient = options.geth ? 'geth' : 'parity';
+const gethClient = 'testrpc';
 
 gulp.task('deploy:contracts', [gethClient, 'clean:contracts'], () => {
   return execute(`truffle migrate --reset`);
@@ -45,6 +45,12 @@ gulp.task('generate:contracts:integration', ['deploy:contracts'], async () => {
   .then(execute(`sed -ie'' s/'function mint'/'function isUpdated() constant returns(bool) {return true;} function mint'/g UpdatedToken.sol`, { cwd: './contracts' }))
   .then(execute(`sed -ie'' s/'function stringToSig'/'function isUpdated() constant returns(bool) {return true;} function stringToSig'/g UpdatedResolver.sol`, { cwd: './contracts' }))
   .then(execute(`sed -ie'' s/'Pointer(destination, 0);'/'Pointer(destination, 0); pointers[stringToSig("isUpdated()")] = Pointer(destination, 32);'/g UpdatedResolver.sol`, { cwd: './contracts' }));
+});
+
+gulp.task('testrpc', () => {
+  const cmd = makeCmd(`testrpc`);
+  executeDetached(cmd);
+  return waitForPort('8545');
 });
 
 gulp.task('parity', async () => {

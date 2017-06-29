@@ -14,16 +14,21 @@ contract('ColonyTokenSale', function(accounts) {
 
   describe('Sale initialisation', () => {
     it("should return correct current block number", async function () {
-      await testHelper.stopMining.call();
+      await testHelper.stopMining();
       const currentBlock = await colonySale.getBlockNumber.call();
       const currentActualBlock = web3.eth.blockNumber;
-      await testHelper.startMining.call();
+      await testHelper.startMining();
       assert.equal(currentActualBlock, currentBlock.toNumber());
     });
 
     it("should have correct sale start block", async function () {
       const startBlock = await colonySale.startBlock.call();
       assert.equal(startBlock.toNumber(), 4000000);
+    });
+
+    it("should have correct initial sale end block", async function () {
+      const endBlock = await colonySale.endBlock.call();
+      assert.equal(endBlock.toNumber(), 4071153);
     });
 
     it("should have correct soft cap", async function () {
@@ -35,14 +40,9 @@ contract('ColonyTokenSale', function(accounts) {
       const minimumAmountToRaise = await colonySale.minimumAmountToRaise.call();
       assert.equal(minimumAmountToRaise.toNumber(), web3.toWei('40000', 'ether'));
     });
-
-    it("should have correct maximum duration", async function () {
-      const endBlock = await colonySale.endBlock.call();
-      assert.equal(endBlock.toNumber(), 4071153);
-    });
   });
 
-  describe('Before the start block is reached', () => {
+  describe.skip('Before the start block is reached', () => {
     it.skip("should not accept contributions", async function () {
       const currentBlock = web3.eth.blockNumber;
     });
@@ -91,13 +91,14 @@ contract('ColonyTokenSale', function(accounts) {
     });
   });
 
-  describe('Soft cap reached, countdown to sale end begins', async () => {
+  describe.skip('Soft cap reached, countdown to sale end begins', async () => {
     before('get to softCap', async () => {
-      colonySale.send(200000, { from: COINBASE_ACCOUNT });
+      await colonySale.send(200000, { from: COINBASE_ACCOUNT });
     });
 
     it('when softCap reached in under 635 blocks, should set remainder duration to 635 blocks', async function () {
       const currentBlock = web3.eth.blockNumber;
+      //await testHelper.forwardTime(60*60);
       ColonyTokenSale.new();
     });
 
@@ -113,7 +114,7 @@ contract('ColonyTokenSale', function(accounts) {
   });
 
   // Sale ends after 21 days or 24 hours after the soft cap is reached, whichever comes first
-  describe('End of public sale', () => {
+  describe.skip('End of public sale', () => {
     it('if soft cap is NOT reached within 14 days from start, should close the sale', async function () {
       const currentBlock = web3.eth.blockNumber;
       ColonyTokenSale.new();
@@ -130,13 +131,13 @@ contract('ColonyTokenSale', function(accounts) {
     });
   });
 
-  describe('Past end of public sale', () => {
+  describe.skip('Past end of public sale', () => {
     it.skip("should not accept contributions", async function () {
       const currentBlock = web3.eth.blockNumber;
       ColonyTokenSale.new();
     });
   });
 
-  describe('Two years after public sale completes', () => {
+  describe.skip('Two years after public sale completes', () => {
   });
 });

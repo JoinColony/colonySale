@@ -13,10 +13,14 @@ contract('CLNY Token', function (accounts) {
   let etherRouter;
   let resolver;
   let token;
+  let tokenDeployed;
+
+  before(async function () {
+    tokenDeployed = await Token.deployed();
+    resolver = await Resolver.new(tokenDeployed.address);
+  });
 
   beforeEach(async function () {
-    const tokenDeployed = await Token.deployed();
-    resolver = await Resolver.new(tokenDeployed.address);
     etherRouter = await EtherRouter.new();
     await etherRouter.setResolver(resolver.address);
     token = await Token.at(etherRouter.address);
