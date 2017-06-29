@@ -94,7 +94,7 @@ gulp.task('test:contracts:upgrade', 'Run contract upgrade tests', ['deploy:contr
   return execute(cmd).then(cleanUpgradeTempContracts);
 });
 
-gulp.task('test:coverage:contracts', 'Run contract test coverage using solidity-coverage', () => {
+gulp.task('test:contracts:coverage', 'Run contract test coverage using solidity-coverage', () => {
   const cmd = makeCmd(`solidity-coverage`);
   return execute(cmd).then(checkCoverageAgainstThreshold);
 });
