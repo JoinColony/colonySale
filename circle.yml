@@ -5,14 +5,14 @@ machine:
 dependencies:
   pre:
     - rm -rf node_modules
+    - mkdir -p ~/.yarn-cache
   cache_directories:
     - "~/.yarn-cache"
 
   override:
     - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 0.24.6
     - yarn global add mkdirp gulp@3.9.1
-    - mkdir -p ~/.yarn-cache
-    - yarn --pure-lockfile --cache-folder ~/.yarn-cache #truffle-contract replies on ethjs-abi which requires node>v6.5
+    - yarn --pure-lockfile --cache-folder ~/.yarn-cache
     - git submodule update --init --recursive --remote
 
     # Set up parity
