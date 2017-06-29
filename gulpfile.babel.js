@@ -33,6 +33,10 @@ gulp.task('lint:contracts', () => {
   return execute('solium --dir . || true');
 });
 
+const checkCoverageAgainstThreshold = () => {
+  return execute('istanbul check-coverage --branches 62.5');
+};
+
 gulp.task('generate:contracts:integration', ['deploy:contracts'], async () => {
   return execute(`cp Token.sol UpdatedToken.sol`, { cwd: './contracts' })
   .then(execute(`cp Resolver.sol UpdatedResolver.sol`, { cwd: './contracts' }))
@@ -82,6 +86,11 @@ gulp.task('test:contracts', 'Run contract tests', ['deploy:contracts', 'lint:con
 gulp.task('test:contracts:upgrade', 'Run contract upgrade tests', ['deploy:contracts', 'generate:contracts:integration'], () => {
   const cmd = makeCmd(`truffle test ./upgrade-test/* --network integration`);
   return execute(cmd).then(cleanUpgradeTempContracts);
+});
+
+gulp.task('test:coverage:contracts', 'Run contract test coverage using solidity-coverage', () => {
+  const cmd = makeCmd(`solidity-coverage`);
+  return execute(cmd).then(checkCoverageAgainstThreshold);
 });
 
 const waitForPort = port => {

@@ -26,11 +26,13 @@
     "babel-register": "^6.24.1",
     "gulp": "^3.9.1",
     "gulp-help": "^1.6.1",
+    "istanbul": "^0.4.5",
     "mocha": "^3.4.2",
     "mocha-circleci-reporter": "^0.0.2",
     "pshell": "^1.1.0",
     "request": "^2.81.0",
     "rimraf": "^2.6.1",
+    "solidity-coverage": "https://github.com/sc-forks/solidity-coverage.git#aa41e80f1f8dc53f1f05955e203933467d6cabd0",
     "solium": "^0.4.0",
     "truffle": "3.2.5"
   }

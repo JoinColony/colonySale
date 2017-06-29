@@ -7,3 +7,5 @@ parityPassword
 test-results.xml
 contracts/Updated*.sol
 *.sole
+coverage
+coverage.json
