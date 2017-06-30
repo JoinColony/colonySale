@@ -29,7 +29,7 @@ module.exports = {
     // case we get an error that is unexpected...
     // console.log('Error:',err)
 
-    // Note also the solc updates to error handling 
+    // Note also the solc updates to error handling
     // https://github.com/ethereum/solidity/blob/develop/docs/control-structures.rst#error-handling-assert-require-revert-and-exceptions
     const block = web3.eth.getBlock('latest', true);
     return block.transactions[0].hash;
@@ -47,6 +47,20 @@ module.exports = {
       method: 'evm_increaseTime',
       params: [seconds],
       id: new Date().getTime() });
+  },
+  forwardToBlock(blockNumber) {
+    // Check we are behind the given blockNumber
+    let currentBlock = web3.eth.blockNumber;
+    assert.isBelow(currentBlock, blockNumber);
+
+    console.log('Forwarding chain to block ' + blockNumber + ' ...');
+    while (currentBlock<blockNumber) {
+      web3.currentProvider.send({
+        jsonrpc: '2.0',
+        method: 'evm_mine' });
+      currentBlock = web3.eth.blockNumber;
+    }
+    return;
   },
   mineTransaction() {
     return web3.currentProvider.send({
