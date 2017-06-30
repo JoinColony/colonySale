@@ -34,7 +34,7 @@ gulp.task('lint:contracts', () => {
 });
 
 const checkCoverageAgainstThreshold = () => {
-  return execute('istanbul check-coverage --branches 62.5');
+  return execute('istanbul check-coverage --branches 75');
 };
 
 gulp.task('generate:contracts:integration', ['deploy:contracts'], async () => {
