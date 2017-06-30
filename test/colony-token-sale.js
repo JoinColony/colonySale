@@ -11,7 +11,7 @@ contract('ColonyTokenSale', function(accounts) {
   describe('Sale initialisation', () => {
     before(async function () {
       const softCapInWei = web3.toWei(200000, 'ether');
-      colonySale = await ColonyTokenSale.new(4000000, softCapInWei, 5, 10);
+      colonySale = await ColonyTokenSale.new(4000000, softCapInWei, 635, 5082);
     });
 
     it("should return correct current block number", async function () {
@@ -32,8 +32,17 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(endBlock.toNumber(), 4071153);
     });
 
-    it.skip("should have CLNY token price of 1 finney", async function () {
+    it("should have correct min post soft cap blocks duration", async function () {
+      const postSoftCapMinBlocks = await colonySale.postSoftCapMinBlocks.call();
+      assert.equal(postSoftCapMinBlocks.toNumber(), 635);
+    });
 
+    it("should have correct max post soft cap blocks duration", async function () {
+      const postSoftCapMaxBlocks = await colonySale.postSoftCapMaxBlocks.call();
+      assert.equal(postSoftCapMaxBlocks.toNumber(), 5082);
+    });
+
+    it.skip("should have CLNY token price of 1 finney", async function () {
     });
 
     it("should have correct soft cap", async function () {
