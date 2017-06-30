@@ -16,7 +16,7 @@ contract ColonyTokenSale is DSMath {
   uint public postSoftCapMinBlocks;
   uint public postSoftCapMaxBlocks;
   // CLNY token wei price, at the start of the sale
-  uint public initialPrice = 1 finney;
+  uint public tokenPrice = 1 finney;
   // Minimum contribution amount
   uint constant public MINIMUM_INVESTMENT = 1 finney;
   // Total amount raised

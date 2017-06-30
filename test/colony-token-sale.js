@@ -42,7 +42,10 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(postSoftCapMaxBlocks.toNumber(), 5082);
     });
 
-    it.skip("should have CLNY token price of 1 finney", async function () {
+    it("should have CLNY token price of 1 finney", async function () {
+      const tokenPrice = await colonySale.tokenPrice.call();
+      const oneFinney = web3.toWei(1, 'finney');
+      assert.equal(tokenPrice.toNumber(), oneFinney);
     });
 
     it("should have correct soft cap", async function () {
