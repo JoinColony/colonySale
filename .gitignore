@@ -9,3 +9,6 @@ contracts/Updated*.sol
 *.sole
 coverage
 coverage.json
+coverageEnv
+scTopics
+allFiredEvents
