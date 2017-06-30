@@ -5,6 +5,7 @@ const MultiSigWallet = artifacts.require('multisig-wallet/MultiSigWallet.sol');
 const EtherRouter = artifacts.require('EtherRouter');
 const Resolver = artifacts.require('Resolver');
 const Token = artifacts.require('Token');
+const Ownable = artifacts.require('Ownable');
 
 contract('EtherRouter / Resolver', function (accounts) {
   const COINBASE_ACCOUNT = accounts[0];
@@ -36,6 +37,33 @@ contract('EtherRouter / Resolver', function (accounts) {
       const tx = await etherRouter.setResolver('0xb3e2b6020926af4763d706b5657446b95795de57', { from: COINBASE_ACCOUNT, gas: 4700000})
       .catch(testHelper.ifUsingTestRPC);
       testHelper.checkAllGasSpent(4700000, tx);
+      const _resolver = await etherRouter.resolver.call();
+      assert.equal(_resolver, resolver.address);
+    });
+
+    it('should throw if owner tries to change owner with invalid address', async function () {
+      const ownableContract = await Ownable.new();
+      let tx;
+      try {
+        tx = await ownableContract.changeOwner('0x0');
+      } catch(err) {
+        tx = testHelper.ifUsingTestRPC(err);
+      }
+
+      const owner = await ownableContract.owner.call();
+      assert.equal(owner, COINBASE_ACCOUNT);
+    });
+
+    it('should throw if owner tries to change the Resolver on EtherRouter with invalid address', async function () {
+      const txData = await etherRouter.contract.setResolver.getData('0x0')
+      const transactionId = await multisig.submitTransaction(etherRouter.address, 0, txData, { from: ACCOUNT_TWO });
+      let tx;
+      try {
+        tx = await multisig.confirmTransaction(transactionId);
+      } catch(err) {
+        tx = testHelper.ifUsingTestRPC(err);
+      }
+
       const _resolver = await etherRouter.resolver.call();
       assert.equal(_resolver, resolver.address);
     });
