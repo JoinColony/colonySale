@@ -10,7 +10,8 @@ contract('ColonyTokenSale', function(accounts) {
 
   describe('Sale initialisation', () => {
     before(async function () {
-      colonySale = await ColonyTokenSale.new(4000000);
+      const softCapInWei = web3.toWei(200000, 'ether');
+      colonySale = await ColonyTokenSale.new(4000000, softCapInWei, 5, 10);
     });
 
     it("should return correct current block number", async function () {
@@ -50,8 +51,7 @@ contract('ColonyTokenSale', function(accounts) {
     beforeEach('setup future startBlock', async () => {
       const currentBlock = web3.eth.blockNumber;
       const startBlock = currentBlock + 30;
-      console.log('startBlock set to', startBlock);
-      colonySale = await ColonyTokenSale.new(startBlock);
+      colonySale = await ColonyTokenSale.new(startBlock, 1000, 5, 10);
     });
 
     it("should not accept contributions", async function () {
@@ -72,8 +72,7 @@ contract('ColonyTokenSale', function(accounts) {
   describe('Start of public sale, when the start block is reached', async () => {
     beforeEach('setup sale at startBlock', async () => {
       const currentBlock = web3.eth.blockNumber;
-      console.log('startBlock set to currentBlock', currentBlock);
-      colonySale = await ColonyTokenSale.new(currentBlock);
+      colonySale = await ColonyTokenSale.new(currentBlock, 1000, 5, 10);
       // Send 1 test ether to the contract
       testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1);
     });
@@ -94,23 +93,42 @@ contract('ColonyTokenSale', function(accounts) {
     });
   });
 
-  describe.skip('Soft cap reached, countdown to sale end begins', async () => {
-    before('get to softCap', async () => {
-      await colonySale.send(200000, { from: COINBASE_ACCOUNT });
-    });
-
-    it('when softCap reached in under 635 blocks, should set remainder duration to 635 blocks', async function () {
+  describe('Soft cap reached, should correctly calculate sale endBlock', async () => {
+    beforeEach('fast forward contributions to softCap', async () => {
       const currentBlock = web3.eth.blockNumber;
-      //await testHelper.forwardTime(60*60);
-
+      colonySale = await ColonyTokenSale.new(currentBlock, 1000, 5, 10);
     });
 
-    it('when softCap reached in over 5082 blocks, should set remainder duration to 5082 blocks', async function () {
-
+    it('when softCap reached in under the postSoftCapMinBlocks, should set remainder duration to postSoftCapMinBlocks', async function () {
+      const startBlock = await colonySale.startBlock.call();
+      // Reach the softCap
+      await colonySale.send(1000, { from: COINBASE_ACCOUNT });
+      const currentBlock = web3.eth.blockNumber;
+      const endBlock = await colonySale.endBlock.call();
+      assert.equal(endBlock.toNumber(), currentBlock+5);
     });
 
-    it('when softCap reached in over 635 but under 5082 blocks, should set remainder duration to that amount of blocks', async function () {
+    it('when softCap reached in over postSoftCapMaxBlocks, should set remainder duration to postSoftCapMaxBlocks', async function () {
+      // Go forward 12 blocks from sale start
+      const startBlock = await colonySale.startBlock.call();
+      testHelper.forwardToBlock(startBlock.plus(11).toNumber());
+      // Reach the softCap
+      await colonySale.send(1000, { from: COINBASE_ACCOUNT });
+      const currentBlock = web3.eth.blockNumber;
+      const endBlock = await colonySale.endBlock.call();
+      assert.equal(endBlock.toNumber(), currentBlock+10);
+    });
 
+    it('when softCap reached in over postSoftCapMinBlocks but under postSoftCapMaxBlocks, should set remainder duration to that amount of blocks',
+    async function () {
+      // Go forward 6 blocks from sale start
+      const startBlock = await colonySale.startBlock.call();
+      testHelper.forwardToBlock(startBlock.plus(6).toNumber());
+      // Reach the softCap
+      await colonySale.send(1000, { from: COINBASE_ACCOUNT });
+      const currentBlock = web3.eth.blockNumber;
+      const endBlock = await colonySale.endBlock.call();
+      assert.equal(endBlock.toNumber(), currentBlock+7);
     });
   });
 
