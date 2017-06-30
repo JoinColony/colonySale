@@ -31,6 +31,10 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(endBlock.toNumber(), 4071153);
     });
 
+    it.skip("should have CLNY token price of 1 finney", async function () {
+
+    });
+
     it("should have correct soft cap", async function () {
       const softCap = await colonySale.softCap.call();
       assert.equal(softCap.toNumber(), web3.toWei('200000', 'ether'));
@@ -79,22 +83,6 @@ contract('ColonyTokenSale', function(accounts) {
       const colonySaleBalanceAfter = web3.eth.getBalance(colonySale.address);
       const totalRaised = web3.toWei(2, 'ether');
       assert.isTrue(colonySaleBalanceAfter.equals(totalRaised));
-    });
-
-    it.skip("should accept contributions after the soft cap is reached but before sale ends", async function () {
-
-    });
-
-    it.skip("should use CLNY token price of 1 finney for first 24 hours", async function () {
-
-    });
-
-    it.skip("CLNY token price should drop by 25 CLNY per day, incremented on a per block basis", async function () {
-
-    });
-
-    it.skip("CLNY token price should drop by 80% when the soft cap is reached for the remaining 24 hours", async function () {
-
     });
 
     it.skip("should fail to accept less than the minimum investment of 1 finney", async function () {
