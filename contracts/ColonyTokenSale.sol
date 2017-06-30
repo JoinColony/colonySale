@@ -6,7 +6,7 @@ import "./dappsys/math.sol";
 
 contract ColonyTokenSale is DSMath {
   // Block number in which the sale starts. Inclusive. Sale will be opened at start block.
-  uint public startBlock = 4000000;
+  uint public startBlock;
   // Sale will continue for a maximum of 71153 blocks (~14 days). Initialised as the latest possible block number at which the sale ends.
   // Updated if softCap reached to the number of blocks it took to reach the soft cap and it is a min of 635 and max 5082.
   // Exclusive. Sale will be closed at end block.
@@ -35,18 +35,20 @@ contract ColonyTokenSale is DSMath {
       _;
   }
 
-  function ColonyTokenSale () {
+  function ColonyTokenSale (uint _startBlock) {
+    startBlock = _startBlock;
   }
 
   function getBlockNumber() constant returns (uint) {
     return block.number;
   }
 
-  function buy(address _owner) {
+  function buy(address _owner) internal
+  saleOpen 
+  {
     if (msg.value > 0) {
       totalRaised += msg.value;
     }
-    return;
   }
 
   function () public payable {

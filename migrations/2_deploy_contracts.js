@@ -10,9 +10,6 @@ module.exports = function(deployer, network) {
   deployer.deploy(EtherRouter);
   deployer.deploy(Token);
 
-  // Deploy main token sale
-  deployer.deploy(ColonyTokenSale);
-
   // Add demo data if we're not deploying to the live network.
   if (network === 'integration') {
     const UpdatedToken = artifacts.require('./UpdatedToken.sol');
