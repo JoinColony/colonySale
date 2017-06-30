@@ -60,18 +60,25 @@ contract('ColonyTokenSale', function(accounts) {
       }
       const colonySaleBalanceAfter = web3.eth.getBalance(colonySale.address);
       assert.equal(colonySaleBalanceAfter.toNumber(), colonySaleBalanceBefore.toNumber());
+      const totalRaised = await colonySale.totalRaised.call();
+      assert.equal(totalRaised.toNumber(), 0);
     });
   });
 
-  describe.skip('Start of public sale, when the start block is reached', async () => {
+  describe('Start of public sale, when the start block is reached', async () => {
     beforeEach('setup sale at startBlock', async () => {
       const currentBlock = web3.eth.blockNumber;
       console.log('startBlock set to currentBlock', currentBlock);
       colonySale = await ColonyTokenSale.new(currentBlock);
+      // Send 1 test ether to the contract
+      testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1);
     });
 
-    it.skip("should accept contributions before the soft cap is reached", async function () {
-
+    it("should accept contributions before the soft cap is reached", async function () {
+      testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1);
+      const colonySaleBalanceAfter = web3.eth.getBalance(colonySale.address);
+      const totalRaised = web3.toWei(2, 'ether');
+      assert.isTrue(colonySaleBalanceAfter.equals(totalRaised));
     });
 
     it.skip("should accept contributions after the soft cap is reached but before sale ends", async function () {

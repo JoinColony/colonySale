@@ -1,10 +1,3 @@
-// These globals represent contracts and are added by Truffle:
-/* globals FakeNewRootColony, RootColony, Colony, RootColonyResolver, ColonyFactory, EternalStorage*/
-
-import Promise from 'bluebird';
-import _ from 'lodash';
-import shortid from 'shortid';
-
 module.exports = {
   ifUsingTestRPC(err) {
     // Make sure this is a throw we expect.
@@ -92,4 +85,13 @@ module.exports = {
       console.log('got receipt', receipt);
     }
     return receipt;
-  } };
+  },
+  sendEther(a, b, amount) {
+    const balanceBefore = web3.eth.getBalance(b);
+    const amountInWei = web3.toWei(amount, 'ether');
+    web3.eth.sendTransaction({ from: a, to: b, value: amountInWei });
+
+    const balanceAfter = web3.eth.getBalance(b);
+    assert.equal(balanceAfter.toNumber(), balanceBefore.plus(amountInWei).toNumber());
+  }
+ };
