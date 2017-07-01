@@ -34,9 +34,16 @@ contract ColonyTokenSale is DSMath {
       _;
   }
 
-  function ColonyTokenSale (uint _startBlock, uint _softCap, uint _postSoftCapMinBlocks, uint _postSoftCapMaxBlocks) {
+  function ColonyTokenSale (uint _startBlock, uint _softCap, uint _postSoftCapMinBlocks, uint _postSoftCapMaxBlocks, uint _maxSaleDurationBlocks) {
+    // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks < maxSaleDurationBlocks
+    if (_postSoftCapMinBlocks == 0) throw;
+    if (_postSoftCapMinBlocks >= _maxSaleDurationBlocks) throw;
+    if (_postSoftCapMinBlocks >= _postSoftCapMaxBlocks) throw;
+    if (_postSoftCapMaxBlocks >= _maxSaleDurationBlocks) throw;
+
+    // TODO validate startBLock > block.number;
     startBlock = _startBlock;
-    endBlock = add(startBlock, 71153);
+    endBlock = add(startBlock, _maxSaleDurationBlocks);
     softCap = _softCap;
     postSoftCapMinBlocks = _postSoftCapMinBlocks;
     postSoftCapMaxBlocks = _postSoftCapMaxBlocks;

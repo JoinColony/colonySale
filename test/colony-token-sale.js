@@ -9,9 +9,11 @@ contract('ColonyTokenSale', function(accounts) {
   let colonySale;
 
   describe('Sale initialisation', () => {
+    let softCapInWei;
+
     before(async function () {
-      const softCapInWei = web3.toWei(200000, 'ether');
-      colonySale = await ColonyTokenSale.new(4000000, softCapInWei, 635, 5082);
+      softCapInWei = web3.toWei(200000, 'ether');
+      colonySale = await ColonyTokenSale.new(4000000, softCapInWei, 635, 5082, 71153);
     });
 
     it("should return correct current block number", async function () {
@@ -42,6 +44,33 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(postSoftCapMaxBlocks.toNumber(), 5082);
     });
 
+    it("should throw if initialised with invalid block duration parameters", async function () {
+      try {
+        await ColonyTokenSale.new(4000000, softCapInWei, 0, 5082, 71153);
+      } catch (e) {
+        testHelper.ifUsingTestRPC(e);
+        console.log(e);
+      }
+      
+      try {
+        await ColonyTokenSale.new(4000000, softCapInWei, 635, 635, 71153);
+      } catch (e) {
+        testHelper.ifUsingTestRPC(e);
+      }
+
+      try {
+        await ColonyTokenSale.new(4000000, softCapInWei, 635, 5082, 5080);
+      } catch (e) {
+        testHelper.ifUsingTestRPC(e);
+      }
+
+      try {
+        await ColonyTokenSale.new(4000000, softCapInWei, 635, 5082, 600);
+      } catch (e) {
+        testHelper.ifUsingTestRPC(e);
+      }
+    });
+
     it("should have CLNY token price of 1 finney", async function () {
       const tokenPrice = await colonySale.tokenPrice.call();
       const oneFinney = web3.toWei(1, 'finney');
@@ -63,7 +92,7 @@ contract('ColonyTokenSale', function(accounts) {
     beforeEach('setup future startBlock', async () => {
       const currentBlock = web3.eth.blockNumber;
       const startBlock = currentBlock + 30;
-      colonySale = await ColonyTokenSale.new(startBlock, 1000, 5, 10);
+      colonySale = await ColonyTokenSale.new(startBlock, 1000, 5, 10, 20);
     });
 
     it("should not accept contributions", async function () {
@@ -84,7 +113,7 @@ contract('ColonyTokenSale', function(accounts) {
   describe('Start of public sale, when the start block is reached', async () => {
     beforeEach('setup sale at startBlock', async () => {
       const currentBlock = web3.eth.blockNumber;
-      colonySale = await ColonyTokenSale.new(currentBlock, 1000, 5, 10);
+      colonySale = await ColonyTokenSale.new(currentBlock, 1000, 5, 10, 20);
       // Send 1 test ether to the contract
       testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1);
     });
@@ -108,10 +137,10 @@ contract('ColonyTokenSale', function(accounts) {
   describe('Soft cap reached, should correctly calculate sale endBlock', async () => {
     beforeEach('fast forward contributions to softCap', async () => {
       const currentBlock = web3.eth.blockNumber;
-      colonySale = await ColonyTokenSale.new(currentBlock, 1000, 5, 10);
+      colonySale = await ColonyTokenSale.new(currentBlock, 1000, 5, 10, 20);
     });
 
-    it('when softCap reached in under the postSoftCapMinBlocks, should set remainder duration to postSoftCapMinBlocks', async function () {
+    it('when softCap reached blocks in under the postSoftCapMinBlocks, should set remainder duration to postSoftCapMinBlocks', async function () {
       const startBlock = await colonySale.startBlock.call();
       // Reach the softCap
       await colonySale.send(1000, { from: COINBASE_ACCOUNT });
@@ -120,7 +149,7 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(endBlock.toNumber(), currentBlock+5);
     });
 
-    it('when softCap reached in over postSoftCapMaxBlocks, should set remainder duration to postSoftCapMaxBlocks', async function () {
+    it('when softCap reached blocks in over postSoftCapMaxBlocks, should set remainder duration to postSoftCapMaxBlocks', async function () {
       // Go forward 12 blocks from sale start
       const startBlock = await colonySale.startBlock.call();
       testHelper.forwardToBlock(startBlock.plus(11).toNumber());
@@ -129,6 +158,18 @@ contract('ColonyTokenSale', function(accounts) {
       const currentBlock = web3.eth.blockNumber;
       const endBlock = await colonySale.endBlock.call();
       assert.equal(endBlock.toNumber(), currentBlock+10);
+    });
+
+    it('when softCap reached blocks in over postSoftCapMinBlocks but under postSoftCapMaxBlocks, should set remainder duration to that amount of blocks',
+    async function () {
+      // Go forward 6 blocks from sale start
+      const startBlock = await colonySale.startBlock.call();
+      testHelper.forwardToBlock(startBlock.plus(6).toNumber());
+      // Reach the softCap
+      await colonySale.send(1000, { from: COINBASE_ACCOUNT });
+      const currentBlock = web3.eth.blockNumber;
+      const endBlock = await colonySale.endBlock.call();
+      assert.equal(endBlock.toNumber(), currentBlock+7);
     });
 
     it('when softCap reached in over postSoftCapMinBlocks but under postSoftCapMaxBlocks, should set remainder duration to that amount of blocks',
