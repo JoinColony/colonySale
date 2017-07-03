@@ -18,7 +18,7 @@ contract ColonyTokenSale is DSMath {
   // CLNY token wei price, at the start of the sale
   uint constant public tokenPrice = 1 finney;
   // Minimum contribution amount
-  uint constant public MINIMUM_INVESTMENT = 1 finney;
+  uint constant public minimumContribution = 1 finney;
   // Total amount raised
   uint public totalRaised = 0 ether;
   // Sale soft cap
@@ -35,7 +35,7 @@ contract ColonyTokenSale is DSMath {
   }
 
   modifier overMinContribution {
-    assert(msg.value >= MINIMUM_INVESTMENT);
+    assert(msg.value >= minimumContribution);
     _;
   }
 

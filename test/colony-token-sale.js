@@ -65,7 +65,7 @@ contract('ColonyTokenSale', function(accounts) {
     });
 
     it("should have minimum contribution of 1 finney", async function () {
-      const minimumContribution = await colonySale.MINIMUM_INVESTMENT.call();
+      const minimumContribution = await colonySale.minimumContribution.call();
       const oneFinney = web3.toWei(1, 'finney');
       assert.equal(minimumContribution.toNumber(), oneFinney);
     });
