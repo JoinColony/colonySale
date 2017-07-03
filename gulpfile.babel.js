@@ -15,7 +15,7 @@ const gulp = gulpHelp(originalGulp, {
 });
 const options = minimist(process.argv.slice(2));
 
-const gethClient = options.geth ? 'geth' : 'parity';
+const gethClient = 'testrpc';
 
 gulp.task('deploy:contracts', [gethClient, 'clean:contracts'], () => {
   return execute(`truffle migrate --reset`);
@@ -34,7 +34,7 @@ gulp.task('lint:contracts', () => {
 });
 
 const checkCoverageAgainstThreshold = () => {
-  return execute('istanbul check-coverage --branches 62.5');
+  return execute('istanbul check-coverage --statements 100 --branches 85 --functions 100 --lines 100');
 };
 
 gulp.task('generate:contracts:integration', ['deploy:contracts'], async () => {
@@ -45,6 +45,12 @@ gulp.task('generate:contracts:integration', ['deploy:contracts'], async () => {
   .then(execute(`sed -ie'' s/'function mint'/'function isUpdated() constant returns(bool) {return true;} function mint'/g UpdatedToken.sol`, { cwd: './contracts' }))
   .then(execute(`sed -ie'' s/'function stringToSig'/'function isUpdated() constant returns(bool) {return true;} function stringToSig'/g UpdatedResolver.sol`, { cwd: './contracts' }))
   .then(execute(`sed -ie'' s/'Pointer(destination, 0);'/'Pointer(destination, 0); pointers[stringToSig("isUpdated()")] = Pointer(destination, 32);'/g UpdatedResolver.sol`, { cwd: './contracts' }));
+});
+
+gulp.task('testrpc', () => {
+  const cmd = makeCmd(`testrpc`);
+  executeDetached(cmd);
+  return waitForPort('8545');
 });
 
 gulp.task('parity', async () => {
@@ -88,7 +94,7 @@ gulp.task('test:contracts:upgrade', 'Run contract upgrade tests', ['deploy:contr
   return execute(cmd).then(cleanUpgradeTempContracts);
 });
 
-gulp.task('test:coverage:contracts', 'Run contract test coverage using solidity-coverage', () => {
+gulp.task('test:contracts:coverage', 'Run contract test coverage using solidity-coverage', () => {
   const cmd = makeCmd(`solidity-coverage`);
   return execute(cmd).then(checkCoverageAgainstThreshold);
 });

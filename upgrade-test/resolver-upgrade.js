@@ -10,17 +10,11 @@ contract('Resolver contract upgrade', function (accounts) {
   const ACCOUNT_TWO = accounts[1];
   const ACCOUNT_THREE = accounts[2];
 
-  let resolver;
-  let etherRouter;
-  let token;
   let updatedResolver;
 
   beforeEach(async function () {
-    etherRouter = await EtherRouter.deployed();
-    token = await Token.at(etherRouter.address);
     const tokenDeployed = Token.deployed();
     updatedResolver = await UpdatedResolver.new(tokenDeployed.address);
-    await etherRouter.setResolver(updatedResolver.address);
   });
 
   describe('when upgrading Resolver contract', function () {

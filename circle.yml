@@ -13,6 +13,7 @@ dependencies:
     - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 0.24.6
     - yarn global add mkdirp gulp@3.9.1
     - yarn --pure-lockfile --cache-folder ~/.yarn-cache
+    - yarn global add ethereumjs-testrpc@4.0.0
     - git submodule update --init --recursive --remote
 
     # Set up parity
@@ -34,6 +35,6 @@ test:
   override:
     - gulp test:contracts
     - gulp test:contracts:upgrade
-    - gulp test:coverage:contracts
+    - gulp test:contracts:coverage
   post:
     - mv ./test-results.xml $CIRCLE_TEST_REPORTS/truffle.xml
