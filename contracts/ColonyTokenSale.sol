@@ -16,7 +16,7 @@ contract ColonyTokenSale is DSMath {
   uint public postSoftCapMinBlocks;
   uint public postSoftCapMaxBlocks;
   // CLNY token wei price, at the start of the sale
-  uint public tokenPrice = 1 finney;
+  uint constant public tokenPrice = 1 finney;
   // Minimum contribution amount
   uint constant public MINIMUM_INVESTMENT = 1 finney;
   // Total amount raised
@@ -32,6 +32,11 @@ contract ColonyTokenSale is DSMath {
       assert(getBlockNumber() >= startBlock);
       assert(getBlockNumber() < endBlock);
       _;
+  }
+
+  modifier overMinContribution {
+    assert(msg.value >= MINIMUM_INVESTMENT);
+    _;
   }
 
   function ColonyTokenSale (uint _startBlock, uint _softCap, uint _postSoftCapMinBlocks, uint _postSoftCapMaxBlocks, uint _maxSaleDurationBlocks) {
@@ -57,6 +62,7 @@ contract ColonyTokenSale is DSMath {
   }
 
   function buy(address _owner) internal
+  overMinContribution
   saleOpen
   {
     if (msg.value > 0) {

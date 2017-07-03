@@ -86,10 +86,15 @@ module.exports = {
     }
     return receipt;
   },
-  sendEther(a, b, amount) {
+  sendEther(a, b, amount, denomination) {
     const balanceBefore = web3.eth.getBalance(b);
-    const amountInWei = web3.toWei(amount, 'ether');
-    web3.eth.sendTransaction({ from: a, to: b, value: amountInWei });
+    const amountInWei = web3.toWei(amount, denomination);
+    try {
+      web3.eth.sendTransaction({ from: a, to: b, value: amountInWei });
+    }
+    catch (err) {
+      throw err;
+    }
 
     const balanceAfter = web3.eth.getBalance(b);
     assert.equal(balanceAfter.toNumber(), balanceBefore.plus(amountInWei).toNumber());
