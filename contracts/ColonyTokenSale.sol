@@ -35,11 +35,14 @@ contract ColonyTokenSale is DSMath {
   }
 
   function ColonyTokenSale (uint _startBlock, uint _softCap, uint _postSoftCapMinBlocks, uint _postSoftCapMaxBlocks, uint _maxSaleDurationBlocks) {
-    // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks < maxSaleDurationBlocks
-    if (_postSoftCapMinBlocks == 0) throw;
-    if (_postSoftCapMinBlocks >= _maxSaleDurationBlocks) throw;
-    if (_postSoftCapMinBlocks >= _postSoftCapMaxBlocks) throw;
-    if (_postSoftCapMaxBlocks >= _maxSaleDurationBlocks) throw;
+    // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
+    if (_postSoftCapMinBlocks == 0) {
+      throw;
+    }
+
+    if (_postSoftCapMinBlocks >= _postSoftCapMaxBlocks) {
+      throw;
+    }
 
     // TODO validate startBLock > block.number;
     startBlock = _startBlock;
@@ -62,14 +65,20 @@ contract ColonyTokenSale is DSMath {
 
     // When softCap is reached, calculate the remainder sale duration in blocks.
     if (totalRaised >= softCap) {
+      uint updatedEndBlock;
       uint currentBlock = block.number;
       uint blocksInSale = sub(currentBlock, startBlock);
       if (blocksInSale < postSoftCapMinBlocks) {
-        endBlock = add(currentBlock, postSoftCapMinBlocks);
+        updatedEndBlock = add(currentBlock, postSoftCapMinBlocks);
       } else if (blocksInSale > postSoftCapMaxBlocks) {
-        endBlock = add(currentBlock, postSoftCapMaxBlocks);
+        updatedEndBlock = add(currentBlock, postSoftCapMaxBlocks);
       } else {
-        endBlock = add(currentBlock, blocksInSale);
+        updatedEndBlock = add(currentBlock, blocksInSale);
+      }
+
+      // We cannot exceed the longest sale duration.
+      if (updatedEndBlock < endBlock) {
+        endBlock = updatedEndBlock;
       }
     }
   }

@@ -8,7 +8,7 @@ contract('ColonyTokenSale', function(accounts) {
   const ACCOUNT_THREE = accounts[2];
   let colonySale;
 
-  describe('Sale initialisation', () => {
+  describe('sale initialisation', () => {
     let softCapInWei;
 
     before(async function () {
@@ -49,23 +49,10 @@ contract('ColonyTokenSale', function(accounts) {
         await ColonyTokenSale.new(4000000, softCapInWei, 0, 5082, 71153);
       } catch (e) {
         testHelper.ifUsingTestRPC(e);
-        console.log(e);
       }
-      
+
       try {
         await ColonyTokenSale.new(4000000, softCapInWei, 635, 635, 71153);
-      } catch (e) {
-        testHelper.ifUsingTestRPC(e);
-      }
-
-      try {
-        await ColonyTokenSale.new(4000000, softCapInWei, 635, 5082, 5080);
-      } catch (e) {
-        testHelper.ifUsingTestRPC(e);
-      }
-
-      try {
-        await ColonyTokenSale.new(4000000, softCapInWei, 635, 5082, 600);
       } catch (e) {
         testHelper.ifUsingTestRPC(e);
       }
@@ -88,7 +75,7 @@ contract('ColonyTokenSale', function(accounts) {
     });
   });
 
-  describe('Before the start block is reached', () => {
+  describe('sefore the start block is reached', () => {
     beforeEach('setup future startBlock', async () => {
       const currentBlock = web3.eth.blockNumber;
       const startBlock = currentBlock + 30;
@@ -110,7 +97,7 @@ contract('ColonyTokenSale', function(accounts) {
     });
   });
 
-  describe('Start of public sale, when the start block is reached', async () => {
+  describe('start of public sale, when the start block is reached', async () => {
     beforeEach('setup sale at startBlock', async () => {
       const currentBlock = web3.eth.blockNumber;
       colonySale = await ColonyTokenSale.new(currentBlock, 1000, 5, 10, 20);
@@ -134,54 +121,54 @@ contract('ColonyTokenSale', function(accounts) {
     });
   });
 
-  describe('Soft cap reached, should correctly calculate sale endBlock', async () => {
-    beforeEach('fast forward contributions to softCap', async () => {
+  describe('when soft cap reached', async () => {
+    const postSoftCapMinBlocks = 5;
+    const postSoftCapMaxBlocks = 7
+    const maxSaleDuration = 18;
+
+    beforeEach(async () => {
       const currentBlock = web3.eth.blockNumber;
-      colonySale = await ColonyTokenSale.new(currentBlock, 1000, 5, 10, 20);
+      colonySale = await ColonyTokenSale.new(currentBlock, 100, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration);
     });
 
-    it('when softCap reached blocks in under the postSoftCapMinBlocks, should set remainder duration to postSoftCapMinBlocks', async function () {
+    it('while under the postSoftCapMinBlocks, should set remainder duration to postSoftCapMinBlocks', async function () {
       const startBlock = await colonySale.startBlock.call();
       // Reach the softCap
-      await colonySale.send(1000, { from: COINBASE_ACCOUNT });
+      await colonySale.send(100, { from: COINBASE_ACCOUNT });
       const currentBlock = web3.eth.blockNumber;
       const endBlock = await colonySale.endBlock.call();
-      assert.equal(endBlock.toNumber(), currentBlock+5);
+      assert.equal(endBlock.toNumber(), currentBlock + postSoftCapMinBlocks);
     });
 
-    it('when softCap reached blocks in over postSoftCapMaxBlocks, should set remainder duration to postSoftCapMaxBlocks', async function () {
-      // Go forward 12 blocks from sale start
-      const startBlock = await colonySale.startBlock.call();
-      testHelper.forwardToBlock(startBlock.plus(11).toNumber());
-      // Reach the softCap
-      await colonySale.send(1000, { from: COINBASE_ACCOUNT });
-      const currentBlock = web3.eth.blockNumber;
-      const endBlock = await colonySale.endBlock.call();
-      assert.equal(endBlock.toNumber(), currentBlock+10);
-    });
-
-    it('when softCap reached blocks in over postSoftCapMinBlocks but under postSoftCapMaxBlocks, should set remainder duration to that amount of blocks',
+    it('while over postSoftCapMinBlocks but under postSoftCapMaxBlocks, should set remainder duration to that amount of blocks',
     async function () {
-      // Go forward 6 blocks from sale start
       const startBlock = await colonySale.startBlock.call();
-      testHelper.forwardToBlock(startBlock.plus(6).toNumber());
+      testHelper.forwardToBlock(startBlock.plus(5).toNumber());
       // Reach the softCap
-      await colonySale.send(1000, { from: COINBASE_ACCOUNT });
+      await colonySale.send(100, { from: COINBASE_ACCOUNT });
       const currentBlock = web3.eth.blockNumber;
       const endBlock = await colonySale.endBlock.call();
-      assert.equal(endBlock.toNumber(), currentBlock+7);
+      assert.equal(endBlock.toNumber(), currentBlock + postSoftCapMinBlocks + 1);
     });
 
-    it('when softCap reached in over postSoftCapMinBlocks but under postSoftCapMaxBlocks, should set remainder duration to that amount of blocks',
-    async function () {
-      // Go forward 6 blocks from sale start
+    it('while over postSoftCapMaxBlocks, should set remainder duration to postSoftCapMaxBlocks', async function () {
       const startBlock = await colonySale.startBlock.call();
-      testHelper.forwardToBlock(startBlock.plus(6).toNumber());
+      testHelper.forwardToBlock(startBlock.plus(8).toNumber());
       // Reach the softCap
-      await colonySale.send(1000, { from: COINBASE_ACCOUNT });
+      await colonySale.send(100, { from: COINBASE_ACCOUNT });
       const currentBlock = web3.eth.blockNumber;
       const endBlock = await colonySale.endBlock.call();
-      assert.equal(endBlock.toNumber(), currentBlock+7);
+      assert.equal(endBlock.toNumber(), currentBlock + postSoftCapMaxBlocks);
+    });
+
+    it('while over postSoftCapMaxBlocks and over longest-sale-duration block should keep remainder duration to longest-sale-duration block (default)',
+    async function () {
+      const startBlock = await colonySale.startBlock.call();
+      testHelper.forwardToBlock(startBlock.plus(10).toNumber());
+      // Reach the softCap
+      await colonySale.send(100, { from: COINBASE_ACCOUNT });
+      const endBlock = await colonySale.endBlock.call();
+      assert.equal(endBlock.toNumber(), startBlock.plus(maxSaleDuration).toNumber());
     });
   });
 
