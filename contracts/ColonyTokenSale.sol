@@ -66,7 +66,7 @@ contract ColonyTokenSale is DSMath {
   saleOpen
   {
     if (msg.value > 0) {
-      totalRaised += msg.value;
+      totalRaised = add(msg.value, totalRaised);
     }
 
     // When softCap is reached, calculate the remainder sale duration in blocks.
