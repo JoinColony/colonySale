@@ -26,7 +26,7 @@ contract ColonyTokenSale is DSMath {
   // The address to hold the funds donated
   address public colonyMultisig;
   // The address of the Colony Network Token
-  Token public tokenTracker;
+  Token public token;
 
   modifier saleOpen {
       assert(getBlockNumber() >= startBlock);
@@ -39,15 +39,16 @@ contract ColonyTokenSale is DSMath {
     _;
   }
 
-  function ColonyTokenSale (uint _startBlock, uint _softCap, uint _postSoftCapMinBlocks, uint _postSoftCapMaxBlocks, uint _maxSaleDurationBlocks) {
+  function ColonyTokenSale (
+    uint _startBlock,
+    uint _softCap,
+    uint _postSoftCapMinBlocks,
+    uint _postSoftCapMaxBlocks,
+    uint _maxSaleDurationBlocks,
+    address _token) {
     // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
-    if (_postSoftCapMinBlocks == 0) {
-      throw;
-    }
-
-    if (_postSoftCapMinBlocks >= _postSoftCapMaxBlocks) {
-      throw;
-    }
+    if (_postSoftCapMinBlocks == 0) { throw; }
+    if (_postSoftCapMinBlocks >= _postSoftCapMaxBlocks) { throw; }
 
     // TODO validate startBLock > block.number;
     startBlock = _startBlock;
@@ -55,6 +56,7 @@ contract ColonyTokenSale is DSMath {
     softCap = _softCap;
     postSoftCapMinBlocks = _postSoftCapMinBlocks;
     postSoftCapMaxBlocks = _postSoftCapMaxBlocks;
+    token = Token(_token);
   }
 
   function getBlockNumber() constant returns (uint) {

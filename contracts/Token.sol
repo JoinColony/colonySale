@@ -69,6 +69,7 @@ contract Token is ERC20, DSMath, Ownable {
         return true;
     }
 
+    // TODO make this ownerOnly
     function mint(uint128 wad) {
         _balances[msg.sender] = add(_balances[msg.sender], wad);
         _supply = add(_supply, wad);

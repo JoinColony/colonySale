@@ -1,4 +1,6 @@
 var ColonyTokenSale = artifacts.require("./ColonyTokenSale.sol");
+var Token = artifacts.require("./Token.sol");
+var EtherRouter = artifacts.require('./EtherRouter.sol');
 
 import testHelper from '../helpers/test-helper';
 
@@ -7,13 +9,18 @@ contract('ColonyTokenSale', function(accounts) {
   const ACCOUNT_TWO = accounts[1];
   const ACCOUNT_THREE = accounts[2];
   let colonySale;
+  let etherRouter;
+
+  before(async function () {
+    etherRouter = await EtherRouter.deployed();
+  });
 
   describe('sale initialisation', () => {
     let softCapInWei;
 
     before(async function () {
       softCapInWei = web3.toWei(200000, 'ether');
-      colonySale = await ColonyTokenSale.new(4000000, softCapInWei, 635, 5082, 71153);
+      colonySale = await ColonyTokenSale.new(4000000, softCapInWei, 635, 5082, 71153, etherRouter.address);
     });
 
     it("should return correct current block number", async function () {
@@ -46,13 +53,13 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should throw if initialised with invalid block duration parameters", async function () {
       try {
-        await ColonyTokenSale.new(4000000, softCapInWei, 0, 5082, 71153);
+        await ColonyTokenSale.new(4000000, softCapInWei, 0, 5082, 71153, etherRouter.address);
       } catch (e) {
         testHelper.ifUsingTestRPC(e);
       }
 
       try {
-        await ColonyTokenSale.new(4000000, softCapInWei, 635, 635, 71153);
+        await ColonyTokenSale.new(4000000, softCapInWei, 635, 635, 71153, etherRouter.address);
       } catch (e) {
         testHelper.ifUsingTestRPC(e);
       }
@@ -75,6 +82,11 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(softCap.toNumber(), web3.toWei('200000', 'ether'));
     });
 
+    it("should have set the Token address", async function () {
+      const tokenAddress = await colonySale.token.call();
+      assert.equal(tokenAddress, etherRouter.address);
+    });
+
     it.skip("should have correct minumum amount to raise", async function () {
       const minimumAmountToRaise = await colonySale.minimumAmountToRaise.call();
       assert.equal(minimumAmountToRaise.toNumber(), web3.toWei('40000', 'ether'));
@@ -85,7 +97,7 @@ contract('ColonyTokenSale', function(accounts) {
     beforeEach('setup future startBlock', async () => {
       const currentBlock = web3.eth.blockNumber;
       const startBlock = currentBlock + 30;
-      colonySale = await ColonyTokenSale.new(startBlock, 1000, 5, 10, 20);
+      colonySale = await ColonyTokenSale.new(startBlock, 1000, 5, 10, 20, etherRouter.address);
     });
 
     it("should not accept contributions", async function () {
@@ -106,7 +118,7 @@ contract('ColonyTokenSale', function(accounts) {
   describe('start of public sale, when the start block is reached', async () => {
     beforeEach('setup sale at startBlock', async () => {
       const currentBlock = web3.eth.blockNumber;
-      colonySale = await ColonyTokenSale.new(currentBlock, 1000, 5, 10, 20);
+      colonySale = await ColonyTokenSale.new(currentBlock, 1000, 5, 10, 20, etherRouter.address);
       // Send 1 test ether to the contract
       testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1, 'ether');
     });
@@ -142,7 +154,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     beforeEach(async () => {
       const currentBlock = web3.eth.blockNumber;
-      colonySale = await ColonyTokenSale.new(currentBlock, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration);
+      colonySale = await ColonyTokenSale.new(currentBlock, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration, etherRouter.address);
     });
 
     it('while under the postSoftCapMinBlocks, should set remainder duration to postSoftCapMinBlocks', async function () {
