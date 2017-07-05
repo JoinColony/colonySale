@@ -45,7 +45,8 @@ contract ColonyTokenSale is DSMath {
     uint _postSoftCapMinBlocks,
     uint _postSoftCapMaxBlocks,
     uint _maxSaleDurationBlocks,
-    address _token) {
+    address _token,
+    address _colonyMultisig) {
     // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
     if (_postSoftCapMinBlocks == 0) { throw; }
     if (_postSoftCapMinBlocks >= _postSoftCapMaxBlocks) { throw; }
@@ -57,6 +58,7 @@ contract ColonyTokenSale is DSMath {
     postSoftCapMinBlocks = _postSoftCapMinBlocks;
     postSoftCapMaxBlocks = _postSoftCapMaxBlocks;
     token = Token(_token);
+    colonyMultisig = _colonyMultisig;
   }
 
   function getBlockNumber() constant returns (uint) {
@@ -67,9 +69,14 @@ contract ColonyTokenSale is DSMath {
   overMinContribution
   saleOpen
   {
-    if (msg.value > 0) {
-      totalRaised = add(msg.value, totalRaised);
-    }
+    // Send funds to multisig, throws on failure
+    colonyMultisig.transfer(msg.value);
+
+    // Calculate token amount purchased for given value and generate purchase
+    uint amount = div(msg.value, tokenPrice); //TODO we use wei only, should we be working with token numbers?
+
+    // Up the total raised with given value
+    totalRaised = add(msg.value, totalRaised);
 
     // When softCap is reached, calculate the remainder sale duration in blocks.
     if (totalRaised >= softCap) {
