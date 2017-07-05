@@ -135,11 +135,11 @@ contract('ColonyTokenSale', function(accounts) {
       const currentBlock = await web3.eth.blockNumber;
       colonySale = await ColonyTokenSale.new(currentBlock, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration, etherRouter.address, colonyMultisig.address);
       // Send the min contribution as a start
-      testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1, 'finney');
+      await testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1, 'finney');
     });
 
     it("should accept contributions before the soft cap is reached", async function () {
-      testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1, 'finney');
+      await testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1, 'finney');
       const colonySaleBalanceAfter = web3.eth.getBalance(colonyMultisig.address);
       const totalRaised = web3.toWei(2, 'finney');
       assert.isTrue(colonySaleBalanceAfter.equals(totalRaised));
@@ -147,7 +147,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should not accept contributions less than the minimum of 1 finney", async function () {
       try {
-        testHelper.sendEther(ACCOUNT_TWO, colonySale.address, 10, 'wei');
+        await testHelper.sendEther(ACCOUNT_TWO, colonySale.address, 10, 'wei');
       } catch(err) {
         testHelper.ifUsingTestRPC(err);
       }
@@ -160,7 +160,7 @@ contract('ColonyTokenSale', function(accounts) {
       const currentBlock = await web3.eth.blockNumber;
       const colonySale1 = await ColonyTokenSale.new(currentBlock, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration, etherRouter.address, ownable.address);
       try {
-        testHelper.sendEther(ACCOUNT_TWO, colonySale1.address, 1, 'finney');
+        await testHelper.sendEther(ACCOUNT_TWO, colonySale1.address, 1, 'finney');
       } catch(err) {
         testHelper.ifUsingTestRPC(err);
       }
