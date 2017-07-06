@@ -19,6 +19,8 @@ contract ColonyTokenSale is DSMath {
   uint constant public tokenPrice = 1 finney;
   // Minimum contribution amount
   uint constant public minimumContribution = 1 finney;
+  // Minimum amount to raise for sale to be successful
+  uint public minToRaise;
   // Total amount raised
   uint public totalRaised = 0 ether;
   // Sale soft cap
@@ -43,6 +45,7 @@ contract ColonyTokenSale is DSMath {
 
   function ColonyTokenSale (
     uint _startBlock,
+    uint _minToRaise,
     uint _softCap,
     uint _postSoftCapMinBlocks,
     uint _postSoftCapMaxBlocks,
@@ -56,6 +59,7 @@ contract ColonyTokenSale is DSMath {
     // TODO validate startBLock > block.number;
     startBlock = _startBlock;
     endBlock = add(startBlock, _maxSaleDurationBlocks);
+    minToRaise = _minToRaise;
     softCap = _softCap;
     postSoftCapMinBlocks = _postSoftCapMinBlocks;
     postSoftCapMaxBlocks = _postSoftCapMaxBlocks;
@@ -113,10 +117,12 @@ contract ColonyTokenSale is DSMath {
     // Check the sale is closed, i.e. on or past endblock
     assert(currentBlock >= endBlock);
 
+    // Check min amount to raise is reached
+    assert(totalRaised >= minToRaise);
+
     // Check sale is not finalised already
     assert(saleFinalized == false);
 
-    //TODO: Check min contribution is reached
     //TODO: mint tokens for team/investors/foundation = 49% of totalSupply raised in sale
     saleFinalized = true;
   }
