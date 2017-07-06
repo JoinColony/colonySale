@@ -1,5 +1,6 @@
 var ColonyTokenSale = artifacts.require("./ColonyTokenSale.sol");
 var Token = artifacts.require("./Token.sol");
+var Resolver = artifacts.require("./Resolver.sol");
 var EtherRouter = artifacts.require('./EtherRouter.sol');
 var Ownable = artifacts.require('./Ownable.sol');
 var MultiSigWallet = artifacts.require('multisig-wallet/MultiSigWallet.sol');
@@ -10,25 +11,48 @@ contract('ColonyTokenSale', function(accounts) {
   const COINBASE_ACCOUNT = accounts[0];
   const ACCOUNT_TWO = accounts[1];
   const ACCOUNT_THREE = accounts[2];
-  let colonySale;
+
+  // Initialised at the start of test in `before` call
+  let ownable;
+  let tokenDeployed;
+  let resolver;
+
+  // Set via createColonyTokenSale function
   let etherRouter;
   let token;
   let colonyMultisig;
-  let ownable;
+  let colonySale;
+
+  // Sale properties
+  let softCapInWei;
 
   before(async function () {
-    etherRouter = await EtherRouter.deployed();
-    token = Token.at(etherRouter.address);
     ownable = await Ownable.deployed();
+    tokenDeployed = await Token.deployed();
+    resolver = await Resolver.new(tokenDeployed.address);
   });
 
-  describe('sale initialisation', () => {
-    let softCapInWei;
+  // Setup blank token and token sale with given parameters
+  const createColonyTokenSale = async function (startBlock, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration) {
+    etherRouter = await EtherRouter.new();
+    await etherRouter.setResolver(resolver.address);
+    token = await Token.at(etherRouter.address);
+    colonyMultisig = await MultiSigWallet.new([COINBASE_ACCOUNT], 1);
+    colonySale = await ColonyTokenSale.new(startBlock, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration, etherRouter.address, colonyMultisig.address);
+  };
 
-    before(async function () {
+  const createColonyTokenSaleWithInvalidMultiSig = async function (startBlock, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration) {
+    let etherRouter = await EtherRouter.new();
+    await etherRouter.setResolver(resolver.address);
+    token = await Token.at(etherRouter.address);
+    colonyMultisig = await MultiSigWallet.new([COINBASE_ACCOUNT], 1);
+    colonySale = await ColonyTokenSale.new(startBlock, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration, etherRouter.address, ownable.address);
+  };
+
+  describe('sale initialisation', () => {
+    beforeEach(async function () {
       softCapInWei = web3.toWei(200000, 'ether');
-      colonyMultisig = await MultiSigWallet.new([COINBASE_ACCOUNT], 1);
-      colonySale = await ColonyTokenSale.new(4000000, softCapInWei, 635, 5082, 71153, etherRouter.address, colonyMultisig.address);
+      await createColonyTokenSale(4000000, softCapInWei, 635, 5082, 71153);
     });
 
     it("should return correct current block number", async function () {
@@ -101,12 +125,11 @@ contract('ColonyTokenSale', function(accounts) {
     });
   });
 
-  describe('before the start block is reached', () => {
+  describe('before sale start block is reached', () => {
     beforeEach('setup future startBlock', async () => {
-      colonyMultisig = await MultiSigWallet.new([COINBASE_ACCOUNT], 1);
       const currentBlock = web3.eth.blockNumber;
       const startBlock = currentBlock + 30;
-      colonySale = await ColonyTokenSale.new(startBlock, 1000, 5, 10, 20, etherRouter.address, colonyMultisig.address);
+      await createColonyTokenSale(startBlock, 1000, 5, 10, 20);
     });
 
     it("should not accept contributions", async function () {
@@ -124,25 +147,21 @@ contract('ColonyTokenSale', function(accounts) {
     });
   });
 
-  describe('start of public sale, when the start block is reached', async () => {
-    const postSoftCapMinBlocks = 5;
-    const postSoftCapMaxBlocks = 7
-    const maxSaleDuration = 18;
-    const softCap = web3.toWei(1, 'ether');
-
+  describe('when sale start block is reached', async () => {
     beforeEach('setup sale at startBlock', async () => {
-      colonyMultisig = await MultiSigWallet.new([COINBASE_ACCOUNT], 1);
       const currentBlock = await web3.eth.blockNumber;
-      colonySale = await ColonyTokenSale.new(currentBlock, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration, etherRouter.address, colonyMultisig.address);
+      await createColonyTokenSale(currentBlock, web3.toWei(1, 'ether'), 5, 7, 18);
       // Send the min contribution as a start
       await testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1, 'finney');
     });
 
     it("should accept contributions before the soft cap is reached", async function () {
       await testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1, 'finney');
-      const colonySaleBalanceAfter = web3.eth.getBalance(colonyMultisig.address);
+      const colonySaleBalanceAfter = await web3.eth.getBalance(colonyMultisig.address);
       const totalRaised = web3.toWei(2, 'finney');
-      assert.isTrue(colonySaleBalanceAfter.equals(totalRaised));
+      assert.equal(colonySaleBalanceAfter.toNumber(), totalRaised);
+      const totalSupply = await token.totalSupply.call();
+      assert.equal(totalSupply.toNumber(), 2);
     });
 
     it("should not accept contributions less than the minimum of 1 finney", async function () {
@@ -154,16 +173,20 @@ contract('ColonyTokenSale', function(accounts) {
       const colonySaleBalanceAfter = web3.eth.getBalance(colonyMultisig.address);
       const totalRaised = web3.toWei(1, 'finney');
       assert.equal(colonySaleBalanceAfter.toNumber(), totalRaised);
+      const totalSupply = await token.totalSupply.call();
+      assert.equal(totalSupply.toNumber(), 1);
     });
 
     it("should throw if cannot forward funds to multisig wallet", async function () {
       const currentBlock = await web3.eth.blockNumber;
-      const colonySale1 = await ColonyTokenSale.new(currentBlock, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration, etherRouter.address, ownable.address);
+      await createColonyTokenSaleWithInvalidMultiSig(currentBlock, web3.toWei(1, 'ether'), 5, 7, 18);
       try {
-        await testHelper.sendEther(ACCOUNT_TWO, colonySale1.address, 1, 'finney');
+        await testHelper.sendEther(ACCOUNT_TWO, colonySale.address, 1, 'finney');
       } catch(err) {
         testHelper.ifUsingTestRPC(err);
       }
+      const totalSupply = await token.totalSupply.call();
+      assert.equal(totalSupply.toNumber(), 0);
     });
 
     it.skip('should fail to transfer tokens too early', async function () {
@@ -172,19 +195,16 @@ contract('ColonyTokenSale', function(accounts) {
   });
 
   describe('when soft cap reached', async () => {
+  const softCap = web3.toWei(10, 'finney');
     const postSoftCapMinBlocks = 5;
-    const postSoftCapMaxBlocks = 7
+    const postSoftCapMaxBlocks = 7;
     const maxSaleDuration = 18;
-    const softCap = web3.toWei(10, 'finney');
 
     beforeEach(async () => {
-      colonyMultisig = await MultiSigWallet.new([COINBASE_ACCOUNT], 1);
-      const currentBlock = web3.eth.blockNumber;
-      colonySale = await ColonyTokenSale.new(currentBlock, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration, etherRouter.address, colonyMultisig.address);
+      await createColonyTokenSale(web3.eth.blockNumber, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration);
     });
 
     it('while under the postSoftCapMinBlocks, should set remainder duration to postSoftCapMinBlocks', async function () {
-      const startBlock = await colonySale.startBlock.call();
       // Reach the softCap
       await colonySale.send(softCap, { from: COINBASE_ACCOUNT });
       const currentBlock = web3.eth.blockNumber;
@@ -192,8 +212,7 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(endBlock.toNumber(), currentBlock + postSoftCapMinBlocks);
     });
 
-    it('while over postSoftCapMinBlocks but under postSoftCapMaxBlocks, should set remainder duration to that amount of blocks',
-    async function () {
+    it('while over postSoftCapMinBlocks but under postSoftCapMaxBlocks, should set remainder duration to that amount of blocks', async function () {
       const startBlock = await colonySale.startBlock.call();
       testHelper.forwardToBlock(startBlock.plus(5).toNumber());
       // Reach the softCap
