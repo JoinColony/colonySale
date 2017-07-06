@@ -52,7 +52,7 @@ contract('ColonyTokenSale', function(accounts) {
 
   describe('sale initialisation', () => {
     beforeEach(async function () {
-      softCapInWei = web3.toWei(200000, 'ether');
+      softCapInWei = web3.toWei(50000, 'ether');
       minAmountToRaise = web3.toWei(20000, 'ether');
       await createColonyTokenSale(4000000, minAmountToRaise, softCapInWei, 635, 5082, 71153);
     });
@@ -118,17 +118,12 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should have correct soft cap", async function () {
       const softCap = await colonySale.softCap.call();
-      assert.equal(softCap.toNumber(), web3.toWei('200000', 'ether'));
+      assert.equal(softCap.toNumber(), web3.toWei('50000', 'ether'));
     });
 
     it("should have set the Token address", async function () {
       const tokenAddress = await colonySale.token.call();
       assert.equal(tokenAddress, etherRouter.address);
-    });
-
-    it.skip("should have correct minumum amount to raise", async function () {
-      const minimumAmountToRaise = await colonySale.minimumAmountToRaise.call();
-      assert.equal(minimumAmountToRaise.toNumber(), web3.toWei('40000', 'ether'));
     });
   });
 
