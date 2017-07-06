@@ -209,6 +209,17 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(tokenBalance3.toNumber(), 2012);
     });
 
+    it("should not be able to finalize sale", async function () {
+      try {
+        await colonySale.finalize();
+      } catch (err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+
+      const saleFinalised = await colonySale.saleFinalized.call();
+      assert.isFalse(saleFinalised);
+    });
+
     it.skip('should fail to transfer tokens too early', async function () {
 
     });
@@ -261,26 +272,50 @@ contract('ColonyTokenSale', function(accounts) {
       const endBlock = await colonySale.endBlock.call();
       assert.equal(endBlock.toNumber(), startBlock.plus(maxSaleDuration).toNumber());
     });
-  });
 
-  // Sale ends after 21 days or 24 hours after the soft cap is reached, whichever comes first
-  describe.skip('End of public sale', () => {
-    it('if soft cap is NOT reached within 14 days from start, should close the sale', async function () {
+    it("should not be able to finalize sale", async function () {
+      try {
+        await colonySale.finalize();
+      } catch (err) {
+        testHelper.ifUsingTestRPC(err);
+      }
 
-    });
-
-    it('when post softCap period is occuring and the maximum number of blocks 71153 is reached, should close the sale', async function () {
-
-    });
-
-    it('when post softCap period has ended, should close the sale', async function () {
-
+      const saleFinalised = await colonySale.saleFinalized.call();
+      assert.isFalse(saleFinalised);
     });
   });
 
-  describe.skip('Past end of public sale', () => {
-    it.skip("should not accept contributions", async function () {
+  describe('when sale end block is reached', () => {
+    beforeEach('setup a closed sale', async () => {
+      const softCap = web3.toWei(10, 'finney');
+      const currentBlock = web3.eth.blockNumber;
+      await createColonyTokenSale(currentBlock, softCap, 5, 10, 20);
+      // Reach the soft cap
+      await colonySale.send(softCap, { from: COINBASE_ACCOUNT });
+      // Get the endBlock and fast forward to it
+      const endBlock = await colonySale.endBlock.call();
+      testHelper.forwardToBlock(endBlock.toNumber());
+    });
 
+    it("should not accept contributions", async function () {
+      const colonySaleBalanceBefore = web3.eth.getBalance(colonyMultisig.address);
+      const totalRaisedBefore = await colonySale.totalRaised.call();
+      const amountInWei = web3.toWei(1, 'finney');
+      try {
+        web3.eth.sendTransaction({ from: COINBASE_ACCOUNT, to: colonySale.address, value: amountInWei });
+      } catch(err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+      const colonySaleBalanceAfter = web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(colonySaleBalanceAfter.toNumber(), colonySaleBalanceBefore.toNumber());
+      const totalRaisedAfter = await colonySale.totalRaised.call();
+      assert.equal(totalRaisedAfter.toNumber(), totalRaisedBefore.toNumber());
+    });
+
+    it("should be able to finalize sale", async function () {
+      await colonySale.finalize();
+      const saleFinalised = await colonySale.saleFinalized.call();
+      assert.isTrue(saleFinalised);
     });
   });
 

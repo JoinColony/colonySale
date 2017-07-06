@@ -109,7 +109,10 @@ contract ColonyTokenSale is DSMath {
   }
 
   function finalize() external {
-    //TODO: Check the endblock is Past
+    uint currentBlock = block.number;
+    // Check the sale is closed, i.e. on or past endblock
+    assert(currentBlock >= endBlock);
+
     //TODO: Check min contribution is reached
     //TODO: Check sale is not finalised already
 
