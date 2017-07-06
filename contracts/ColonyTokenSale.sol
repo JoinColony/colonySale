@@ -16,9 +16,11 @@ contract ColonyTokenSale is DSMath {
   uint public postSoftCapMinBlocks;
   uint public postSoftCapMaxBlocks;
   // CLNY token wei price, at the start of the sale
-  uint public tokenPrice = 1 finney;
+  uint constant public tokenPrice = 1 finney;
   // Minimum contribution amount
-  uint constant public MINIMUM_INVESTMENT = 1 finney;
+  uint constant public minimumContribution = 1 finney;
+  // Minimum amount to raise for sale to be successful
+  uint public minToRaise;
   // Total amount raised
   uint public totalRaised = 0 ether;
   // Sale soft cap
@@ -26,7 +28,9 @@ contract ColonyTokenSale is DSMath {
   // The address to hold the funds donated
   address public colonyMultisig;
   // The address of the Colony Network Token
-  Token public tokenTracker;
+  Token public token;
+  // Has the sale been finalised by Colony
+  bool public saleFinalized = false;
 
   modifier saleOpen {
       assert(getBlockNumber() >= startBlock);
@@ -34,22 +38,33 @@ contract ColonyTokenSale is DSMath {
       _;
   }
 
-  function ColonyTokenSale (uint _startBlock, uint _softCap, uint _postSoftCapMinBlocks, uint _postSoftCapMaxBlocks, uint _maxSaleDurationBlocks) {
-    // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
-    if (_postSoftCapMinBlocks == 0) {
-      throw;
-    }
+  modifier overMinContribution {
+    assert(msg.value >= minimumContribution);
+    _;
+  }
 
-    if (_postSoftCapMinBlocks >= _postSoftCapMaxBlocks) {
-      throw;
-    }
+  function ColonyTokenSale (
+    uint _startBlock,
+    uint _minToRaise,
+    uint _softCap,
+    uint _postSoftCapMinBlocks,
+    uint _postSoftCapMaxBlocks,
+    uint _maxSaleDurationBlocks,
+    address _token,
+    address _colonyMultisig) {
+    // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
+    if (_postSoftCapMinBlocks == 0) { throw; }
+    if (_postSoftCapMinBlocks >= _postSoftCapMaxBlocks) { throw; }
 
     // TODO validate startBLock > block.number;
     startBlock = _startBlock;
     endBlock = add(startBlock, _maxSaleDurationBlocks);
+    minToRaise = _minToRaise;
     softCap = _softCap;
     postSoftCapMinBlocks = _postSoftCapMinBlocks;
     postSoftCapMaxBlocks = _postSoftCapMaxBlocks;
+    token = Token(_token);
+    colonyMultisig = _colonyMultisig;
   }
 
   function getBlockNumber() constant returns (uint) {
@@ -57,11 +72,20 @@ contract ColonyTokenSale is DSMath {
   }
 
   function buy(address _owner) internal
+  overMinContribution
   saleOpen
   {
-    if (msg.value > 0) {
-      totalRaised += msg.value;
-    }
+    // Send funds to multisig, throws on failure
+    colonyMultisig.transfer(msg.value);
+
+    // Calculate token amount purchased for given value and generate purchase
+    uint amount = div(msg.value, tokenPrice); //TODO we use wei only, should we be working with token numbers?
+    uint128 hamount = uint128(amount);
+    token.mint(hamount);
+    token.transfer(_owner, amount);
+
+    // Up the total raised with given value
+    totalRaised = add(msg.value, totalRaised);
 
     // When softCap is reached, calculate the remainder sale duration in blocks.
     if (totalRaised >= softCap) {
@@ -77,6 +101,7 @@ contract ColonyTokenSale is DSMath {
       }
 
       // We cannot exceed the longest sale duration.
+      // TODO use math min/max function
       if (updatedEndBlock < endBlock) {
         endBlock = updatedEndBlock;
       }
@@ -85,5 +110,20 @@ contract ColonyTokenSale is DSMath {
 
   function () public payable {
     return buy(msg.sender);
+  }
+
+  function finalize() external {
+    uint currentBlock = block.number;
+    // Check the sale is closed, i.e. on or past endblock
+    assert(currentBlock >= endBlock);
+
+    // Check min amount to raise is reached
+    assert(totalRaised >= minToRaise);
+
+    // Check sale is not finalised already
+    assert(saleFinalized == false);
+
+    //TODO: mint tokens for team/investors/foundation = 49% of totalSupply raised in sale
+    saleFinalized = true;
   }
 }

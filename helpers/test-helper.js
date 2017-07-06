@@ -86,12 +86,26 @@ module.exports = {
     }
     return receipt;
   },
-  sendEther(a, b, amount) {
-    const balanceBefore = web3.eth.getBalance(b);
-    const amountInWei = web3.toWei(amount, 'ether');
-    web3.eth.sendTransaction({ from: a, to: b, value: amountInWei });
+  sendEther(source, dest, amount, denomination) {
+    const amountInWei = web3.toWei(amount, denomination);
+    const amountInHex = web3.toHex(amountInWei);
+    const request = {
+      jsonrpc: '2.0',
+      method: 'eth_sendTransaction',
+      params: [
+        {
+          from: source,
+          to: dest,
+          gas: '0x47E7C4', // Send the max gas as this triggers the gas-heavier `buy` function
+          value: amountInHex
+        }
+      ],
+      id: new Date().getTime() };
 
-    const balanceAfter = web3.eth.getBalance(b);
-    assert.equal(balanceAfter.toNumber(), balanceBefore.plus(amountInWei).toNumber());
+    return web3.currentProvider.send(request, function(err, done) {
+      if (err) {
+        console.log(err);
+      }
+    });
   }
  };
