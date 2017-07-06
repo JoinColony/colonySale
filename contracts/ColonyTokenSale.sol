@@ -76,6 +76,8 @@ contract ColonyTokenSale is DSMath {
     uint amount = div(msg.value, tokenPrice); //TODO we use wei only, should we be working with token numbers?
     uint128 hamount = uint128(amount);
     token.mint(hamount);
+    token.transfer(_owner, amount);
+    
     // Up the total raised with given value
     totalRaised = add(msg.value, totalRaised);
 

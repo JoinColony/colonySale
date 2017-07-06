@@ -189,6 +189,26 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(totalSupply.toNumber(), 0);
     });
 
+    it("should issue the correct tokens for valid contributions", async function () {
+      await testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 4, 'finney');
+      await testHelper.sendEther(ACCOUNT_TWO, colonySale.address, 1, 'ether');
+      await testHelper.sendEther(ACCOUNT_THREE, colonySale.address, 12, 'finney');
+      await testHelper.sendEther(ACCOUNT_TWO, colonySale.address, 1, 'finney');
+      await testHelper.sendEther(ACCOUNT_THREE, colonySale.address, 2, 'ether');
+
+      const colonySaleBalanceAfter = web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(colonySaleBalanceAfter.toNumber(), 3018000000000000000); // 3 ether 18 finney
+      const totalSupply = await token.totalSupply.call();
+      assert.equal(totalSupply.toNumber(), 3018);
+
+      const tokenBalance1 = await token.balanceOf.call(COINBASE_ACCOUNT);
+      const tokenBalance2 = await token.balanceOf.call(ACCOUNT_TWO);
+      const tokenBalance3 = await token.balanceOf.call(ACCOUNT_THREE);
+      assert.equal(tokenBalance1.toNumber(), 5);
+      assert.equal(tokenBalance2.toNumber(), 1001);
+      assert.equal(tokenBalance3.toNumber(), 2012);
+    });
+
     it.skip('should fail to transfer tokens too early', async function () {
 
     });
