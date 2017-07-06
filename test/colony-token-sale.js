@@ -216,9 +216,9 @@ contract('ColonyTokenSale', function(accounts) {
 
   describe('when soft cap reached', async () => {
   const softCap = web3.toWei(10, 'finney');
-    const postSoftCapMinBlocks = 5;
-    const postSoftCapMaxBlocks = 7;
-    const maxSaleDuration = 18;
+    const postSoftCapMinBlocks = 6;
+    const postSoftCapMaxBlocks = 8;
+    const maxSaleDuration = 20;
 
     beforeEach(async () => {
       await createColonyTokenSale(web3.eth.blockNumber, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration);
@@ -234,17 +234,17 @@ contract('ColonyTokenSale', function(accounts) {
 
     it('while over postSoftCapMinBlocks but under postSoftCapMaxBlocks, should set remainder duration to that amount of blocks', async function () {
       const startBlock = await colonySale.startBlock.call();
-      testHelper.forwardToBlock(startBlock.plus(5).toNumber());
+      testHelper.forwardToBlock(startBlock.plus(postSoftCapMinBlocks - 1).toNumber());
       // Reach the softCap
       await colonySale.send(softCap, { from: COINBASE_ACCOUNT });
       const currentBlock = web3.eth.blockNumber;
       const endBlock = await colonySale.endBlock.call();
-      assert.equal(endBlock.toNumber(), currentBlock + postSoftCapMinBlocks + 1);
+      assert.equal(endBlock.toNumber(), currentBlock + postSoftCapMinBlocks);
     });
 
     it('while over postSoftCapMaxBlocks, should set remainder duration to postSoftCapMaxBlocks', async function () {
       const startBlock = await colonySale.startBlock.call();
-      testHelper.forwardToBlock(startBlock.plus(8).toNumber());
+      testHelper.forwardToBlock(startBlock.plus(postSoftCapMaxBlocks).toNumber());
       // Reach the softCap
       await colonySale.send(softCap, { from: COINBASE_ACCOUNT });
       const currentBlock = web3.eth.blockNumber;
@@ -255,7 +255,7 @@ contract('ColonyTokenSale', function(accounts) {
     it('while over postSoftCapMaxBlocks and over longest-sale-duration block should keep remainder duration to longest-sale-duration block (default)',
     async function () {
       const startBlock = await colonySale.startBlock.call();
-      testHelper.forwardToBlock(startBlock.plus(10).toNumber());
+      testHelper.forwardToBlock(startBlock.plus(15).toNumber());
       // Reach the softCap
       await colonySale.send(softCap, { from: COINBASE_ACCOUNT });
       const endBlock = await colonySale.endBlock.call();
