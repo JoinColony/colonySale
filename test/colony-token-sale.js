@@ -317,6 +317,19 @@ contract('ColonyTokenSale', function(accounts) {
       const saleFinalised = await colonySale.saleFinalized.call();
       assert.isTrue(saleFinalised);
     });
+
+    it("should not be able to finalize sale more which is already finalized", async function () {
+      await colonySale.finalize();
+
+      try {
+        await colonySale.finalize();
+      } catch (err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+
+      const saleFinalised = await colonySale.saleFinalized.call();
+      assert.isTrue(saleFinalised);
+    });
   });
 
   describe.skip('Two years after public sale completes', () => {

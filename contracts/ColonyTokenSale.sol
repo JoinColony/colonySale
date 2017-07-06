@@ -113,9 +113,10 @@ contract ColonyTokenSale is DSMath {
     // Check the sale is closed, i.e. on or past endblock
     assert(currentBlock >= endBlock);
 
-    //TODO: Check min contribution is reached
-    //TODO: Check sale is not finalised already
+    // Check sale is not finalised already
+    assert(saleFinalized == false);
 
+    //TODO: Check min contribution is reached
     //TODO: mint tokens for team/investors/foundation = 49% of totalSupply raised in sale
     saleFinalized = true;
   }
