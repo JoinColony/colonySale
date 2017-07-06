@@ -27,6 +27,8 @@ contract ColonyTokenSale is DSMath {
   address public colonyMultisig;
   // The address of the Colony Network Token
   Token public token;
+  // Has the sale been finalised by Colony
+  bool public saleFinalized = false;
 
   modifier saleOpen {
       assert(getBlockNumber() >= startBlock);
@@ -77,7 +79,7 @@ contract ColonyTokenSale is DSMath {
     uint128 hamount = uint128(amount);
     token.mint(hamount);
     token.transfer(_owner, amount);
-    
+
     // Up the total raised with given value
     totalRaised = add(msg.value, totalRaised);
 
@@ -95,6 +97,7 @@ contract ColonyTokenSale is DSMath {
       }
 
       // We cannot exceed the longest sale duration.
+      // TODO use math min/max function
       if (updatedEndBlock < endBlock) {
         endBlock = updatedEndBlock;
       }
@@ -103,5 +106,14 @@ contract ColonyTokenSale is DSMath {
 
   function () public payable {
     return buy(msg.sender);
+  }
+
+  function finalize() external {
+    //TODO: Check the endblock is Past
+    //TODO: Check min contribution is reached
+    //TODO: Check sale is not finalised already
+
+    //TODO: mint tokens for team/investors/foundation = 49% of totalSupply raised in sale
+    saleFinalized = true;
   }
 }
