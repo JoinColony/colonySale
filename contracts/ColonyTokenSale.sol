@@ -33,13 +33,13 @@ contract ColonyTokenSale is DSMath {
   bool public saleFinalized = false;
 
   modifier saleOpen {
-      assert(getBlockNumber() >= startBlock);
-      assert(getBlockNumber() < endBlock);
-      _;
+    require(getBlockNumber() >= startBlock);
+    require(getBlockNumber() < endBlock);
+    _;
   }
 
   modifier overMinContribution {
-    assert(msg.value >= minimumContribution);
+    require(msg.value >= minimumContribution);
     _;
   }
 
@@ -53,8 +53,8 @@ contract ColonyTokenSale is DSMath {
     address _token,
     address _colonyMultisig) {
     // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
-    if (_postSoftCapMinBlocks == 0) { throw; }
-    if (_postSoftCapMinBlocks >= _postSoftCapMaxBlocks) { throw; }
+    require(_postSoftCapMinBlocks > 0);
+    require(_postSoftCapMinBlocks < _postSoftCapMaxBlocks);
 
     // TODO validate startBLock > block.number;
     startBlock = _startBlock;
@@ -75,7 +75,7 @@ contract ColonyTokenSale is DSMath {
   overMinContribution
   saleOpen
   {
-    // Send funds to multisig, throws on failure
+    // Send funds to multisig, revert op performed on failure
     colonyMultisig.transfer(msg.value);
 
     // Calculate token amount purchased for given value and generate purchase
