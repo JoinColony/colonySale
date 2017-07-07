@@ -85,6 +85,23 @@ contract('EtherRouter / Resolver', function (accounts) {
   });
 
   describe('Resolver', function () {
+    it('should successfully lookup erc20 properties', async function () {
+      // Check `symbol` property is registered successfully
+      let response = await resolver.lookup.call('0xbe16b05c');
+      assert.equal(response[0], tokenDeployed.address);
+      assert.equal(response[1], 32);
+
+      // Check `decimals` property is registered successfully
+      response = await resolver.lookup.call('0x784c4fb1');
+      assert.equal(response[0], tokenDeployed.address);
+      assert.equal(response[1], 32);
+
+      // Check `name` property is registered successfully
+      response = await resolver.lookup.call('0x23614583');
+      assert.equal(response[0], tokenDeployed.address);
+      assert.equal(response[1], 32);
+    });
+
     it('should successfully lookup erc20 functions', async function () {
       // Check `totalSupply` function is registered successfully
       let response = await resolver.lookup.call('0x18160ddd');

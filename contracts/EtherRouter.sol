@@ -4,6 +4,9 @@ import "./Ownable.sol";
 
 contract EtherRouter is Ownable{
   Resolver public resolver;
+  bytes32 public symbol = 'CLNY';
+  uint256 public decimals = 18;
+  bytes32 public name = 'Colony Network Token';
 
   function() payable {
     uint r;
