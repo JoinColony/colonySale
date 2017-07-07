@@ -348,7 +348,7 @@ contract('ColonyTokenSale', function(accounts) {
       testHelper.forwardToBlock(endBlock.toNumber());
     });
 
-    it("when minToRaise has not been reached, should NOT be able to finalize sale", async function () {
+    it("should NOT be able to finalize sale", async function () {
       try {
         await colonySale.finalize();
       } catch (err) {

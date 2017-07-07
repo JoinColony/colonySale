@@ -87,7 +87,7 @@ contract ColonyTokenSale is DSMath {
     // Up the total raised with given value
     totalRaised = add(msg.value, totalRaised);
 
-    // When softCap is reached, calculate the remainder sale duration in blocks.
+    // When softCap is reached, calculate the remainder sale duration in blocks
     if (totalRaised >= softCap) {
       uint updatedEndBlock;
       uint currentBlock = block.number;
@@ -100,11 +100,8 @@ contract ColonyTokenSale is DSMath {
         updatedEndBlock = add(currentBlock, blocksInSale);
       }
 
-      // We cannot exceed the longest sale duration.
-      // TODO use math min/max function
-      if (updatedEndBlock < endBlock) {
-        endBlock = updatedEndBlock;
-      }
+      // We cannot exceed the longest sale duration
+      endBlock = min(updatedEndBlock, endBlock);
     }
   }
 
