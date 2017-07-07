@@ -332,6 +332,13 @@ contract('ColonyTokenSale', function(accounts) {
       const saleFinalised = await colonySale.saleFinalized.call();
       assert.isTrue(saleFinalised);
     });
+
+    it("when sale finalized, should issue correct total retained tokens", async function () {
+      const tokenSupplyBefore = await token.totalSupply.call();
+      await colonySale.finalize();
+      const tokenSupplyAfter = await token.totalSupply.call();
+      assert.equal(tokenSupplyBefore.mul(2).toNumber(), tokenSupplyAfter.toNumber());
+    });
   });
 
   describe('when sale is unsuccessful, i.e. endBlock reached without raising minimum amount', () => {

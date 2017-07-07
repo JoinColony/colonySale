@@ -111,7 +111,7 @@ contract ColonyTokenSale is DSMath {
 
   function finalize() external {
     uint currentBlock = block.number;
-    // Check the sale is closed, i.e. on or past endblock
+    // Check the sale is closed, i.e. on or past endBlock
     assert(currentBlock >= endBlock);
 
     // Check min amount to raise is reached
@@ -120,7 +120,15 @@ contract ColonyTokenSale is DSMath {
     // Check sale is not finalised already
     assert(saleFinalized == false);
 
-    //TODO: mint tokens for team/investors/foundation = 49% of totalSupply raised in sale
+    // Mint as much retained tokens as raised in sale, i.e. 50% is sold, 50% retained
+    uint128 totalSupply = cast(token.totalSupply());
+    token.mint(totalSupply);
+    //TODO
+    // 5% early investors
+    // 10% team
+    // 15% foundation
+    // 20% strategy fund
+
     saleFinalized = true;
   }
 }
