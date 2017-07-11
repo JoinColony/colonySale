@@ -81,13 +81,6 @@ contract ColonyTokenSale is DSMath {
     colonyMultisig.transfer(msg.value);
     userBuys[_owner] += msg.value;
 
-    //TODO: move below logic to claim function
-    // Calculate token amount purchased for given value and generate purchase
-    uint amount = div(msg.value, tokenPrice); //TODO we use wei only, should we be working with token numbers?
-    uint128 hamount = cast(amount);
-    token.mint(hamount);
-    token.transfer(_owner, amount);
-
     // Up the total raised with given value
     totalRaised = add(msg.value, totalRaised);
 
@@ -113,6 +106,17 @@ contract ColonyTokenSale is DSMath {
 
   function () public payable {
     return buy(msg.sender);
+  }
+
+  //TODO: make this owner only
+  //TODO: decide how logically to tie this to `finalize()`
+  function claim(address _owner) external {
+    // Calculate token amount for given value and transfer tokens
+    uint amount = div(userBuys[_owner], tokenPrice);
+    uint128 hamount = cast(amount);
+    //TODO: move mint call to finalize()
+    token.mint(hamount);
+    token.transfer(_owner, amount);
   }
 
   function finalize() external {
