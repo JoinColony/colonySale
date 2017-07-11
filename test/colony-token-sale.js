@@ -154,7 +154,7 @@ contract('ColonyTokenSale', function(accounts) {
       const currentBlock = await web3.eth.blockNumber;
       await createColonyTokenSale(currentBlock, web3.toWei(0.3, 'ether'), web3.toWei(1, 'ether'), 5, 7, 18);
       // Send the min contribution as a start
-      await testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1, 'finney');
+      await colonySale.send(web3.toWei(1, 'finney'));
     });
 
     it("should accept contributions before the soft cap is reached", async function () {
@@ -164,8 +164,6 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(colonySaleBalanceAfter.toNumber(), TwoFinney);
       const userBuy = await colonySale.userBuys.call(COINBASE_ACCOUNT);
       assert.equal(userBuy.toNumber(), TwoFinney);
-      const totalSupply = await token.totalSupply.call();
-      assert.equal(totalSupply.toNumber(), 2);
     });
 
     it("should NOT accept contributions less than the minimum of 1 finney", async function () {
@@ -175,10 +173,7 @@ contract('ColonyTokenSale', function(accounts) {
         testHelper.ifUsingTestRPC(err);
       }
       const colonySaleBalanceAfter = web3.eth.getBalance(colonyMultisig.address);
-      const totalRaised = web3.toWei(1, 'finney');
-      assert.equal(colonySaleBalanceAfter.toNumber(), totalRaised);
-      const totalSupply = await token.totalSupply.call();
-      assert.equal(totalSupply.toNumber(), 1);
+      assert.equal(colonySaleBalanceAfter.toNumber(), web3.toWei(1, 'finney'));
     });
 
     it("should throw if cannot forward funds to multisig wallet", async function () {
@@ -193,26 +188,6 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(totalSupply.toNumber(), 0);
     });
 
-    it("should issue the correct tokens for valid contributions", async function () {
-      await testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 4, 'finney');
-      await testHelper.sendEther(ACCOUNT_TWO, colonySale.address, 1, 'ether');
-      await testHelper.sendEther(ACCOUNT_THREE, colonySale.address, 12, 'finney');
-      await testHelper.sendEther(ACCOUNT_TWO, colonySale.address, 1, 'finney');
-      await testHelper.sendEther(ACCOUNT_THREE, colonySale.address, 2, 'ether');
-
-      const colonySaleBalanceAfter = web3.eth.getBalance(colonyMultisig.address);
-      assert.equal(colonySaleBalanceAfter.toNumber(), 3018000000000000000); // 3 ether 18 finney
-      const totalSupply = await token.totalSupply.call();
-      assert.equal(totalSupply.toNumber(), 3018);
-
-      const tokenBalance1 = await token.balanceOf.call(COINBASE_ACCOUNT);
-      const tokenBalance2 = await token.balanceOf.call(ACCOUNT_TWO);
-      const tokenBalance3 = await token.balanceOf.call(ACCOUNT_THREE);
-      assert.equal(tokenBalance1.toNumber(), 5);
-      assert.equal(tokenBalance2.toNumber(), 1001);
-      assert.equal(tokenBalance3.toNumber(), 2012);
-    });
-
     it("should NOT be able to finalize sale", async function () {
       try {
         await colonySale.finalize();
@@ -222,6 +197,17 @@ contract('ColonyTokenSale', function(accounts) {
 
       const saleFinalised = await colonySale.saleFinalized.call();
       assert.isFalse(saleFinalised);
+    });
+
+    it("should NOT be able to claim tokens", async function () {
+      try {
+        await colonySale.claim(COINBASE_ACCOUNT);
+      } catch (err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+
+      const balanceOfTokenholder = await token.balanceOf.call(COINBASE_ACCOUNT);
+      assert.equal(balanceOfTokenholder.toNumber(), 0);
     });
 
     it.skip('should fail to transfer tokens too early', async function () {
@@ -287,15 +273,30 @@ contract('ColonyTokenSale', function(accounts) {
       const saleFinalised = await colonySale.saleFinalized.call();
       assert.isFalse(saleFinalised);
     });
+
+    it("should NOT be able to claim tokens", async function () {
+      try {
+        await colonySale.claim(COINBASE_ACCOUNT);
+      } catch (err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+
+      const balanceOfTokenholder = await token.balanceOf.call(COINBASE_ACCOUNT);
+      assert.equal(balanceOfTokenholder.toNumber(), 0);
+    });
   });
 
-  describe('when sale end block is reached', () => {
+  describe('when sale is successful, i.e. endBlock reached and raised minimum amount', () => {
     beforeEach('setup a closed sale', async () => {
-      const softCap = web3.toWei(10, 'finney');
+      const softCap = web3.toWei(3, 'ether');
       const currentBlock = web3.eth.blockNumber;
-      await createColonyTokenSale(currentBlock, web3.toWei(3, 'finney'), softCap, 5, 10, 20);
-      // Reach the soft cap
-      await colonySale.send(softCap, { from: COINBASE_ACCOUNT });
+      await createColonyTokenSale(currentBlock, web3.toWei(1, 'finney'), softCap, 5, 10, 20);
+      // Add purchases for 3 ether 18 finney in total
+      await testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 4, 'finney');
+      await testHelper.sendEther(ACCOUNT_TWO, colonySale.address, 1, 'ether');
+      await testHelper.sendEther(ACCOUNT_THREE, colonySale.address, 12, 'finney');
+      await testHelper.sendEther(ACCOUNT_TWO, colonySale.address, 1, 'finney');
+      await testHelper.sendEther(ACCOUNT_THREE, colonySale.address, 2, 'ether');
       // Get the endBlock and fast forward to it
       const endBlock = await colonySale.endBlock.call();
       testHelper.forwardToBlock(endBlock.toNumber());
@@ -315,7 +316,18 @@ contract('ColonyTokenSale', function(accounts) {
       const totalRaisedAfter = await colonySale.totalRaised.call();
       assert.equal(totalRaisedAfter.toNumber(), totalRaisedBefore.toNumber());
       const userBuy = await colonySale.userBuys.call(COINBASE_ACCOUNT);
-      assert.equal(userBuy.toNumber(), web3.toWei(10, 'finney'));
+      assert.equal(userBuy.toNumber(), web3.toWei(4, 'finney'));
+    });
+
+    it("when sale NOT yet finalized, should NOT be able to claim tokens", async function () {
+      try {
+        await colonySale.claim(COINBASE_ACCOUNT);
+      } catch (err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+
+      const balanceOfTokenholder = await token.balanceOf.call(COINBASE_ACCOUNT);
+      assert.equal(balanceOfTokenholder.toNumber(), 0);
     });
 
     it("when minToRaise has been reached, should be able to finalize sale", async function () {
@@ -324,7 +336,7 @@ contract('ColonyTokenSale', function(accounts) {
       assert.isTrue(saleFinalised);
     });
 
-    it("when sale already finalised, should NOT be able to finalize sale again", async function () {
+    it("when sale finalised, should NOT be able to finalize sale again", async function () {
       await colonySale.finalize();
 
       try {
@@ -337,11 +349,25 @@ contract('ColonyTokenSale', function(accounts) {
       assert.isTrue(saleFinalised);
     });
 
-    it("when sale finalized, should issue correct total retained tokens", async function () {
-      const tokenSupplyBefore = await token.totalSupply.call();
+    it("when sale finalized, should mint correct total retained tokens", async function () {
+      const totalRaised = await colonySale.totalRaised.call();
+      const tokenPrice = await colonySale.tokenPrice.call();
       await colonySale.finalize();
-      const tokenSupplyAfter = await token.totalSupply.call();
-      assert.equal(tokenSupplyBefore.mul(2).toNumber(), tokenSupplyAfter.toNumber());
+      const tokenSupply = await token.totalSupply.call();
+      assert.equal(tokenSupply.toNumber(), 6034);
+      assert.equal(totalRaised.div(tokenPrice).mul(2).toNumber(), 6034);
+    });
+
+    it("when sale finalized, buyers should be able to claim their tokens", async function () {
+      await colonySale.finalize();
+
+      // Initially their balance is 0
+      const tokenBalance1Pre = await token.balanceOf.call(COINBASE_ACCOUNT);
+      assert.equal(tokenBalance1Pre.toNumber(), 0);
+      // Claim tokens for account
+      await colonySale.claim(COINBASE_ACCOUNT);
+      const tokenBalance1 = await token.balanceOf.call(COINBASE_ACCOUNT);
+      assert.equal(tokenBalance1.toNumber(), 4);
     });
   });
 
@@ -368,6 +394,19 @@ contract('ColonyTokenSale', function(accounts) {
 
       const saleFinalised = await colonySale.saleFinalized.call();
       assert.isFalse(saleFinalised);
+    });
+
+    it("should NOT be able to claim tokens", async function () {
+      try {
+        await colonySale.claim(COINBASE_ACCOUNT);
+      } catch (err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+
+      const balanceOfTokenholder1 = await token.balanceOf.call(ACCOUNT_TWO);
+      assert.equal(balanceOfTokenholder1.toNumber(), 0);
+      const balanceOfTokenholder2 = await token.balanceOf.call(ACCOUNT_THREE);
+      assert.equal(balanceOfTokenholder2.toNumber(), 0);
     });
   });
 

@@ -60,8 +60,9 @@ contract('ColonyTokenSale', function(accounts) {
       const endBlock = await colonySale.endBlock.call();
       testHelper.forwardToBlock(endBlock.toNumber());
 
-      const txClaim = await colonySale.claim(COINBASE_ACCOUNT);
-      console.log('claim() cost', txClaim.receipt.gasUsed);
+      //TODO
+      //const txClaim = await colonySale.claim(COINBASE_ACCOUNT);
+      //console.log('claim() cost', txClaim.receipt.gasUsed);
 
       const txFinalize = await colonySale.finalize();
       console.log('finalize() cost', txFinalize.receipt.gasUsed);

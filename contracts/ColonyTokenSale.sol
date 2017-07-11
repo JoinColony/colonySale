@@ -22,7 +22,7 @@ contract ColonyTokenSale is DSMath {
   // Minimum amount to raise for sale to be successful
   uint public minToRaise;
   // Total amount raised
-  uint public totalRaised = 0 ether;
+  uint public totalRaised = 0 wei;
   // Sale soft cap
   uint public softCap;
   // The address to hold the funds donated
@@ -34,13 +34,18 @@ contract ColonyTokenSale is DSMath {
 
   mapping (address => uint) public userBuys;
 
-  modifier saleOpen {
+  modifier sale_is_open {
     require(getBlockNumber() >= startBlock);
     require(getBlockNumber() < endBlock);
     _;
   }
 
-  modifier overMinContribution {
+  modifier sale_is_finalized {
+    require(saleFinalized);
+    _;
+  }
+
+  modifier contribution_is_over_the_minimum {
     require(msg.value >= minimumContribution);
     _;
   }
@@ -74,8 +79,8 @@ contract ColonyTokenSale is DSMath {
   }
 
   function buy(address _owner) internal
-  overMinContribution
-  saleOpen
+  contribution_is_over_the_minimum
+  sale_is_open
   {
     // Send funds to multisig, revert op performed on failure
     colonyMultisig.transfer(msg.value);
@@ -109,16 +114,16 @@ contract ColonyTokenSale is DSMath {
   }
 
   //TODO: make this owner only
-  //TODO: decide how logically to tie this to `finalize()`
-  function claim(address _owner) external {
+  function claim(address _owner) external
+  sale_is_finalized
+  {
     // Calculate token amount for given value and transfer tokens
     uint amount = div(userBuys[_owner], tokenPrice);
-    uint128 hamount = cast(amount);
-    //TODO: move mint call to finalize()
-    token.mint(hamount);
     token.transfer(_owner, amount);
+    //TODO log claim
   }
 
+  //TODO: secure to owner only
   function finalize() external {
     uint currentBlock = block.number;
     // Check the sale is closed, i.e. on or past endBlock
@@ -131,8 +136,10 @@ contract ColonyTokenSale is DSMath {
     assert(saleFinalized == false);
 
     // Mint as much retained tokens as raised in sale, i.e. 50% is sold, 50% retained
-    uint128 totalSupply = cast(token.totalSupply());
-    token.mint(totalSupply);
+    uint amount = div(totalRaised, tokenPrice);
+    uint128 hamount = hmul(cast(amount), 2);
+    token.mint(hamount);
+
     //TODO
     // 5% early investors
     // 10% team
