@@ -32,6 +32,8 @@ contract ColonyTokenSale is DSMath {
   // Has the sale been finalised by Colony
   bool public saleFinalized = false;
 
+  mapping (address => uint) public userBuys;
+
   modifier saleOpen {
     require(getBlockNumber() >= startBlock);
     require(getBlockNumber() < endBlock);
@@ -77,7 +79,9 @@ contract ColonyTokenSale is DSMath {
   {
     // Send funds to multisig, revert op performed on failure
     colonyMultisig.transfer(msg.value);
+    userBuys[_owner] += msg.value;
 
+    //TODO: move below logic to claim function
     // Calculate token amount purchased for given value and generate purchase
     uint amount = div(msg.value, tokenPrice); //TODO we use wei only, should we be working with token numbers?
     uint128 hamount = cast(amount);
@@ -103,6 +107,8 @@ contract ColonyTokenSale is DSMath {
       // We cannot exceed the longest sale duration
       endBlock = min(updatedEndBlock, endBlock);
     }
+
+    //TODO: log the buy
   }
 
   function () public payable {

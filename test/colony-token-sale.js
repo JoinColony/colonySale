@@ -160,8 +160,10 @@ contract('ColonyTokenSale', function(accounts) {
     it("should accept contributions before the soft cap is reached", async function () {
       await testHelper.sendEther(COINBASE_ACCOUNT, colonySale.address, 1, 'finney');
       const colonySaleBalanceAfter = await web3.eth.getBalance(colonyMultisig.address);
-      const totalRaised = web3.toWei(2, 'finney');
-      assert.equal(colonySaleBalanceAfter.toNumber(), totalRaised);
+      const TwoFinney = web3.toWei(2, 'finney');
+      assert.equal(colonySaleBalanceAfter.toNumber(), TwoFinney);
+      const userBuy = await colonySale.userBuys.call(COINBASE_ACCOUNT);
+      assert.equal(userBuy.toNumber(), TwoFinney);
       const totalSupply = await token.totalSupply.call();
       assert.equal(totalSupply.toNumber(), 2);
     });
@@ -312,6 +314,8 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(colonySaleBalanceAfter.toNumber(), colonySaleBalanceBefore.toNumber());
       const totalRaisedAfter = await colonySale.totalRaised.call();
       assert.equal(totalRaisedAfter.toNumber(), totalRaisedBefore.toNumber());
+      const userBuy = await colonySale.userBuys.call(COINBASE_ACCOUNT);
+      assert.equal(userBuy.toNumber(), web3.toWei(10, 'finney'));
     });
 
     it("when minToRaise has been reached, should be able to finalize sale", async function () {
