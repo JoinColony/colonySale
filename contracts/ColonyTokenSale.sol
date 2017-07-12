@@ -59,6 +59,11 @@ contract ColonyTokenSale is DSMath {
     _;
   }
 
+  modifier non_zero_address(address x) {
+    require(x != 0);
+    _;
+  }
+
   function ColonyTokenSale (
     uint _startBlock,
     uint _minToRaise,
@@ -67,7 +72,10 @@ contract ColonyTokenSale is DSMath {
     uint _postSoftCapMaxBlocks,
     uint _maxSaleDurationBlocks,
     address _token,
-    address _colonyMultisig) {
+    address _colonyMultisig)
+    non_zero_address(_token)
+    non_zero_address(_colonyMultisig)
+    {
     // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
     require(_postSoftCapMinBlocks > 0);
     require(_postSoftCapMinBlocks < _postSoftCapMaxBlocks);
@@ -135,8 +143,7 @@ contract ColonyTokenSale is DSMath {
     Claim(_owner, amount, tokens);
   }
 
-  function finalize() external
-  {
+  function finalize() external {
     uint currentBlock = block.number;
     // Check the sale is closed, i.e. on or past endBlock
     assert(currentBlock >= endBlock);

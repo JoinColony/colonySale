@@ -104,6 +104,23 @@ contract('ColonyTokenSale', function(accounts) {
       }
     });
 
+    it("should throw if initialised with zero address parameters", async function () {
+      let saleContract = '';
+      try {
+        saleContract = await ColonyTokenSale.new(4000000, 20000, softCapInWei, 0, 5082, 71153, 0, colonyMultisig.address);
+      } catch (e) {
+        testHelper.ifUsingTestRPC(e);
+      }
+      assert.equal(saleContract, '');
+
+      try {
+        saleContract = await ColonyTokenSale.new(4000000, 20000, softCapInWei, 635, 635, 71153, etherRouter.address, 0x0);
+      } catch (e) {
+        testHelper.ifUsingTestRPC(e);
+      }
+      assert.equal(saleContract, '');
+    });
+
     it("should have CLNY token wei price of 1 finney", async function () {
       const tokenPrice = await colonySale.tokenPrice.call();
       const oneFinney = web3.toWei(1, 'finney');
