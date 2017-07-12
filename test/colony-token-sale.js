@@ -364,10 +364,20 @@ contract('ColonyTokenSale', function(accounts) {
       // Initially their balance is 0
       const tokenBalance1Pre = await token.balanceOf.call(COINBASE_ACCOUNT);
       assert.equal(tokenBalance1Pre.toNumber(), 0);
+      const tokenBalance2Pre = await token.balanceOf.call(ACCOUNT_TWO);
+      assert.equal(tokenBalance2Pre.toNumber(), 0);
+      const tokenBalance3Pre = await token.balanceOf.call(ACCOUNT_THREE);
+      assert.equal(tokenBalance3Pre.toNumber(), 0);
       // Claim tokens for account
       await colonySale.claim(COINBASE_ACCOUNT);
       const tokenBalance1 = await token.balanceOf.call(COINBASE_ACCOUNT);
       assert.equal(tokenBalance1.toNumber(), 4);
+      await colonySale.claim(ACCOUNT_TWO);
+      const tokenBalance2 = await token.balanceOf.call(ACCOUNT_TWO);
+      assert.equal(tokenBalance2.toNumber(), 1001);
+      await colonySale.claim(ACCOUNT_THREE);
+      const tokenBalance3 = await token.balanceOf.call(ACCOUNT_THREE);
+      assert.equal(tokenBalance3.toNumber(), 2012);
     });
   });
 
