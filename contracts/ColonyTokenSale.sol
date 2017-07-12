@@ -38,6 +38,11 @@ contract ColonyTokenSale is DSMath {
   event Claim(address buyer, uint amount, uint tokens);
   event SaleFinalized(address user, uint totalRaised, uint totalSupply);
 
+  modifier only_colony_multisig {
+    require(msg.sender == colonyMultisig);
+    _;
+  }
+
   modifier sale_is_open {
     require(getBlockNumber() >= startBlock);
     require(getBlockNumber() < endBlock);
@@ -117,8 +122,8 @@ contract ColonyTokenSale is DSMath {
     return buy(msg.sender);
   }
 
-  //TODO1: make this owner only
   function claim(address _owner) external
+  only_colony_multisig
   sale_is_finalized
   {
     // Calculate token amount for given value and transfer tokens
@@ -130,8 +135,8 @@ contract ColonyTokenSale is DSMath {
     Claim(_owner, amount, tokens);
   }
 
-  //TODO1: secure to owner only
-  function finalize() external {
+  function finalize() external
+  {
     uint currentBlock = block.number;
     // Check the sale is closed, i.e. on or past endBlock
     assert(currentBlock >= endBlock);
