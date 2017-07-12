@@ -38,28 +38,28 @@ contract ColonyTokenSale is DSMath {
   event Claim(address buyer, uint amount, uint tokens);
   event SaleFinalized(address user, uint totalRaised, uint totalSupply);
 
-  modifier only_colony_multisig {
+  modifier onlyColonyMultisig {
     require(msg.sender == colonyMultisig);
     _;
   }
 
-  modifier sale_is_open {
+  modifier saleOpen {
     require(getBlockNumber() >= startBlock);
     require(getBlockNumber() < endBlock);
     _;
   }
 
-  modifier sale_is_finalized {
+  modifier saleFinalised {
     require(saleFinalized);
     _;
   }
 
-  modifier contribution_is_over_the_minimum {
+  modifier contributionOverMinimum {
     require(msg.value >= minimumContribution);
     _;
   }
 
-  modifier non_zero_address(address x) {
+  modifier nonZeroAddress(address x) {
     require(x != 0);
     _;
   }
@@ -73,8 +73,8 @@ contract ColonyTokenSale is DSMath {
     uint _maxSaleDurationBlocks,
     address _token,
     address _colonyMultisig)
-    non_zero_address(_token)
-    non_zero_address(_colonyMultisig)
+    nonZeroAddress(_token)
+    nonZeroAddress(_colonyMultisig)
     {
     // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
     require(_postSoftCapMinBlocks > 0);
@@ -96,8 +96,8 @@ contract ColonyTokenSale is DSMath {
   }
 
   function buy(address _owner) internal
-  contribution_is_over_the_minimum
-  sale_is_open
+  saleOpen
+  contributionOverMinimum
   {
     // Send funds to multisig, revert op performed on failure
     colonyMultisig.transfer(msg.value);
@@ -131,8 +131,8 @@ contract ColonyTokenSale is DSMath {
   }
 
   function claim(address _owner) external
-  only_colony_multisig
-  sale_is_finalized
+  onlyColonyMultisig
+  saleFinalised
   {
     // Calculate token amount for given value and transfer tokens
     uint amount = userBuys[_owner];
