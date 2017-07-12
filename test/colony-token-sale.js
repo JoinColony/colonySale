@@ -379,6 +379,13 @@ contract('ColonyTokenSale', function(accounts) {
       const tokenBalance3 = await token.balanceOf.call(ACCOUNT_THREE);
       assert.equal(tokenBalance3.toNumber(), 2012);
     });
+
+    it("when sale is finalized and tokens claimed, that account balnce in userBuys should be set to 0", async function () {
+      await colonySale.finalize();
+      await colonySale.claim(COINBASE_ACCOUNT);
+      const userBuy = await colonySale.userBuys.call(COINBASE_ACCOUNT);
+      assert.equal(userBuy.toNumber(), 0);
+    });
   });
 
   describe('when sale is unsuccessful, i.e. endBlock reached without raising minimum amount', () => {

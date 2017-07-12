@@ -119,6 +119,7 @@ contract ColonyTokenSale is DSMath {
   {
     // Calculate token amount for given value and transfer tokens
     uint amount = div(userBuys[_owner], tokenPrice);
+    userBuys[_owner] = 0;
     token.transfer(_owner, amount);
     //TODO log claim
   }
