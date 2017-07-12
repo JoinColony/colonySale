@@ -34,6 +34,10 @@ contract ColonyTokenSale is DSMath {
 
   mapping (address => uint) public userBuys;
 
+  event Purchase(address buyer, uint amount);
+  event Claim(address buyer, uint amount, uint tokens);
+  event SaleFinalized(address user, uint totalRaised, uint totalSupply);
+
   modifier sale_is_open {
     require(getBlockNumber() >= startBlock);
     require(getBlockNumber() < endBlock);
@@ -106,25 +110,27 @@ contract ColonyTokenSale is DSMath {
       endBlock = min(updatedEndBlock, endBlock);
     }
 
-    //TODO: log the buy
+    Purchase(_owner, msg.value);
   }
 
   function () public payable {
     return buy(msg.sender);
   }
 
-  //TODO: make this owner only
+  //TODO1: make this owner only
   function claim(address _owner) external
   sale_is_finalized
   {
     // Calculate token amount for given value and transfer tokens
-    uint amount = div(userBuys[_owner], tokenPrice);
+    uint amount = userBuys[_owner];
+    uint tokens = div(amount, tokenPrice);
     userBuys[_owner] = 0;
-    token.transfer(_owner, amount);
-    //TODO log claim
+    token.transfer(_owner, tokens);
+
+    Claim(_owner, amount, tokens);
   }
 
-  //TODO: secure to owner only
+  //TODO1: secure to owner only
   function finalize() external {
     uint currentBlock = block.number;
     // Check the sale is closed, i.e. on or past endBlock
@@ -148,5 +154,6 @@ contract ColonyTokenSale is DSMath {
     // 20% strategy fund
 
     saleFinalized = true;
+    SaleFinalized(msg.sender, totalRaised, hamount);
   }
 }

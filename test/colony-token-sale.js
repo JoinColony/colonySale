@@ -166,6 +166,11 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(userBuy.toNumber(), TwoFinney);
     });
 
+    it("contributions should log Puchase events", async function () {
+      const tx = await colonySale.send(web3.toWei(1, 'finney'));
+      assert.equal(tx.logs[0].event, 'Purchase');
+    });
+
     it("should NOT accept contributions less than the minimum of 1 finney", async function () {
       try {
         await testHelper.sendEther(ACCOUNT_TWO, colonySale.address, 10, 'wei');
@@ -331,7 +336,8 @@ contract('ColonyTokenSale', function(accounts) {
     });
 
     it("when minToRaise has been reached, should be able to finalize sale", async function () {
-      await colonySale.finalize();
+      const tx = await colonySale.finalize();
+      assert.equal(tx.logs[0].event, 'SaleFinalized');
       const saleFinalised = await colonySale.saleFinalized.call();
       assert.isTrue(saleFinalised);
     });
@@ -380,9 +386,17 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(tokenBalance3.toNumber(), 2012);
     });
 
-    it("when sale is finalized and tokens claimed, that account balnce in userBuys should be set to 0", async function () {
+    it("when sale is finalized and tokens claimed, that account balance in userBuys should be set to 0", async function () {
       await colonySale.finalize();
       await colonySale.claim(COINBASE_ACCOUNT);
+      const userBuy = await colonySale.userBuys.call(COINBASE_ACCOUNT);
+      assert.equal(userBuy.toNumber(), 0);
+    });
+
+    it("when sale is finalized and tokens claimed, claim event should be logged", async function () {
+      await colonySale.finalize();
+      const tx = await colonySale.claim(COINBASE_ACCOUNT);
+      assert.equal(tx.logs[0].event, 'Claim');
       const userBuy = await colonySale.userBuys.call(COINBASE_ACCOUNT);
       assert.equal(userBuy.toNumber(), 0);
     });
