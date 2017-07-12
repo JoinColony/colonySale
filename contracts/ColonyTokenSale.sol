@@ -22,7 +22,7 @@ contract ColonyTokenSale is DSMath {
   // Minimum amount to raise for sale to be successful
   uint public minToRaise;
   // Total amount raised
-  uint public totalRaised = 0 ether;
+  uint public totalRaised = 0 wei;
   // Sale soft cap
   uint public softCap;
   // The address to hold the funds donated
@@ -32,14 +32,35 @@ contract ColonyTokenSale is DSMath {
   // Has the sale been finalised by Colony
   bool public saleFinalized = false;
 
-  modifier saleOpen {
-      assert(getBlockNumber() >= startBlock);
-      assert(getBlockNumber() < endBlock);
-      _;
+  mapping (address => uint) public userBuys;
+
+  event Purchase(address buyer, uint amount);
+  event Claim(address buyer, uint amount, uint tokens);
+  event SaleFinalized(address user, uint totalRaised, uint totalSupply);
+
+  modifier only_colony_multisig {
+    require(msg.sender == colonyMultisig);
+    _;
   }
 
-  modifier overMinContribution {
-    assert(msg.value >= minimumContribution);
+  modifier sale_is_open {
+    require(getBlockNumber() >= startBlock);
+    require(getBlockNumber() < endBlock);
+    _;
+  }
+
+  modifier sale_is_finalized {
+    require(saleFinalized);
+    _;
+  }
+
+  modifier contribution_is_over_the_minimum {
+    require(msg.value >= minimumContribution);
+    _;
+  }
+
+  modifier non_zero_address(address x) {
+    require(x != 0);
     _;
   }
 
@@ -51,10 +72,13 @@ contract ColonyTokenSale is DSMath {
     uint _postSoftCapMaxBlocks,
     uint _maxSaleDurationBlocks,
     address _token,
-    address _colonyMultisig) {
+    address _colonyMultisig)
+    non_zero_address(_token)
+    non_zero_address(_colonyMultisig)
+    {
     // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
-    if (_postSoftCapMinBlocks == 0) { throw; }
-    if (_postSoftCapMinBlocks >= _postSoftCapMaxBlocks) { throw; }
+    require(_postSoftCapMinBlocks > 0);
+    require(_postSoftCapMinBlocks < _postSoftCapMaxBlocks);
 
     // TODO validate startBLock > block.number;
     startBlock = _startBlock;
@@ -72,22 +96,17 @@ contract ColonyTokenSale is DSMath {
   }
 
   function buy(address _owner) internal
-  overMinContribution
-  saleOpen
+  contribution_is_over_the_minimum
+  sale_is_open
   {
-    // Send funds to multisig, throws on failure
+    // Send funds to multisig, revert op performed on failure
     colonyMultisig.transfer(msg.value);
-
-    // Calculate token amount purchased for given value and generate purchase
-    uint amount = div(msg.value, tokenPrice); //TODO we use wei only, should we be working with token numbers?
-    uint128 hamount = uint128(amount);
-    token.mint(hamount);
-    token.transfer(_owner, amount);
+    userBuys[_owner] += msg.value;
 
     // Up the total raised with given value
     totalRaised = add(msg.value, totalRaised);
 
-    // When softCap is reached, calculate the remainder sale duration in blocks.
+    // When softCap is reached, calculate the remainder sale duration in blocks
     if (totalRaised >= softCap) {
       uint updatedEndBlock;
       uint currentBlock = block.number;
@@ -100,21 +119,33 @@ contract ColonyTokenSale is DSMath {
         updatedEndBlock = add(currentBlock, blocksInSale);
       }
 
-      // We cannot exceed the longest sale duration.
-      // TODO use math min/max function
-      if (updatedEndBlock < endBlock) {
-        endBlock = updatedEndBlock;
-      }
+      // We cannot exceed the longest sale duration
+      endBlock = min(updatedEndBlock, endBlock);
     }
+
+    Purchase(_owner, msg.value);
   }
 
   function () public payable {
     return buy(msg.sender);
   }
 
+  function claim(address _owner) external
+  only_colony_multisig
+  sale_is_finalized
+  {
+    // Calculate token amount for given value and transfer tokens
+    uint amount = userBuys[_owner];
+    uint tokens = div(amount, tokenPrice);
+    userBuys[_owner] = 0;
+    token.transfer(_owner, tokens);
+
+    Claim(_owner, amount, tokens);
+  }
+
   function finalize() external {
     uint currentBlock = block.number;
-    // Check the sale is closed, i.e. on or past endblock
+    // Check the sale is closed, i.e. on or past endBlock
     assert(currentBlock >= endBlock);
 
     // Check min amount to raise is reached
@@ -123,7 +154,18 @@ contract ColonyTokenSale is DSMath {
     // Check sale is not finalised already
     assert(saleFinalized == false);
 
-    //TODO: mint tokens for team/investors/foundation = 49% of totalSupply raised in sale
+    // Mint as much retained tokens as raised in sale, i.e. 50% is sold, 50% retained
+    uint amount = div(totalRaised, tokenPrice);
+    uint128 hamount = hmul(cast(amount), 2);
+    token.mint(hamount);
+
+    //TODO
+    // 5% early investors
+    // 10% team
+    // 15% foundation
+    // 20% strategy fund
+
     saleFinalized = true;
+    SaleFinalized(msg.sender, totalRaised, hamount);
   }
 }

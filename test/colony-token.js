@@ -24,6 +24,24 @@ contract('CLNY Token', function (accounts) {
     etherRouter = await EtherRouter.new();
     await etherRouter.setResolver(resolver.address);
     token = await Token.at(etherRouter.address);
+    console.log()
+  });
+
+  describe('when working with ERC20 properties', function () {
+    it('token `symbol` property is correct', async() => {
+      const tokenSymbol = await token.symbol();
+      assert.equal(web3.toUtf8(tokenSymbol), 'CLNY');
+    });
+
+    it('token `decimals` property is correct', async() => {
+      const tokenDecimals = await token.decimals.call();
+      assert.equal(tokenDecimals.toString(), '18');
+    });
+
+    it('token `name` property is correct', async() => {
+      const tokenName = await token.name.call();
+      assert.equal(web3.toUtf8(tokenName), 'Colony Network Token');
+    });
   });
 
   describe('when working with ERC20 functions', function () {

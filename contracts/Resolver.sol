@@ -6,6 +6,9 @@ contract Resolver {
   mapping (bytes4 => Pointer) public pointers;
 
   function Resolver(address destination) {
+    pointers[stringToSig("symbol")] = Pointer(destination, 32);
+    pointers[stringToSig("decimals")] = Pointer(destination, 32);
+    pointers[stringToSig("name")] = Pointer(destination, 32);
     pointers[stringToSig("totalSupply()")] = Pointer(destination, 32);
     pointers[stringToSig("balanceOf(address)")] = Pointer(destination, 32);
     pointers[stringToSig("allowance(address,address)")] = Pointer(destination, 32);

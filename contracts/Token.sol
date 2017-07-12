@@ -18,6 +18,10 @@ import "./Ownable.sol";
 
 contract Token is ERC20, DSMath, Ownable {
     address resolver;
+    bytes32 public symbol;
+    uint256 public decimals;
+    bytes32 public name;
+
     uint256 _supply;
     mapping (address => uint256) _balances;
     mapping (address => mapping (address => uint256)) _approvals;
