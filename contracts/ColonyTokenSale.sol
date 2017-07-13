@@ -164,8 +164,8 @@ contract ColonyTokenSale is DSMath {
 
     // Early investors get 5%
     uint128 earlyInvestorAllocation = wmul(wdiv(totalSupply, 100), 5);
-    token.transfer(0xb77d57f4959eafa0339424b83fcfaf9c15407461, earlyInvestorAllocation);
-    AllocatedReservedTokens(0xb77d57f4959eafa0339424b83fcfaf9c15407461, earlyInvestorAllocation);
+    token.transfer(0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4, earlyInvestorAllocation);
+    AllocatedReservedTokens(0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4, earlyInvestorAllocation);
 
     saleFinalized = true;
     SaleFinalized(msg.sender, totalRaised, totalSupply);
