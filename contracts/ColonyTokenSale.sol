@@ -162,10 +162,15 @@ contract ColonyTokenSale is DSMath {
     uint128 totalSupply = wdiv(wmul(cast(purchasedTokensWei), 100), 51);
     token.mint(totalSupply);
 
-    // Early investors get 5%
+    // Early investor gets 5%
     uint128 earlyInvestorAllocation = wmul(wdiv(totalSupply, 100), 5);
     token.transfer(0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4, earlyInvestorAllocation);
     AllocatedReservedTokens(0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4, earlyInvestorAllocation);
+
+    // Strategy fund gets 19%
+    uint128 strategyFundAllocation = wmul(wdiv(totalSupply, 100), 19);
+    token.transfer(0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F, strategyFundAllocation);
+    AllocatedReservedTokens(0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F, strategyFundAllocation);
 
     saleFinalized = true;
     SaleFinalized(msg.sender, totalRaised, totalSupply);

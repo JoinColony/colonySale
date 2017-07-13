@@ -9,12 +9,13 @@ import BigNumber from 'bignumber.js';
 import testHelper from '../helpers/test-helper';
 
 contract('ColonyTokenSale', function(accounts) {
+
   const COLONY_ACCOUNT = accounts[0]; //0xb77D57F4959eAfA0339424b83FcFaf9c15407461
   const BUYER_ONE = accounts[1];      //0x9dF24e73f40b2a911Eb254A8825103723E13209C
   const BUYER_TWO = accounts[2];      //0x27fF0C145E191C22C75cD123C679C3e1F58a4469
   const BUYER_THREE = accounts[3];    //0x0021Cb24d7D4e669120b139030095315DFa6699a
   const BUYER_FOUR = accounts[4];     //0xF822d689a2e10c1511dcD54dF5Ce43a9d393e75c
-  const INVESTOR_1 = accounts[5];     //0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4
+  const INVESTOR_1 = accounts[5]      //0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4
   const INVESTOR_2 = accounts[6];     //0x9F485401a3C22529aB6EA15E2EbD5A8CA54a5430
   const TEAM_MEMBER_1 = accounts[7];  //0x4110afd6bAc4F25724aDe66F0e0300dde0696a58
   const TEAM_MEMBER_2 = accounts[8];  //0x099a2B3E7b8558381A8aB3B3B7953858d5691946
@@ -367,7 +368,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("when minToRaise has been reached, should be able to finalize sale", async function () {
       const tx = await colonySale.finalize();
-      assert.equal(tx.logs[1].event, 'SaleFinalized');
+      assert.equal(tx.logs[2].event, 'SaleFinalized');
       const saleFinalised = await colonySale.saleFinalized.call();
       assert.isTrue(saleFinalised);
     });
@@ -388,14 +389,22 @@ contract('ColonyTokenSale', function(accounts) {
     it("when sale finalized, should mint correct total retained tokens", async function () {
       await colonySale.finalize();
       const tokenSupply = await token.totalSupply.call();
-      assert.equal(tokenSupply.toNumber(), 5915.686274509804*1e18); // = 3017 CLNY tokens sold / 0.51
+      assert.equal(tokenSupply.toNumber(), 5915686274509803921569); // = 3017 CLNY tokens sold / 0.51
     });
 
-    it("when sale finalized, should assign correct early investor allocation", async function () {
+    it("when sale finalized, should assign correct retained allocations", async function () {
       await colonySale.finalize();
-      const investorTokenWeiBalance = await token.balanceOf.call('0xb77d57f4959eafa0339424b83fcfaf9c15407461');
-      const expectedAllocation = new BigNumber('295784313725490196078');
-      assert.isTrue(investorTokenWeiBalance.equals(expectedAllocation)); // = 5% of total 5915.686274509804*1e18
+
+      // Total number of tokens (wei) is 5915686274509803921569
+      // Investor balance = 5% of total
+      const investorTokenWeiBalance = await token.balanceOf.call(INVESTOR_1);
+      const expectedInvestorAllocation = web3.toBigNumber('295784313725490196078'); // Actually 5% is exactly 295784313725490196078.5
+      assert.isTrue(investorTokenWeiBalance.equals(expectedInvestorAllocation));
+
+      // Strategy fund balance = 19% of total
+      const strategyFundTokenWeiBalance = await token.balanceOf.call(STRATEGY_FUND);
+      const expectedStrategyFundAllocation = web3.toBigNumber('1123980392156862745098');
+      assert.isTrue(strategyFundTokenWeiBalance.equals(expectedStrategyFundAllocation));
     });
 
     it("when sale finalized, buyers should be able to claim their tokens", async function () {
