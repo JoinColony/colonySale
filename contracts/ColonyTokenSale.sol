@@ -15,14 +15,14 @@ contract ColonyTokenSale is DSMath {
   // minumum and maximum are 635 and 5082 blocks corresponding to roughly 3 and 24 hours.
   uint public postSoftCapMinBlocks;
   uint public postSoftCapMaxBlocks;
-  // CLNY token wei price, at the start of the sale
+  // CLNY token price
   uint constant public tokenPrice = 1 finney;
   // Minimum contribution amount
   uint constant public minimumContribution = 1 finney;
   // Minimum amount to raise for sale to be successful
   uint public minToRaise;
   // Total amount raised
-  uint public totalRaised = 0 wei;
+  uint public totalRaised = 0 ether;
   // Sale soft cap
   uint public softCap;
   // The address to hold the funds donated
@@ -36,7 +36,7 @@ contract ColonyTokenSale is DSMath {
 
   event Purchase(address buyer, uint amount);
   event Claim(address buyer, uint amount, uint tokens);
-  event SaleFinalized(address user, uint totalRaised, uint totalSupply);
+  event SaleFinalized(address user, uint totalRaised, uint128 totalSupply);
 
   modifier onlyColonyMultisig {
     require(msg.sender == colonyMultisig);
@@ -154,18 +154,14 @@ contract ColonyTokenSale is DSMath {
     // Check sale is not finalised already
     assert(saleFinalized == false);
 
-    // Mint as much retained tokens as raised in sale, i.e. 50% is sold, 50% retained
-    uint amount = div(totalRaised, tokenPrice);
-    uint128 hamount = hmul(cast(amount), 2);
-    token.mint(hamount);
-
-    //TODO
-    // 5% early investors
-    // 10% team
-    // 15% foundation
-    // 20% strategy fund
+    // Mint as much retained tokens as raised in sale, i.e. 51% is sold, 49% retained
+    uint purchasedTokens = div(totalRaised, tokenPrice);
+    uint decimals = token.decimals();
+    uint purchasedTokensWei = purchasedTokens * 10 ** decimals;
+    uint128 totalSupply = wdiv(wmul(cast(purchasedTokensWei), 100), 51);
+    token.mint(totalSupply);
 
     saleFinalized = true;
-    SaleFinalized(msg.sender, totalRaised, hamount);
+    SaleFinalized(msg.sender, totalRaised, totalSupply);
   }
 }

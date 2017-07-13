@@ -376,12 +376,9 @@ contract('ColonyTokenSale', function(accounts) {
     });
 
     it("when sale finalized, should mint correct total retained tokens", async function () {
-      const totalRaised = await colonySale.totalRaised.call();
-      const tokenPrice = await colonySale.tokenPrice.call();
       await colonySale.finalize();
       const tokenSupply = await token.totalSupply.call();
-      assert.equal(tokenSupply.toNumber(), 6034);
-      assert.equal(totalRaised.div(tokenPrice).mul(2).toNumber(), 6034);
+      assert.equal(tokenSupply.toNumber(), 5915.686274509804*1e18); // = 3017 CLNY tokens sold / 0.51
     });
 
     it("when sale finalized, buyers should be able to claim their tokens", async function () {
