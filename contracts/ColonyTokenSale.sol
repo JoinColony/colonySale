@@ -37,6 +37,7 @@ contract ColonyTokenSale is DSMath {
   event Purchase(address buyer, uint amount);
   event Claim(address buyer, uint amount, uint tokens);
   event SaleFinalized(address user, uint totalRaised, uint128 totalSupply);
+  event AllocatedReservedTokens(address user, uint tokens);
 
   modifier onlyColonyMultisig {
     require(msg.sender == colonyMultisig);
@@ -160,6 +161,11 @@ contract ColonyTokenSale is DSMath {
     uint purchasedTokensWei = purchasedTokens * 10 ** decimals;
     uint128 totalSupply = wdiv(wmul(cast(purchasedTokensWei), 100), 51);
     token.mint(totalSupply);
+
+    // Early investors get 5%
+    uint128 earlyInvestorAllocation = wmul(wdiv(totalSupply, 100), 5);
+    token.transfer(0xb77d57f4959eafa0339424b83fcfaf9c15407461, earlyInvestorAllocation);
+    AllocatedReservedTokens(0xb77d57f4959eafa0339424b83fcfaf9c15407461, earlyInvestorAllocation);
 
     saleFinalized = true;
     SaleFinalized(msg.sender, totalRaised, totalSupply);

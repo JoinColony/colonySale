@@ -5,6 +5,7 @@ var EtherRouter = artifacts.require('./EtherRouter.sol');
 var Ownable = artifacts.require('./Ownable.sol');
 var MultiSigWallet = artifacts.require('multisig-wallet/MultiSigWallet.sol');
 
+import BigNumber from 'bignumber.js';
 import testHelper from '../helpers/test-helper';
 
 contract('ColonyTokenSale', function(accounts) {
@@ -357,7 +358,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("when minToRaise has been reached, should be able to finalize sale", async function () {
       const tx = await colonySale.finalize();
-      assert.equal(tx.logs[0].event, 'SaleFinalized');
+      assert.equal(tx.logs[1].event, 'SaleFinalized');
       const saleFinalised = await colonySale.saleFinalized.call();
       assert.isTrue(saleFinalised);
     });
@@ -381,12 +382,20 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(tokenSupply.toNumber(), 5915.686274509804*1e18); // = 3017 CLNY tokens sold / 0.51
     });
 
+    it("when sale finalized, should assign correct early investor allocation", async function () {
+      await colonySale.finalize();
+      const investorTokenWeiBalance = await token.balanceOf.call('0xb77d57f4959eafa0339424b83fcfaf9c15407461');
+      const expectedAllocation = new BigNumber('295784313725490196078');
+      assert.isTrue(investorTokenWeiBalance.equals(expectedAllocation)); // = 5% of total 5915.686274509804*1e18
+    });
+
     it("when sale finalized, buyers should be able to claim their tokens", async function () {
       await colonySale.finalize();
 
-      // Initially their balance is 0
+      // Initially their balance is 0, except if they receive preallcated tokens, e.g. investors
+      const preAllocatedTokens = new BigNumber('295784313725490196078');
       const tokenBalance1Pre = await token.balanceOf.call(COINBASE_ACCOUNT);
-      assert.equal(tokenBalance1Pre.toNumber(), 0);
+      assert.isTrue(tokenBalance1Pre.equals(preAllocatedTokens));
       const tokenBalance2Pre = await token.balanceOf.call(ACCOUNT_TWO);
       assert.equal(tokenBalance2Pre.toNumber(), 0);
       const tokenBalance3Pre = await token.balanceOf.call(ACCOUNT_THREE);
@@ -395,7 +404,7 @@ contract('ColonyTokenSale', function(accounts) {
       let txData = await colonySale.contract.claim.getData(COINBASE_ACCOUNT);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COINBASE_ACCOUNT });
       const tokenBalance1 = await token.balanceOf.call(COINBASE_ACCOUNT);
-      assert.equal(tokenBalance1.toNumber(), 4);
+      assert.isTrue(tokenBalance1.equals(preAllocatedTokens.add(4)));
 
       txData = await colonySale.contract.claim.getData(ACCOUNT_TWO);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COINBASE_ACCOUNT });
