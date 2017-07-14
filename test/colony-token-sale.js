@@ -405,6 +405,10 @@ contract('ColonyTokenSale', function(accounts) {
       const expectedTeamMember1Allocation = new BigNumber('30000000000000000000');
       assert.isTrue(teamMember1TokenWeiBalance.equals(expectedTeamMember1Allocation));
 
+      const teamMember2TokenWeiBalance = await token.balanceOf.call(TEAM_MEMBER_2);
+      const expectedTeamMember2Allocation = new BigNumber('80000000000000000000');
+      assert.isTrue(teamMember2TokenWeiBalance.equals(expectedTeamMember2Allocation));
+
       // Strategy fund balance = 19% of total
       const strategyFundTokenWeiBalance = await token.balanceOf.call(STRATEGY_FUND);
       const expectedStrategyFundAllocation = new BigNumber('1123980392156862745098');
