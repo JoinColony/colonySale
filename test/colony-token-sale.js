@@ -64,7 +64,7 @@ contract('ColonyTokenSale', function(accounts) {
     beforeEach(async function () {
       softCapInWei = web3.toWei(50000, 'ether');
       minAmountToRaise = web3.toWei(20000, 'ether');
-      await createColonyTokenSale(4000000, minAmountToRaise, softCapInWei, 635, 5082, 71153);
+      await createColonyTokenSale(4000000, minAmountToRaise, softCapInWei, 540, 4320, 60480);
     });
 
     it("should return correct current block number", async function () {
@@ -82,7 +82,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should have correct initial sale end block", async function () {
       const endBlock = await colonySale.endBlock.call();
-      assert.equal(endBlock.toNumber(), 4071153);
+      assert.equal(endBlock.toNumber(), 4060480);
     });
 
     it("should have correct minimum amount to raise", async function () {
@@ -92,23 +92,23 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should have correct min post soft cap blocks duration", async function () {
       const postSoftCapMinBlocks = await colonySale.postSoftCapMinBlocks.call();
-      assert.equal(postSoftCapMinBlocks.toNumber(), 635);
+      assert.equal(postSoftCapMinBlocks.toNumber(), 540);
     });
 
     it("should have correct max post soft cap blocks duration", async function () {
       const postSoftCapMaxBlocks = await colonySale.postSoftCapMaxBlocks.call();
-      assert.equal(postSoftCapMaxBlocks.toNumber(), 5082);
+      assert.equal(postSoftCapMaxBlocks.toNumber(), 4320);
     });
 
     it("should throw if initialised with invalid block duration parameters", async function () {
       try {
-        await ColonyTokenSale.new(4000000, 20000, softCapInWei, 0, 5082, 71153, etherRouter.address, colonyMultisig.address);
+        await ColonyTokenSale.new(4000000, 20000, softCapInWei, 0, 4320, 60480, etherRouter.address, colonyMultisig.address);
       } catch (e) {
         testHelper.ifUsingTestRPC(e);
       }
 
       try {
-        await ColonyTokenSale.new(4000000, 20000, softCapInWei, 635, 635, 71153, etherRouter.address, colonyMultisig.address);
+        await ColonyTokenSale.new(4000000, 20000, softCapInWei, 540, 540, 60480, etherRouter.address, colonyMultisig.address);
       } catch (e) {
         testHelper.ifUsingTestRPC(e);
       }
@@ -117,14 +117,14 @@ contract('ColonyTokenSale', function(accounts) {
     it("should throw if initialised with zero address parameters", async function () {
       let saleContract = '';
       try {
-        saleContract = await ColonyTokenSale.new(4000000, 20000, softCapInWei, 0, 5082, 71153, 0, colonyMultisig.address);
+        saleContract = await ColonyTokenSale.new(4000000, 20000, softCapInWei, 0, 4320, 60480, 0, colonyMultisig.address);
       } catch (e) {
         testHelper.ifUsingTestRPC(e);
       }
       assert.equal(saleContract, '');
 
       try {
-        saleContract = await ColonyTokenSale.new(4000000, 20000, softCapInWei, 635, 635, 71153, etherRouter.address, 0x0);
+        saleContract = await ColonyTokenSale.new(4000000, 20000, softCapInWei, 540, 540, 60480, etherRouter.address, 0x0);
       } catch (e) {
         testHelper.ifUsingTestRPC(e);
       }

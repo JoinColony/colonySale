@@ -7,12 +7,12 @@ import "./dappsys/math.sol";
 contract ColonyTokenSale is DSMath {
   // Block number in which the sale starts. Inclusive. Sale will be opened at start block.
   uint public startBlock;
-  // Sale will continue for a maximum of 71153 blocks (~14 days). Initialised as the latest possible block number at which the sale ends.
-  // Updated if softCap reached to the number of blocks it took to reach the soft cap and it is a min of 635 and max 5082.
+  // Sale will continue for a maximum of 60480 blocks (~14 days). Initialised as the latest possible block number at which the sale ends.
+  // Updated if softCap reached to the number of blocks it took to reach the soft cap and it is a min of 540 and max 4320.
   // Exclusive. Sale will be closed at end block.
   uint public endBlock;
   // Once softCap is reached, the remaining sale duration is set to the same amount of blocks it's taken the sale to reach the softCap
-  // minumum and maximum are 635 and 5082 blocks corresponding to roughly 3 and 24 hours.
+  // minumum and maximum are 540 and 4320 blocks corresponding to roughly 3 and 24 hours.
   uint public postSoftCapMinBlocks;
   uint public postSoftCapMaxBlocks;
   // CLNY token price
