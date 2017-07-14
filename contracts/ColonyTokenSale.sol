@@ -177,20 +177,27 @@ contract ColonyTokenSale is DSMath {
 
     // 10% allocated to Team
     uint128 totalTeamAllocation = wmul(wdiv(totalSupply, 100), 10);
-    // Allocate to team members
+
+    // Allocate to team member 1
     uint teamMember1TotalAmountAllocated = 30 finney;
     uint teamMember1Tokens = div(teamMember1TotalAmountAllocated, tokenPrice);
     uint teamMember1TokensWei = teamMember1Tokens * 10 ** decimals;
     token.transfer(TEAM_MEMBER_1, teamMember1TokensWei);
     AllocatedReservedTokens(TEAM_MEMBER_1, teamMember1TokensWei);
-
+    // Allocate to team member 2
     uint teamMember2TotalAmountAllocated = 80 finney;
     uint teamMember2Tokens = div(teamMember2TotalAmountAllocated, tokenPrice);
     uint teamMember2TokensWei = teamMember2Tokens * 10 ** decimals;
     token.transfer(TEAM_MEMBER_2, teamMember2TokensWei);
     AllocatedReservedTokens(TEAM_MEMBER_2, teamMember2TokensWei);
 
-    //TODO: vest remainder in team multisig (totalTeamAllocation - teamMember1TokensWei - teamMember2TokensWei
+    // Vest remainder to team multisig
+    uint teamRemainderAmount = sub(totalTeamAllocation, add(teamMember1TokensWei, teamMember2TokensWei));
+    // TODO create token grant TEAM_MULTISIG, teamRemainderAmount
+
+    // 15% allocated to Foundation
+    uint128 foundationAllocation = wmul(wdiv(totalSupply, 100), 15);
+    // TODO create token grant FOUNDATION, foundationAllocation
 
     // 19% allocated to Strategy fund
     uint128 strategyFundAllocation = wmul(wdiv(totalSupply, 100), 19);
