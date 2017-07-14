@@ -15,8 +15,8 @@ contract ColonyTokenSale is DSMath {
   // minumum and maximum are 540 and 4320 blocks corresponding to roughly 3 and 24 hours.
   uint public postSoftCapMinBlocks;
   uint public postSoftCapMaxBlocks;
-  // CLNY token price
-  uint constant public tokenPrice = 1 finney;
+  // CLNY token price = 1 finney
+  uint constant public tokenPriceMultiplier = 1000;
   // Minimum contribution amount
   uint constant public minimumContribution = 1 finney;
   // Minimum amount to raise for sale to be successful
@@ -40,8 +40,8 @@ contract ColonyTokenSale is DSMath {
   address public FOUNDATION = 0x4e7DBb49018489a27088FE304b18849b02F708F6;
   address public STRATEGY_FUND = 0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F;
 
-  uint constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** token.decimals();
-  uint constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** token.decimals();
+  uint128 constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** 18;
+  uint128 constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
 
   mapping (address => uint) public userBuys;
 
@@ -163,7 +163,7 @@ contract ColonyTokenSale is DSMath {
   {
     // Calculate token amount for given value and transfer tokens
     uint amount = userBuys[_owner];
-    uint tokens = div(amount, tokenPrice);
+    uint tokens = mul(amount, tokenPriceMultiplier);
     userBuys[_owner] = 0;
     token.transfer(_owner, tokens);
 
@@ -176,10 +176,8 @@ contract ColonyTokenSale is DSMath {
   saleNotFinalised
   {
     // Mint as much retained tokens as raised in sale, i.e. 51% is sold, 49% retained
-    uint purchasedTokens = div(totalRaised, tokenPrice);
-    uint decimals = token.decimals();
-    uint purchasedTokensWei = purchasedTokens * 10 ** decimals;
-    uint128 totalSupply = wdiv(wmul(cast(purchasedTokensWei), 100), 51);
+    uint purchasedSupply = mul(totalRaised, tokenPriceMultiplier);
+    uint128 totalSupply = cast(div(mul(purchasedSupply, 100), 51));
     token.mint(totalSupply);
 
     // 5% allocated to Investor
@@ -197,7 +195,7 @@ contract ColonyTokenSale is DSMath {
     AllocatedReservedTokens(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
 
     // Vest remainder to team multisig
-    uint teamRemainderAmount = sub(totalTeamAllocation, add(ALLOCATION_TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_2));
+    uint128 teamRemainderAmount = hsub(totalTeamAllocation, hadd(ALLOCATION_TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_2));
     // TODO create token grant TEAM_MULTISIG, teamRemainderAmount
 
     // 15% allocated to Foundation
@@ -205,7 +203,8 @@ contract ColonyTokenSale is DSMath {
     // TODO create token grant FOUNDATION, foundationAllocation
 
     // 19% allocated to Strategy fund
-    uint128 strategyFundAllocation = wmul(wdiv(totalSupply, 100), 19);
+    // wmul(wdiv(totalSupply, 100), 19);
+    uint128 strategyFundAllocation = hsub(totalSupply, hadd(hadd(hadd(earlyInvestorAllocation, totalTeamAllocation), foundationAllocation), cast(purchasedSupply)));
     token.transfer(STRATEGY_FUND, strategyFundAllocation);
     AllocatedReservedTokens(STRATEGY_FUND, strategyFundAllocation);
 

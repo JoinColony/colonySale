@@ -131,10 +131,9 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(saleContract, '');
     });
 
-    it("should have CLNY token wei price of 1 finney", async function () {
-      const tokenPrice = await colonySale.tokenPrice.call();
-      const oneFinney = web3.toWei(1, 'finney');
-      assert.equal(tokenPrice.toNumber(), oneFinney);
+    it("should have CLNY token wei price multiplier of 1000", async function () {
+      const tokenPriceMultiplier = await colonySale.tokenPriceMultiplier.call();
+      assert.equal(tokenPriceMultiplier.toNumber(), 1000);
     });
 
     it("should have minimum contribution of 1 finney", async function () {
@@ -324,12 +323,14 @@ contract('ColonyTokenSale', function(accounts) {
     beforeEach('setup a closed sale', async () => {
       const softCap = web3.toWei(3, 'ether');
       const currentBlock = web3.eth.blockNumber;
+
       await createColonyTokenSale(currentBlock, web3.toWei(1, 'finney'), softCap, 5, 10, 20);
       // Add purchases for 3 ether 18 finney in total
       await testHelper.sendEther(COLONY_ACCOUNT, colonySale.address, 4, 'finney');
       await testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'ether');
       await testHelper.sendEther(BUYER_TWO, colonySale.address, 12, 'finney');
       await testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'finney');
+      await testHelper.sendEther(BUYER_THREE, colonySale.address, 1001, 'szabo');
       await testHelper.sendEther(BUYER_TWO, colonySale.address, 2, 'ether');
       // Get the endBlock and fast forward to it
       const endBlock = await colonySale.endBlock.call();
@@ -388,17 +389,19 @@ contract('ColonyTokenSale', function(accounts) {
     it("when sale finalized, should mint correct total retained tokens", async function () {
       await colonySale.finalize();
       const tokenSupply = await token.totalSupply.call();
-      assert.equal(tokenSupply.toNumber(), 5915686274509803921569); // = 3017 CLNY tokens sold / 0.51
+      console.log('tokenSupply', tokenSupply);
+      const expected = new BigNumber('5917649019607843137254');
+      assert.equal(tokenSupply.toNumber(), expected.toNumber()); // = 3018001 * 1e15 * CLNY tokens sold / 0.51
     });
 
     it("when sale finalized, should assign correct retained allocations", async function () {
       await colonySale.finalize();
 
-      // Total number of tokens (wei) is 5915686274509803921569
+      // Total number of tokens (wei) is 5917649019607843137254
       // Investor balance = 5% of total
       const investorTokenWeiBalance = await token.balanceOf.call(INVESTOR_1);
-      const expectedInvestorAllocation = new BigNumber('295784313725490196078'); // Actually 5% is exactly 295784313725490196078.5
-      assert.isTrue(investorTokenWeiBalance.equals(expectedInvestorAllocation));
+      const expectedInvestorAllocation = new BigNumber('295882450980392156863'); // Actually 5% is exactly 295784313725490196078.5
+      assert.isTrue(investorTokenWeiBalance.equals(expectedInvestorAllocation), 'Investor allocation incorrect');
 
       // Team balance = 10% of total
       const teamMember1TokenWeiBalance = await token.balanceOf.call(TEAM_MEMBER_1);
@@ -411,8 +414,8 @@ contract('ColonyTokenSale', function(accounts) {
 
       // Strategy fund balance = 19% of total
       const strategyFundTokenWeiBalance = await token.balanceOf.call(STRATEGY_FUND);
-      const expectedStrategyFundAllocation = new BigNumber('1123980392156862745098');
-      assert.isTrue(strategyFundTokenWeiBalance.equals(expectedStrategyFundAllocation));
+      const expectedStrategyFundAllocation = new BigNumber('1124353313725490196078');
+      assert.isTrue(strategyFundTokenWeiBalance.equals(expectedStrategyFundAllocation), 'StrategyFund allocation incorrect');
     });
 
     it("when sale finalized, buyers should be able to claim their tokens", async function () {
@@ -429,17 +432,26 @@ contract('ColonyTokenSale', function(accounts) {
       let txData = await colonySale.contract.claim.getData(COLONY_ACCOUNT);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance1 = await token.balanceOf.call(COLONY_ACCOUNT);
-      assert.equal(tokenBalance1.toNumber(), 4);
+      assert.equal(tokenBalance1.toNumber(), 4 * 1e18);
 
       txData = await colonySale.contract.claim.getData(BUYER_ONE);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance2 = await token.balanceOf.call(BUYER_ONE);
-      assert.equal(tokenBalance2.toNumber(), 1001);
+      assert.equal(tokenBalance2.toNumber(), 1001 * 1e18);
 
       txData = await colonySale.contract.claim.getData(BUYER_TWO);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance3 = await token.balanceOf.call(BUYER_TWO);
-      assert.equal(tokenBalance3.toNumber(), 2012);
+      assert.equal(tokenBalance3.toNumber(), 2012 * 1e18);
+
+      txData = await colonySale.contract.claim.getData(BUYER_THREE);
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
+      const tokenBalance4 = await token.balanceOf.call(BUYER_THREE);
+      assert.equal(tokenBalance4.toNumber(), 1001 * 1e15);
+
+      //TODO when vesting is done assert what's left is the total vested
+      //const tokenBalanceLeft = await token.balanceOf.call(colonySale.address);
+      //assert.equal(tokenBalanceLeft.toNumber(), 0);
     });
 
     it("when sale is finalized and tokens claimed, that account balance in userBuys should be set to 0", async function () {
