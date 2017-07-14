@@ -55,7 +55,9 @@ contract('ColonyTokenSale', function(accounts) {
       console.error('buy() cost', txBuy.receipt.gasUsed);
 
       // Reach the soft cap
-      await colonySale.send(softCap);
+      const txBuySoftCapSet = await colonySale.send(softCap);
+      console.error('buy() cost when endBlock updated', txBuySoftCapSet.receipt.gasUsed);
+
       // Get the endBlock and fast forward to it
       const endBlock = await colonySale.endBlock.call();
       testHelper.forwardToBlock(endBlock.toNumber());
