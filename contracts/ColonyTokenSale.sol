@@ -40,6 +40,9 @@ contract ColonyTokenSale is DSMath {
   address public FOUNDATION = 0x4e7DBb49018489a27088FE304b18849b02F708F6;
   address public STRATEGY_FUND = 0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F;
 
+  uint constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** token.decimals();
+  uint constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** token.decimals();
+
   mapping (address => uint) public userBuys;
 
   event Purchase(address buyer, uint amount);
@@ -179,7 +182,7 @@ contract ColonyTokenSale is DSMath {
     uint128 totalSupply = wdiv(wmul(cast(purchasedTokensWei), 100), 51);
     token.mint(totalSupply);
 
-    // 5% allocated to Investor1
+    // 5% allocated to Investor
     uint128 earlyInvestorAllocation = wmul(wdiv(totalSupply, 100), 5);
     token.transfer(INVESTOR_1, earlyInvestorAllocation);
     AllocatedReservedTokens(INVESTOR_1, earlyInvestorAllocation);
@@ -187,21 +190,14 @@ contract ColonyTokenSale is DSMath {
     // 10% allocated to Team
     uint128 totalTeamAllocation = wmul(wdiv(totalSupply, 100), 10);
 
-    // Allocate to team member 1
-    uint teamMember1TotalAmountAllocated = 30 finney;
-    uint teamMember1Tokens = div(teamMember1TotalAmountAllocated, tokenPrice);
-    uint teamMember1TokensWei = teamMember1Tokens * 10 ** decimals;
-    token.transfer(TEAM_MEMBER_1, teamMember1TokensWei);
-    AllocatedReservedTokens(TEAM_MEMBER_1, teamMember1TokensWei);
-    // Allocate to team member 2
-    uint teamMember2TotalAmountAllocated = 80 finney;
-    uint teamMember2Tokens = div(teamMember2TotalAmountAllocated, tokenPrice);
-    uint teamMember2TokensWei = teamMember2Tokens * 10 ** decimals;
-    token.transfer(TEAM_MEMBER_2, teamMember2TokensWei);
-    AllocatedReservedTokens(TEAM_MEMBER_2, teamMember2TokensWei);
+    // Allocate to team members
+    token.transfer(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1);
+    AllocatedReservedTokens(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_2);
+    token.transfer(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
+    AllocatedReservedTokens(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
 
     // Vest remainder to team multisig
-    uint teamRemainderAmount = sub(totalTeamAllocation, add(teamMember1TokensWei, teamMember2TokensWei));
+    uint teamRemainderAmount = sub(totalTeamAllocation, add(ALLOCATION_TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_2));
     // TODO create token grant TEAM_MULTISIG, teamRemainderAmount
 
     // 15% allocated to Foundation
