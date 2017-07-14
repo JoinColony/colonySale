@@ -58,8 +58,23 @@ contract ColonyTokenSale is DSMath {
     _;
   }
 
+  modifier saleClosed {
+    require(getBlockNumber() >= endBlock);
+    _;
+  }
+
+  modifier raisedMinimumAmount {
+    require(totalRaised >= minToRaise);
+    _;
+  }
+
   modifier saleFinalised {
     require(saleFinalized);
+    _;
+  }
+
+  modifier saleNotFinalised {
+    require(!saleFinalized);
     _;
   }
 
@@ -152,17 +167,11 @@ contract ColonyTokenSale is DSMath {
     Claim(_owner, amount, tokens);
   }
 
-  function finalize() external {
-    uint currentBlock = block.number;
-    // Check the sale is closed, i.e. on or past endBlock
-    assert(currentBlock >= endBlock);
-
-    // Check min amount to raise is reached
-    assert(totalRaised >= minToRaise);
-
-    // Check sale is not finalised already
-    assert(saleFinalized == false);
-
+  function finalize() external
+  saleClosed
+  raisedMinimumAmount
+  saleNotFinalised
+  {
     // Mint as much retained tokens as raised in sale, i.e. 51% is sold, 49% retained
     uint purchasedTokens = div(totalRaised, tokenPrice);
     uint decimals = token.decimals();
