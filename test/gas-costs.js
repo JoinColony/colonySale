@@ -41,8 +41,8 @@ contract('ColonyTokenSale', function(accounts) {
   };
 
   describe('gas costs', async () => {
-    const minToRaise = web3.toWei(2, 'finney');
-    const softCap = web3.toWei(10, 'finney');
+    const minToRaise = web3.toWei(2, 'ether');
+    const softCap = web3.toWei(10, 'ether');
     const value = web3.toWei(1, 'finney');
 
     beforeEach('setup sale at startBlock', async () => {

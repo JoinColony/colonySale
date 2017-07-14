@@ -9,7 +9,7 @@ import BigNumber from 'bignumber.js';
 import testHelper from '../helpers/test-helper';
 
 contract('ColonyTokenSale', function(accounts) {
-  const COLONY_ACCOUNT = accounts[0]; //0xb77D57F4959eAfA0339424b83FcFaf9c15407461
+  const COLONY_ACCOUNT = accounts[0]; //0xb77D57F4959eAfA0339424b83FcFaf9c15407461 Starting balance 100 ETH
   const BUYER_ONE = accounts[1];      //0x9dF24e73f40b2a911Eb254A8825103723E13209C
   const BUYER_TWO = accounts[2];      //0x27fF0C145E191C22C75cD123C679C3e1F58a4469
   const BUYER_THREE = accounts[3];    //0x0021Cb24d7D4e669120b139030095315DFa6699a
@@ -18,7 +18,7 @@ contract('ColonyTokenSale', function(accounts) {
   const INVESTOR_2 = '0x9F485401a3C22529aB6EA15E2EbD5A8CA54a5430';
   const TEAM_MEMBER_1 = '0x4110afd6bAc4F25724aDe66F0e0300dde0696a58';
   const TEAM_MEMBER_2 = '0x099a2B3E7b8558381A8aB3B3B7953858d5691946';
-  const TEAM_MEMBER_3 = '0xd6Bf4Be334A4661e12a647b62EF1510a247dd625';
+  const TEAM_MULTISIG = '0xd6Bf4Be334A4661e12a647b62EF1510a247dd625';
   const FOUNDATION = '0x4e7DBb49018489a27088FE304b18849b02F708F6';
   const STRATEGY_FUND = '0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F';
 
@@ -367,7 +367,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("when minToRaise has been reached, should be able to finalize sale", async function () {
       const tx = await colonySale.finalize();
-      assert.equal(tx.logs[2].event, 'SaleFinalized');
+      assert.equal(tx.logs[4].event, 'SaleFinalized');
       const saleFinalised = await colonySale.saleFinalized.call();
       assert.isTrue(saleFinalised);
     });
@@ -399,6 +399,11 @@ contract('ColonyTokenSale', function(accounts) {
       const investorTokenWeiBalance = await token.balanceOf.call(INVESTOR_1);
       const expectedInvestorAllocation = new BigNumber('295784313725490196078'); // Actually 5% is exactly 295784313725490196078.5
       assert.isTrue(investorTokenWeiBalance.equals(expectedInvestorAllocation));
+
+      // Team balance = 10% of total
+      const teamMember1TokenWeiBalance = await token.balanceOf.call(TEAM_MEMBER_1);
+      const expectedTeamMember1Allocation = new BigNumber('30000000000000000000');
+      assert.isTrue(teamMember1TokenWeiBalance.equals(expectedTeamMember1Allocation));
 
       // Strategy fund balance = 19% of total
       const strategyFundTokenWeiBalance = await token.balanceOf.call(STRATEGY_FUND);

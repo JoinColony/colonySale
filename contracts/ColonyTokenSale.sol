@@ -32,13 +32,13 @@ contract ColonyTokenSale is DSMath {
   // Has the sale been finalised by Colony
   bool public saleFinalized = false;
 
-  address public constant INVESTOR_1 = 0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4;
-  address public constant INVESTOR_2 = 0x9F485401a3C22529aB6EA15E2EbD5A8CA54a5430;
-  address public constant TEAM_MEMBER_1 = 0x4110afd6bAc4F25724aDe66F0e0300dde0696a58;
-  address public constant TEAM_MEMBER_2 = 0x099a2B3E7b8558381A8aB3B3B7953858d5691946;
-  address public constant TEAM_MEMBER_3 = 0xd6Bf4Be334A4661e12a647b62EF1510a247dd625;
-  address public constant FOUNDATION = 0x4e7DBb49018489a27088FE304b18849b02F708F6;
-  address public constant STRATEGY_FUND = 0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F;
+  address public INVESTOR_1 = 0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4;
+  address public INVESTOR_2 = 0x9F485401a3C22529aB6EA15E2EbD5A8CA54a5430;
+  address public TEAM_MEMBER_1 = 0x4110afd6bAc4F25724aDe66F0e0300dde0696a58;
+  address public TEAM_MEMBER_2 = 0x099a2B3E7b8558381A8aB3B3B7953858d5691946;
+  address public TEAM_MULTISIG = 0xd6Bf4Be334A4661e12a647b62EF1510a247dd625;
+  address public FOUNDATION = 0x4e7DBb49018489a27088FE304b18849b02F708F6;
+  address public STRATEGY_FUND = 0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F;
 
   mapping (address => uint) public userBuys;
 
@@ -174,6 +174,23 @@ contract ColonyTokenSale is DSMath {
     uint128 earlyInvestorAllocation = wmul(wdiv(totalSupply, 100), 5);
     token.transfer(INVESTOR_1, earlyInvestorAllocation);
     AllocatedReservedTokens(INVESTOR_1, earlyInvestorAllocation);
+
+    // 10% allocated to Team
+    uint128 totalTeamAllocation = wmul(wdiv(totalSupply, 100), 10);
+    // Allocate to team members
+    uint teamMember1TotalAmountAllocated = 30 finney;
+    uint teamMember1Tokens = div(teamMember1TotalAmountAllocated, tokenPrice);
+    uint teamMember1TokensWei = teamMember1Tokens * 10 ** decimals;
+    token.transfer(TEAM_MEMBER_1, teamMember1TokensWei);
+    AllocatedReservedTokens(TEAM_MEMBER_1, teamMember1TokensWei);
+
+    uint teamMember2TotalAmountAllocated = 80 finney;
+    uint teamMember2Tokens = div(teamMember2TotalAmountAllocated, tokenPrice);
+    uint teamMember2TokensWei = teamMember2Tokens * 10 ** decimals;
+    token.transfer(TEAM_MEMBER_2, teamMember2TokensWei);
+    AllocatedReservedTokens(TEAM_MEMBER_2, teamMember2TokensWei);
+
+    //TODO: vest remainder in team multisig (totalTeamAllocation - teamMember1TokensWei - teamMember2TokensWei
 
     // 19% allocated to Strategy fund
     uint128 strategyFundAllocation = wmul(wdiv(totalSupply, 100), 19);
