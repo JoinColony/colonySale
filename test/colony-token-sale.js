@@ -558,6 +558,43 @@ contract('ColonyTokenSale', function(accounts) {
       await colonySale.finalize();
     });
 
+    it("Less than 6 months after sale finalized, team should NOT be able to claim token grant", async function () {
+      testHelper.forwardTime(15552000 / 2);
+      const balanceBefore = await token.balanceOf.call(TEAM_MULTISIG);
+      assert.equal(balanceBefore.toNumber(), 0);
+
+      try {
+        await colonySale.claimVestedTokens({ from: TEAM_MULTISIG });
+      }
+      catch (err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+
+      const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
+      assert.equal(balanceAfter.toNumber(), 0);
+
+      const tokenGrant = await colonySale.tokenGrants.call(TEAM_MULTISIG);
+      assert.equal(tokenGrant.toNumber(), teamTotal.toNumber());
+    });
+
+    it("Less than 6 months after sale finalized, foundation should NOT be able to claim token grant", async function () {
+      testHelper.forwardTime(15552000 / 2);
+      const balanceBefore = await token.balanceOf.call(FOUNDATION);
+      assert.equal(balanceBefore.toNumber(), 0);
+
+      try {
+        await colonySale.claimVestedTokens({ from: FOUNDATION });
+      }
+      catch (err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+      const balanceAfter = await token.balanceOf.call(FOUNDATION);
+      assert.equal(balanceAfter.toNumber(), 0);
+
+      const tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
+      assert.equal(tokenGrant.toNumber(), foundationTotal.toNumber());
+    });
+
     it("6 months after sale finalized, team should be able to claim 25% of their total token grant", async function () {
       testHelper.forwardTime(15552000);
       const balanceBefore = await token.balanceOf.call(TEAM_MULTISIG);
@@ -571,7 +608,7 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(tokenGrant.toNumber(), teamTotal.sub(balanceAfter).toNumber());
     });
 
-    it("6 months after sale finalized, Foundation should be able to claim 25% of their total token grant", async function () {
+    it("6 months after sale finalized, foundation should be able to claim 25% of their total token grant", async function () {
       testHelper.forwardTime(15552000);
       const balanceBefore = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceBefore.toNumber(), 0);
@@ -594,7 +631,7 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(tokenGrant.toNumber(), teamTotal.sub(balanceAfter).toNumber());
     });
 
-    it("12 months after sale finalized, Foundation should be able to claim 50% of their total token grant", async function () {
+    it("12 months after sale finalized, foundation should be able to claim 50% of their total token grant", async function () {
       testHelper.forwardTime(15552000*2);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
@@ -614,7 +651,7 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(tokenGrant.toNumber(), teamTotal.sub(balanceAfter).toNumber());
     });
 
-    it("18 months after sale finalized, Foundation should be able to claim 75% of their total token grant", async function () {
+    it("18 months after sale finalized, foundation should be able to claim 75% of their total token grant", async function () {
       testHelper.forwardTime(15552000*3);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
@@ -634,7 +671,7 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(tokenGrant.toNumber(), 0);
     });
 
-    it("24 months after sale finalized, Foundation should be able to claim 100% of their total token grant", async function () {
+    it("24 months after sale finalized, foundation should be able to claim 100% of their total token grant", async function () {
       testHelper.forwardTime(15552000*4);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
