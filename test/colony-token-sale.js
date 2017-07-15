@@ -458,10 +458,6 @@ contract('ColonyTokenSale', function(accounts) {
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance4 = await token.balanceOf.call(BUYER_THREE);
       assert.equal(tokenBalance4.toNumber(), 1001 * 1e15);
-
-      //TODO when vesting is done assert what's left is the total vested
-      //const tokenBalanceLeft = await token.balanceOf.call(colonySale.address);
-      //assert.equal(tokenBalanceLeft.toNumber(), 0);
     });
 
     it("when sale is finalized and tokens claimed, that account balance in userBuys should be set to 0", async function () {
@@ -559,7 +555,7 @@ contract('ColonyTokenSale', function(accounts) {
     });
 
     it("Less than 6 months after sale finalized, team should NOT be able to claim token grant", async function () {
-      testHelper.forwardTime(15552000 / 2);
+      testHelper.forwardTime(7776000);
       const balanceBefore = await token.balanceOf.call(TEAM_MULTISIG);
       assert.equal(balanceBefore.toNumber(), 0);
 
@@ -578,7 +574,7 @@ contract('ColonyTokenSale', function(accounts) {
     });
 
     it("Less than 6 months after sale finalized, foundation should NOT be able to claim token grant", async function () {
-      testHelper.forwardTime(15552000 / 2);
+      testHelper.forwardTime(7776000);
       const balanceBefore = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceBefore.toNumber(), 0);
 
@@ -679,6 +675,24 @@ contract('ColonyTokenSale', function(accounts) {
 
       const tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
       assert.equal(tokenGrant.toNumber(), 0);
+    });
+
+    it("when all purchases and grants have been claimed, colonySale token balance should be 0", async function () {
+      let txData = await colonySale.contract.claimPurchase.getData(COLONY_ACCOUNT);
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
+      txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
+      txData = await colonySale.contract.claimPurchase.getData(BUYER_TWO);
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
+      txData = await colonySale.contract.claimPurchase.getData(BUYER_THREE);
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
+
+      testHelper.forwardTime(15552000*4);
+      await colonySale.claimVestedTokens({ from: TEAM_MULTISIG });
+      await colonySale.claimVestedTokens({ from: FOUNDATION });
+
+      const tokenBalanceLeft = await token.balanceOf.call(colonySale.address);
+      assert.equal(tokenBalanceLeft.toNumber(), 0);
     });
   });
 });
