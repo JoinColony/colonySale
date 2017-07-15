@@ -10,6 +10,7 @@ contract('ColonyTokenSale', function(accounts) {
   const COINBASE_ACCOUNT = accounts[0];
   const ACCOUNT_TWO = accounts[1];
   const ACCOUNT_THREE = accounts[2];
+  const FOUNDATION = accounts[10];
 
   // Initialised at the start of test in `before` call
   let ownable;
@@ -66,8 +67,12 @@ contract('ColonyTokenSale', function(accounts) {
       console.log('finalize() cost', txFinalize.receipt.gasUsed);
 
       const txData = await colonySale.contract.claimPurchase.getData(COINBASE_ACCOUNT);
-      const txClaim = await colonyMultisig.submitTransaction(etherRouter.address, 0, txData, { from: COINBASE_ACCOUNT });
-      console.log('claim() cost', txClaim.receipt.gasUsed);
+      const txClaimPurchase = await colonyMultisig.submitTransaction(etherRouter.address, 0, txData, { from: COINBASE_ACCOUNT });
+      console.log('claimPurchase() cost', txClaimPurchase.receipt.gasUsed);
+
+      testHelper.forwardTime(15552000);
+      const txClaimVestedTokens = await colonySale.claimVestedTokens({ from: FOUNDATION });
+      console.log('claimVestedTokens() cost', txClaimVestedTokens.receipt.gasUsed);
     });
   });
 });

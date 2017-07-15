@@ -389,7 +389,6 @@ contract('ColonyTokenSale', function(accounts) {
     it("when sale finalized, should mint correct total retained tokens", async function () {
       await colonySale.finalize();
       const tokenSupply = await token.totalSupply.call();
-      console.log('tokenSupply', tokenSupply);
       const expected = new BigNumber('5917649019607843137254');
       assert.equal(tokenSupply.toNumber(), expected.toNumber()); // = 3018001 * 1e15 * CLNY tokens sold / 0.51
     });
