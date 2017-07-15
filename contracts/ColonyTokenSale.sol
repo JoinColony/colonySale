@@ -31,6 +31,8 @@ contract ColonyTokenSale is DSMath {
   Token public token;
   // Has the sale been finalised by Colony
   bool public saleFinalized = false;
+  uint saleFinalisedTime;
+  uint constant public secondsPerMonth = 2592000;
 
   address public INVESTOR_1 = 0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4;
   address public INVESTOR_2 = 0x9F485401a3C22529aB6EA15E2EbD5A8CA54a5430;
@@ -171,6 +173,19 @@ contract ColonyTokenSale is DSMath {
     Claim(_owner, amount, tokens);
   }
 
+  function claimVestedTokens() external
+  saleFinalised
+  {
+    uint elapsedTime = sub(now, saleFinalisedTime);
+    uint cliffMultiplier = div(elapsedTime, secondsPerMonth*6);
+    assert(cliffMultiplier > 0);
+
+    // Calculate vested tokens and transfer them to recipient
+    uint amountVested = (cliffMultiplier == 4 ? tokenGrants[msg.sender] : mul(div(tokenGrants[msg.sender], 4), cliffMultiplier));
+    tokenGrants[msg.sender] -= amountVested;
+    token.transfer(msg.sender, amountVested);
+  }
+
   function finalize() external
   saleClosed
   raisedMinimumAmount
@@ -210,6 +225,7 @@ contract ColonyTokenSale is DSMath {
     AllocatedReservedTokens(STRATEGY_FUND, strategyFundAllocation);
 
     saleFinalized = true;
+    saleFinalisedTime = now;
     SaleFinalized(msg.sender, totalRaised, totalSupply);
   }
 }
