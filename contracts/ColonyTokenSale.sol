@@ -158,7 +158,7 @@ contract ColonyTokenSale is DSMath {
     return buy(msg.sender);
   }
 
-  function claim(address _owner) external
+  function claimPurchase(address _owner) external
   onlyColonyMultisig
   saleFinalised
   {

@@ -65,7 +65,7 @@ contract('ColonyTokenSale', function(accounts) {
       const txFinalize = await colonySale.finalize();
       console.log('finalize() cost', txFinalize.receipt.gasUsed);
 
-      const txData = await colonySale.contract.claim.getData(COINBASE_ACCOUNT);
+      const txData = await colonySale.contract.claimPurchase.getData(COINBASE_ACCOUNT);
       const txClaim = await colonyMultisig.submitTransaction(etherRouter.address, 0, txData, { from: COINBASE_ACCOUNT });
       console.log('claim() cost', txClaim.receipt.gasUsed);
     });

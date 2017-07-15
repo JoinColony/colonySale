@@ -232,7 +232,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should NOT be able to claim tokens", async function () {
       try {
-        let txData = await colonySale.contract.claim.getData(BUYER_ONE);
+        let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
         await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       } catch (err) {
         testHelper.ifUsingTestRPC(err);
@@ -308,7 +308,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should NOT be able to claim tokens", async function () {
       try {
-        let txData = await colonySale.contract.claim.getData(BUYER_ONE);
+        let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
         await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       } catch (err) {
         testHelper.ifUsingTestRPC(err);
@@ -356,7 +356,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("when sale NOT yet finalized, should NOT be able to claim tokens", async function () {
       try {
-        let txData = await colonySale.contract.claim.getData(BUYER_ONE);
+        let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
         await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       } catch (err) {
         testHelper.ifUsingTestRPC(err);
@@ -439,22 +439,22 @@ contract('ColonyTokenSale', function(accounts) {
       const tokenBalance3Pre = await token.balanceOf.call(BUYER_TWO);
       assert.equal(tokenBalance3Pre.toNumber(), 0);
       // Claim tokens for account
-      let txData = await colonySale.contract.claim.getData(COLONY_ACCOUNT);
+      let txData = await colonySale.contract.claimPurchase.getData(COLONY_ACCOUNT);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance1 = await token.balanceOf.call(COLONY_ACCOUNT);
       assert.equal(tokenBalance1.toNumber(), 4 * 1e18);
 
-      txData = await colonySale.contract.claim.getData(BUYER_ONE);
+      txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance2 = await token.balanceOf.call(BUYER_ONE);
       assert.equal(tokenBalance2.toNumber(), 1001 * 1e18);
 
-      txData = await colonySale.contract.claim.getData(BUYER_TWO);
+      txData = await colonySale.contract.claimPurchase.getData(BUYER_TWO);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance3 = await token.balanceOf.call(BUYER_TWO);
       assert.equal(tokenBalance3.toNumber(), 2012 * 1e18);
 
-      txData = await colonySale.contract.claim.getData(BUYER_THREE);
+      txData = await colonySale.contract.claimPurchase.getData(BUYER_THREE);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance4 = await token.balanceOf.call(BUYER_THREE);
       assert.equal(tokenBalance4.toNumber(), 1001 * 1e15);
@@ -466,7 +466,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("when sale is finalized and tokens claimed, that account balance in userBuys should be set to 0", async function () {
       await colonySale.finalize();
-      const txData = await colonySale.contract.claim.getData(COLONY_ACCOUNT);
+      const txData = await colonySale.contract.claimPurchase.getData(COLONY_ACCOUNT);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
 
       const userBuy = await colonySale.userBuys.call(COLONY_ACCOUNT);
@@ -475,7 +475,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it.skip("when sale is finalized and tokens claimed, claim event should be logged", async function () {
       await colonySale.finalize();
-      const txData = await colonySale.contract.claim.getData(BUYER_ONE);
+      const txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
       const tx = await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       // Cannot get the logs below the multisig parent transaction
       assert.equal(tx.logs[2].event, 'Claim');
@@ -485,7 +485,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should NOT be able to claim tokens, if called by anyone but colonyMultisig", async function () {
       try {
-        let txData = await colonySale.contract.claim.getData(BUYER_ONE);
+        let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
         await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: BUYER_ONE });
       } catch (err) {
         testHelper.ifUsingTestRPC(err);
@@ -523,7 +523,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should NOT be able to claim tokens", async function () {
       try {
-        let txData = await colonySale.contract.claim.getData(BUYER_ONE);
+        let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
         await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       } catch (err) {
         testHelper.ifUsingTestRPC(err);
