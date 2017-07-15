@@ -9399,20 +9399,6 @@ solc@0.4.6, solc@^0.4.2:
     require-from-string "^1.1.0"
     yargs "^4.7.1"
 
-"solidity-coverage@https://github.com/sc-forks/solidity-coverage#allow-exclusions":
-  version "0.1.5"
-  resolved "https://github.com/sc-forks/solidity-coverage#c500b9df7a2975be3ad231c2894e46e94bc650a9"
-  dependencies:
-    commander "^2.9.0"
-    ethereumjs-testrpc-sc "https://github.com/sc-forks/testrpc-sc.git"
-    istanbul "^0.4.5"
-    keccakjs "^0.2.1"
-    mkdirp "^0.5.1"
-    req-cwd "^1.0.1"
-    shelljs "^0.7.4"
-    sol-explore "^1.6.2"
-    solidity-parser "git+https://github.com/sc-forks/solidity-parser.git"
-
 "solidity-coverage@https://github.com/sc-forks/solidity-coverage.git#aa41e80f1f8dc53f1f05955e203933467d6cabd0":
   version "0.1.5"
   resolved "https://github.com/sc-forks/solidity-coverage.git#aa41e80f1f8dc53f1f05955e203933467d6cabd0"
@@ -9445,9 +9431,9 @@ solidity-sha3@^0.4.1:
     left-pad "^1.1.1"
     web3 "^0.16.0"
 
-solium@^0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/solium/-/solium-0.4.0.tgz#42557b3ed4cc800eaccec5058e2925a91b9bad6f"
+solium@^0.5.3:
+  version "0.5.3"
+  resolved "https://registry.yarnpkg.com/solium/-/solium-0.5.3.tgz#5736723dde08fe0e96a151d5bca7538d21f1f624"
   dependencies:
     chokidar "^1.6.0"
     colors "^1.1.2"
@@ -9455,11 +9441,11 @@ solium@^0.4.0:
     lodash "^4.14.2"
     sol-digger "0.0.2"
     sol-explore "^1.6.1"
-    solparse "^1.0.16"
+    solparse "^1.2.0"
 
-solparse@^1.0.16:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/solparse/-/solparse-1.1.0.tgz#63d1631c72feec1bf8ddfaeb6e626e85f1176af4"
+solparse@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/solparse/-/solparse-1.2.0.tgz#678304a86b0bb997eb172d00c0a35a9872b9d2ac"
   dependencies:
     mocha "^2.4.5"
     pegjs "^0.10.0"
