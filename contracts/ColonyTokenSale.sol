@@ -44,6 +44,7 @@ contract ColonyTokenSale is DSMath {
   uint128 constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
 
   mapping (address => uint) public userBuys;
+  mapping (address => uint) public tokenGrants;
 
   event Purchase(address buyer, uint amount);
   event Claim(address buyer, uint amount, uint tokens);
@@ -196,11 +197,11 @@ contract ColonyTokenSale is DSMath {
 
     // Vest remainder to team multisig
     uint128 teamRemainderAmount = hsub(totalTeamAllocation, hadd(ALLOCATION_TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_2));
-    // TODO create token grant TEAM_MULTISIG, teamRemainderAmount
+    tokenGrants[TEAM_MULTISIG] = teamRemainderAmount;
 
     // 15% allocated to Foundation
     uint128 foundationAllocation = wmul(wdiv(totalSupply, 100), 15);
-    // TODO create token grant FOUNDATION, foundationAllocation
+    tokenGrants[FOUNDATION] = foundationAllocation;
 
     // 19% allocated to Strategy fund
     // wmul(wdiv(totalSupply, 100), 19);

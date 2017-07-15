@@ -418,6 +418,16 @@ contract('ColonyTokenSale', function(accounts) {
       assert.isTrue(strategyFundTokenWeiBalance.equals(expectedStrategyFundAllocation), 'StrategyFund allocation incorrect');
     });
 
+    it("when sale finalized, should generate correct token grants", async function () {
+      await colonySale.finalize();
+
+      const teamGrantAmount = await colonySale.tokenGrants.call(TEAM_MULTISIG);
+      assert.equal(teamGrantAmount.toNumber(), new BigNumber('481764901960784313725').toNumber());
+
+      const foundationGrantAmount = await colonySale.tokenGrants.call(FOUNDATION);
+      assert.equal(foundationGrantAmount.toNumber(), new BigNumber('887647352941176470588').toNumber());
+    });
+
     it("when sale finalized, buyers should be able to claim their tokens", async function () {
       await colonySale.finalize();
 
