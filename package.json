@@ -32,8 +32,8 @@
     "pshell": "^1.1.0",
     "request": "^2.81.0",
     "rimraf": "^2.6.1",
-    "solidity-coverage": "https://github.com/sc-forks/solidity-coverage.git#aa41e80f1f8dc53f1f05955e203933467d6cabd0",
-    "solium": "^0.4.0",
+    "solidity-coverage": "0.1.8",
+    "solium": "^0.5.3",
     "truffle": "3.2.5"
   }
 }

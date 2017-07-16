@@ -7,22 +7,22 @@ import "./dappsys/math.sol";
 contract ColonyTokenSale is DSMath {
   // Block number in which the sale starts. Inclusive. Sale will be opened at start block.
   uint public startBlock;
-  // Sale will continue for a maximum of 71153 blocks (~14 days). Initialised as the latest possible block number at which the sale ends.
-  // Updated if softCap reached to the number of blocks it took to reach the soft cap and it is a min of 635 and max 5082.
+  // Sale will continue for a maximum of 60480 blocks (~14 days). Initialised as the latest possible block number at which the sale ends.
+  // Updated if softCap reached to the number of blocks it took to reach the soft cap and it is a min of 540 and max 4320.
   // Exclusive. Sale will be closed at end block.
   uint public endBlock;
   // Once softCap is reached, the remaining sale duration is set to the same amount of blocks it's taken the sale to reach the softCap
-  // minumum and maximum are 635 and 5082 blocks corresponding to roughly 3 and 24 hours.
+  // minumum and maximum are 540 and 4320 blocks corresponding to roughly 3 and 24 hours.
   uint public postSoftCapMinBlocks;
   uint public postSoftCapMaxBlocks;
-  // CLNY token wei price, at the start of the sale
-  uint constant public tokenPrice = 1 finney;
+  // CLNY token price = 1 finney
+  uint constant public tokenPriceMultiplier = 1000;
   // Minimum contribution amount
   uint constant public minimumContribution = 1 finney;
   // Minimum amount to raise for sale to be successful
   uint public minToRaise;
   // Total amount raised
-  uint public totalRaised = 0 wei;
+  uint public totalRaised = 0 ether;
   // Sale soft cap
   uint public softCap;
   // The address to hold the funds donated
@@ -31,35 +31,65 @@ contract ColonyTokenSale is DSMath {
   Token public token;
   // Has the sale been finalised by Colony
   bool public saleFinalized = false;
+  uint saleFinalisedTime;
+  uint constant public secondsPerMonth = 2592000;
+
+  address public INVESTOR_1 = 0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4;
+  address public INVESTOR_2 = 0x9F485401a3C22529aB6EA15E2EbD5A8CA54a5430;
+  address public TEAM_MEMBER_1 = 0x4110afd6bAc4F25724aDe66F0e0300dde0696a58;
+  address public TEAM_MEMBER_2 = 0x099a2B3E7b8558381A8aB3B3B7953858d5691946;
+  address public TEAM_MULTISIG = 0xd6Bf4Be334A4661e12a647b62EF1510a247dd625;
+  address public FOUNDATION = 0x4e7DBb49018489a27088FE304b18849b02F708F6;
+  address public STRATEGY_FUND = 0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F;
+
+  uint128 constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** 18;
+  uint128 constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
 
   mapping (address => uint) public userBuys;
+  mapping (address => uint) public tokenGrants;
 
   event Purchase(address buyer, uint amount);
   event Claim(address buyer, uint amount, uint tokens);
-  event SaleFinalized(address user, uint totalRaised, uint totalSupply);
+  event SaleFinalized(address user, uint totalRaised, uint128 totalSupply);
+  event AllocatedReservedTokens(address user, uint tokens);
 
-  modifier only_colony_multisig {
+  modifier onlyColonyMultisig {
     require(msg.sender == colonyMultisig);
     _;
   }
 
-  modifier sale_is_open {
+  modifier saleOpen {
     require(getBlockNumber() >= startBlock);
     require(getBlockNumber() < endBlock);
     _;
   }
 
-  modifier sale_is_finalized {
+  modifier saleClosed {
+    require(getBlockNumber() >= endBlock);
+    _;
+  }
+
+  modifier raisedMinimumAmount {
+    require(totalRaised >= minToRaise);
+    _;
+  }
+
+  modifier saleFinalised {
     require(saleFinalized);
     _;
   }
 
-  modifier contribution_is_over_the_minimum {
+  modifier saleNotFinalised {
+    require(!saleFinalized);
+    _;
+  }
+
+  modifier contributionOverMinimum {
     require(msg.value >= minimumContribution);
     _;
   }
 
-  modifier non_zero_address(address x) {
+  modifier nonZeroAddress(address x) {
     require(x != 0);
     _;
   }
@@ -73,8 +103,8 @@ contract ColonyTokenSale is DSMath {
     uint _maxSaleDurationBlocks,
     address _token,
     address _colonyMultisig)
-    non_zero_address(_token)
-    non_zero_address(_colonyMultisig)
+    nonZeroAddress(_token)
+    nonZeroAddress(_colonyMultisig)
     {
     // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
     require(_postSoftCapMinBlocks > 0);
@@ -96,8 +126,8 @@ contract ColonyTokenSale is DSMath {
   }
 
   function buy(address _owner) internal
-  contribution_is_over_the_minimum
-  sale_is_open
+  saleOpen
+  contributionOverMinimum
   {
     // Send funds to multisig, revert op performed on failure
     colonyMultisig.transfer(msg.value);
@@ -130,42 +160,72 @@ contract ColonyTokenSale is DSMath {
     return buy(msg.sender);
   }
 
-  function claim(address _owner) external
-  only_colony_multisig
-  sale_is_finalized
+  function claimPurchase(address _owner) external
+  onlyColonyMultisig
+  saleFinalised
   {
     // Calculate token amount for given value and transfer tokens
     uint amount = userBuys[_owner];
-    uint tokens = div(amount, tokenPrice);
+    uint tokens = mul(amount, tokenPriceMultiplier);
     userBuys[_owner] = 0;
     token.transfer(_owner, tokens);
 
     Claim(_owner, amount, tokens);
   }
 
-  function finalize() external {
-    uint currentBlock = block.number;
-    // Check the sale is closed, i.e. on or past endBlock
-    assert(currentBlock >= endBlock);
+  function claimVestedTokens() external
+  saleFinalised
+  {
+    uint elapsedTime = sub(now, saleFinalisedTime);
+    uint cliffMultiplier = div(elapsedTime, secondsPerMonth*6);
+    assert(cliffMultiplier > 0);
 
-    // Check min amount to raise is reached
-    assert(totalRaised >= minToRaise);
+    // Calculate vested tokens and transfer them to recipient
+    uint amountVested = (cliffMultiplier == 4 ? tokenGrants[msg.sender] : mul(div(tokenGrants[msg.sender], 4), cliffMultiplier));
+    tokenGrants[msg.sender] -= amountVested;
+    token.transfer(msg.sender, amountVested);
+  }
 
-    // Check sale is not finalised already
-    assert(saleFinalized == false);
+  function finalize() external
+  saleClosed
+  raisedMinimumAmount
+  saleNotFinalised
+  {
+    // Mint as much retained tokens as raised in sale, i.e. 51% is sold, 49% retained
+    uint purchasedSupply = mul(totalRaised, tokenPriceMultiplier);
+    uint128 totalSupply = cast(div(mul(purchasedSupply, 100), 51));
+    token.mint(totalSupply);
 
-    // Mint as much retained tokens as raised in sale, i.e. 50% is sold, 50% retained
-    uint amount = div(totalRaised, tokenPrice);
-    uint128 hamount = hmul(cast(amount), 2);
-    token.mint(hamount);
+    // 5% allocated to Investor
+    uint128 earlyInvestorAllocation = wmul(wdiv(totalSupply, 100), 5);
+    token.transfer(INVESTOR_1, earlyInvestorAllocation);
+    AllocatedReservedTokens(INVESTOR_1, earlyInvestorAllocation);
 
-    //TODO
-    // 5% early investors
-    // 10% team
-    // 15% foundation
-    // 20% strategy fund
+    // 10% allocated to Team
+    uint128 totalTeamAllocation = wmul(wdiv(totalSupply, 100), 10);
+
+    // Allocate to team members
+    token.transfer(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1);
+    AllocatedReservedTokens(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_2);
+    token.transfer(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
+    AllocatedReservedTokens(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
+
+    // Vest remainder to team multisig
+    uint128 teamRemainderAmount = hsub(totalTeamAllocation, hadd(ALLOCATION_TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_2));
+    tokenGrants[TEAM_MULTISIG] = teamRemainderAmount;
+
+    // 15% allocated to Foundation
+    uint128 foundationAllocation = wmul(wdiv(totalSupply, 100), 15);
+    tokenGrants[FOUNDATION] = foundationAllocation;
+
+    // 19% allocated to Strategy fund
+    // wmul(wdiv(totalSupply, 100), 19);
+    uint128 strategyFundAllocation = hsub(totalSupply, hadd(hadd(hadd(earlyInvestorAllocation, totalTeamAllocation), foundationAllocation), cast(purchasedSupply)));
+    token.transfer(STRATEGY_FUND, strategyFundAllocation);
+    AllocatedReservedTokens(STRATEGY_FUND, strategyFundAllocation);
 
     saleFinalized = true;
-    SaleFinalized(msg.sender, totalRaised, hamount);
+    saleFinalisedTime = now;
+    SaleFinalized(msg.sender, totalRaised, totalSupply);
   }
 }

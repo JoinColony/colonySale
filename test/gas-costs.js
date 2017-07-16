@@ -10,6 +10,7 @@ contract('ColonyTokenSale', function(accounts) {
   const COINBASE_ACCOUNT = accounts[0];
   const ACCOUNT_TWO = accounts[1];
   const ACCOUNT_THREE = accounts[2];
+  const FOUNDATION = '0x4e7DBb49018489a27088FE304b18849b02F708F6';
 
   // Initialised at the start of test in `before` call
   let ownable;
@@ -41,8 +42,8 @@ contract('ColonyTokenSale', function(accounts) {
   };
 
   describe('gas costs', async () => {
-    const minToRaise = web3.toWei(2, 'finney');
-    const softCap = web3.toWei(10, 'finney');
+    const minToRaise = web3.toWei(2, 'ether');
+    const softCap = web3.toWei(10, 'ether');
     const value = web3.toWei(1, 'finney');
 
     beforeEach('setup sale at startBlock', async () => {
@@ -55,7 +56,9 @@ contract('ColonyTokenSale', function(accounts) {
       console.error('buy() cost', txBuy.receipt.gasUsed);
 
       // Reach the soft cap
-      await colonySale.send(softCap);
+      const txBuySoftCapSet = await colonySale.send(softCap);
+      console.error('buy() cost when endBlock updated', txBuySoftCapSet.receipt.gasUsed);
+
       // Get the endBlock and fast forward to it
       const endBlock = await colonySale.endBlock.call();
       testHelper.forwardToBlock(endBlock.toNumber());
@@ -63,9 +66,13 @@ contract('ColonyTokenSale', function(accounts) {
       const txFinalize = await colonySale.finalize();
       console.log('finalize() cost', txFinalize.receipt.gasUsed);
 
-      const txData = await colonySale.contract.claim.getData(COINBASE_ACCOUNT);
-      const txClaim = await colonyMultisig.submitTransaction(etherRouter.address, 0, txData, { from: COINBASE_ACCOUNT });
-      console.log('claim() cost', txClaim.receipt.gasUsed);
+      const txData = await colonySale.contract.claimPurchase.getData(COINBASE_ACCOUNT);
+      const txClaimPurchase = await colonyMultisig.submitTransaction(etherRouter.address, 0, txData, { from: COINBASE_ACCOUNT });
+      console.log('claimPurchase() cost', txClaimPurchase.receipt.gasUsed);
+
+      testHelper.forwardTime(15552000);
+      const txClaimVestedTokens = await colonySale.claimVestedTokens({ from: FOUNDATION });
+      console.log('claimVestedTokens() cost', txClaimVestedTokens.receipt.gasUsed);
     });
   });
 });
