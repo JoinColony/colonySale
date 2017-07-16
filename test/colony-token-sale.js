@@ -9,11 +9,12 @@ import BigNumber from 'bignumber.js';
 import testHelper from '../helpers/test-helper';
 
 contract('ColonyTokenSale', function(accounts) {
-  const COLONY_ACCOUNT = accounts[0]; //0xb77D57F4959eAfA0339424b83FcFaf9c15407461 Starting balance 100 ETH
-  const BUYER_ONE = accounts[1];      //0x9dF24e73f40b2a911Eb254A8825103723E13209C
-  const BUYER_TWO = accounts[2];      //0x27fF0C145E191C22C75cD123C679C3e1F58a4469
-  const BUYER_THREE = accounts[3];    //0x0021Cb24d7D4e669120b139030095315DFa6699a
-  const BUYER_FOUR = accounts[4];     //0xF822d689a2e10c1511dcD54dF5Ce43a9d393e75c
+  //Starting balance 100 ETH for each account
+  const COLONY_ACCOUNT = '0xb77D57F4959eAfA0339424b83FcFaf9c15407461';
+  const BUYER_ONE = '0x9dF24e73f40b2a911Eb254A8825103723E13209C';
+  const BUYER_TWO = '0x27fF0C145E191C22C75cD123C679C3e1F58a4469';
+  const BUYER_THREE = '0x0021Cb24d7D4e669120b139030095315DFa6699a';
+  const BUYER_FOUR = '0xF822d689a2e10c1511dcD54dF5Ce43a9d393e75c';
   const INVESTOR_1 = '0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4';
   const INVESTOR_2 = '0x9F485401a3C22529aB6EA15E2EbD5A8CA54a5430';
   const TEAM_MEMBER_1 = '0x4110afd6bAc4F25724aDe66F0e0300dde0696a58';
