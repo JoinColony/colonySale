@@ -10,7 +10,7 @@ contract('ColonyTokenSale', function(accounts) {
   const COINBASE_ACCOUNT = accounts[0];
   const ACCOUNT_TWO = accounts[1];
   const ACCOUNT_THREE = accounts[2];
-  const FOUNDATION = accounts[10];
+  const FOUNDATION = '0x4e7DBb49018489a27088FE304b18849b02F708F6';
 
   // Initialised at the start of test in `before` call
   let ownable;
