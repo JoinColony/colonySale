@@ -52,11 +52,11 @@ contract('ColonyTokenSale', function(accounts) {
     });
 
     it("functions", async function () {
-      const txBuy = await colonySale.send(value);
+      const txBuy = await colonySale.send(value, { FROM: ACCOUNT_TWO });
       console.error('buy() cost', txBuy.receipt.gasUsed);
 
       // Reach the soft cap
-      const txBuySoftCapSet = await colonySale.send(softCap);
+      const txBuySoftCapSet = await colonySale.send(softCap, { from: ACCOUNT_THREE });
       console.error('buy() cost when endBlock updated', txBuySoftCapSet.receipt.gasUsed);
 
       // Get the endBlock and fast forward to it
@@ -66,7 +66,7 @@ contract('ColonyTokenSale', function(accounts) {
       const txFinalize = await colonySale.finalize();
       console.log('finalize() cost', txFinalize.receipt.gasUsed);
 
-      const txData = await colonySale.contract.claimPurchase.getData(COINBASE_ACCOUNT);
+      const txData = await colonySale.contract.claimPurchase.getData(ACCOUNT_TWO);
       const txClaimPurchase = await colonyMultisig.submitTransaction(etherRouter.address, 0, txData, { from: COINBASE_ACCOUNT });
       console.log('claimPurchase() cost', txClaimPurchase.receipt.gasUsed);
 
