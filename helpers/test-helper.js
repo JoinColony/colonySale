@@ -96,7 +96,7 @@ module.exports = {
         {
           from: source,
           to: dest,
-          gas: '0x47E7C4', // Send the max gas as this triggers the gas-heavier `buy` function
+          gas: '0x30D40', // Buy tx costs ~72,000 gas but solidity-coverage needs more than that, send 200,000
           value: amountInHex
         }
       ],
