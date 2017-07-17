@@ -49,6 +49,7 @@ contract ColonyTokenSale is DSMath {
 
   uint128 constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** 18;
   uint128 constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
+  uint128 constant public ALLOCATION_TEAM_MEMBERS_TOTAL = 110 * 10 ** 18;
 
   mapping (address => uint) public userBuys;
   mapping (address => uint) public tokenGrants;
@@ -221,7 +222,7 @@ contract ColonyTokenSale is DSMath {
     AllocatedReservedTokens(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
 
     // Vest remainder to team multisig
-    uint128 teamRemainderAmount = hsub(totalTeamAllocation, hadd(ALLOCATION_TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_2));
+    uint128 teamRemainderAmount = hsub(totalTeamAllocation, ALLOCATION_TEAM_MEMBERS_TOTAL);
     tokenGrants[TEAM_MULTISIG] = teamRemainderAmount;
 
     // 15% allocated to Foundation
