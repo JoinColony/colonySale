@@ -68,14 +68,6 @@ contract('ColonyTokenSale', function(accounts) {
       await createColonyTokenSale(4000000, minAmountToRaise, softCapInWei, 540, 4320, 60480);
     });
 
-    it("should return correct current block number", async function () {
-      await testHelper.stopMining();
-      const currentBlock = await colonySale.getBlockNumber.call();
-      const currentActualBlock = web3.eth.blockNumber;
-      await testHelper.startMining();
-      assert.equal(currentActualBlock, currentBlock.toNumber());
-    });
-
     it("should have correct sale start block", async function () {
       const startBlock = await colonySale.startBlock.call();
       assert.equal(startBlock.toNumber(), 4000000);

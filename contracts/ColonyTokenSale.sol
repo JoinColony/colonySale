@@ -16,6 +16,7 @@ contract ColonyTokenSale is DSMath {
   uint public postSoftCapMinBlocks;
   uint public postSoftCapMaxBlocks;
   // CLNY token price = 1 finney
+  // 1 Wei = 1000 CLNY Wei
   uint constant public tokenPriceMultiplier = 1000;
   // Minimum contribution amount
   uint constant public minimumContribution = 1 finney;
@@ -29,12 +30,13 @@ contract ColonyTokenSale is DSMath {
   address public colonyMultisig;
   // The address of the Colony Network Token
   Token public token;
+  bool endBlockUpdatedAtSoftCap = false;
   // Has Colony stopped the sale
   bool public saleStopped = false;
   // Has the sale been finalized
   bool public saleFinalized = false;
-  uint saleFinalisedTime;
-  uint constant public secondsPerMonth = 2592000;
+  uint public saleFinalisedTime;
+  uint constant internal secondsPerMonth = 2592000;
 
   address public INVESTOR_1 = 0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4;
   address public INVESTOR_2 = 0x9F485401a3C22529aB6EA15E2EbD5A8CA54a5430;
@@ -61,13 +63,13 @@ contract ColonyTokenSale is DSMath {
   }
 
   modifier saleOpen {
-    assert(getBlockNumber() >= startBlock);
-    assert(getBlockNumber() < endBlock);
+    assert(block.number >= startBlock);
+    assert(block.number < endBlock);
     _;
   }
 
   modifier saleClosed {
-    assert(getBlockNumber() >= endBlock);
+    assert(block.number >= endBlock);
     _;
   }
 
@@ -91,7 +93,7 @@ contract ColonyTokenSale is DSMath {
     _;
   }
 
-  modifier contributionOverMinimum {
+  modifier contributionMeetsMinimum {
     require(msg.value >= minimumContribution);
     _;
   }
@@ -114,7 +116,7 @@ contract ColonyTokenSale is DSMath {
     nonZeroAddress(_colonyMultisig)
     {
     // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
-    require(_postSoftCapMinBlocks > 0);
+    require(_postSoftCapMinBlocks != 0);
     require(_postSoftCapMinBlocks < _postSoftCapMaxBlocks);
 
     // TODO validate startBLock > block.number;
@@ -128,18 +130,14 @@ contract ColonyTokenSale is DSMath {
     colonyMultisig = _colonyMultisig;
   }
 
-  function getBlockNumber() constant returns (uint) {
-    return block.number;
-  }
-
   function buy(address _owner) internal
   saleOpen
   saleNotStopped
-  contributionOverMinimum
+  contributionMeetsMinimum
   {
     // Send funds to multisig, revert op performed on failure
     colonyMultisig.transfer(msg.value);
-    userBuys[_owner] += msg.value;
+    userBuys[_owner] = add(msg.value, userBuys[_owner]);
 
     // Up the total raised with given value
     totalRaised = add(msg.value, totalRaised);
@@ -185,7 +183,7 @@ contract ColonyTokenSale is DSMath {
   saleFinalised
   {
     uint elapsedTime = sub(now, saleFinalisedTime);
-    uint cliffMultiplier = div(elapsedTime, secondsPerMonth*6);
+    uint cliffMultiplier = div(elapsedTime, secondsPerMonth * 6);
     assert(cliffMultiplier > 0);
 
     // Calculate vested tokens and transfer them to recipient
@@ -227,7 +225,6 @@ contract ColonyTokenSale is DSMath {
     tokenGrants[FOUNDATION] = foundationAllocation;
 
     // 19% allocated to Strategy fund
-    // wmul(wdiv(totalSupply, 100), 19);
     uint128 strategyFundAllocation = hsub(totalSupply, hadd(hadd(hadd(earlyInvestorAllocation, totalTeamAllocation), foundationAllocation), cast(purchasedSupply)));
     assert(token.transfer(STRATEGY_FUND, strategyFundAllocation));
     AllocatedReservedTokens(STRATEGY_FUND, strategyFundAllocation);
