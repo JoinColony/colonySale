@@ -564,6 +564,8 @@ contract('ColonyTokenSale', function(accounts) {
     });
 
     it("when called by anyone but colonyMultisig, should NOT be able to claim tokens", async function () {
+      await colonySale.finalize();
+
       try {
         let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
         await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: BUYER_ONE });

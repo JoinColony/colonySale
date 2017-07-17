@@ -176,7 +176,7 @@ contract ColonyTokenSale is DSMath {
     uint amount = userBuys[_owner];
     uint tokens = mul(amount, tokenPriceMultiplier);
     userBuys[_owner] = 0;
-    token.transfer(_owner, tokens);
+    assert(token.transfer(_owner, tokens));
 
     Claim(_owner, amount, tokens);
   }
@@ -191,7 +191,7 @@ contract ColonyTokenSale is DSMath {
     // Calculate vested tokens and transfer them to recipient
     uint amountVested = (cliffMultiplier == 4 ? tokenGrants[msg.sender] : mul(div(tokenGrants[msg.sender], 4), cliffMultiplier));
     tokenGrants[msg.sender] -= amountVested;
-    token.transfer(msg.sender, amountVested);
+    assert(token.transfer(msg.sender, amountVested));
   }
 
   function finalize() external
@@ -206,16 +206,16 @@ contract ColonyTokenSale is DSMath {
 
     // 5% allocated to Investor
     uint128 earlyInvestorAllocation = wmul(wdiv(totalSupply, 100), 5);
-    token.transfer(INVESTOR_1, earlyInvestorAllocation);
+    assert(token.transfer(INVESTOR_1, earlyInvestorAllocation));
     AllocatedReservedTokens(INVESTOR_1, earlyInvestorAllocation);
 
     // 10% allocated to Team
     uint128 totalTeamAllocation = wmul(wdiv(totalSupply, 100), 10);
 
     // Allocate to team members
-    token.transfer(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1);
+    assert(token.transfer(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1));
     AllocatedReservedTokens(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_2);
-    token.transfer(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
+    assert(token.transfer(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2));
     AllocatedReservedTokens(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
 
     // Vest remainder to team multisig
@@ -229,7 +229,7 @@ contract ColonyTokenSale is DSMath {
     // 19% allocated to Strategy fund
     // wmul(wdiv(totalSupply, 100), 19);
     uint128 strategyFundAllocation = hsub(totalSupply, hadd(hadd(hadd(earlyInvestorAllocation, totalTeamAllocation), foundationAllocation), cast(purchasedSupply)));
-    token.transfer(STRATEGY_FUND, strategyFundAllocation);
+    assert(token.transfer(STRATEGY_FUND, strategyFundAllocation));
     AllocatedReservedTokens(STRATEGY_FUND, strategyFundAllocation);
 
     saleFinalized = true;
