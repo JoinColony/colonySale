@@ -30,6 +30,7 @@ contract ColonyTokenSale is DSMath {
   address public colonyMultisig;
   // The address of the Colony Network Token
   Token public token;
+  // endBlock updated once after softCap met
   bool endBlockUpdatedAtSoftCap = false;
   // Has Colony stopped the sale
   bool public saleStopped = false;
@@ -54,6 +55,7 @@ contract ColonyTokenSale is DSMath {
 
   event Purchase(address buyer, uint amount);
   event Claim(address buyer, uint amount, uint tokens);
+  event updatedSaleEndBlock(uint endblockNumber);
   event SaleFinalized(address user, uint totalRaised, uint128 totalSupply);
   event AllocatedReservedTokens(address user, uint tokens);
 
@@ -143,7 +145,7 @@ contract ColonyTokenSale is DSMath {
     totalRaised = add(msg.value, totalRaised);
 
     // When softCap is reached, calculate the remainder sale duration in blocks
-    if (totalRaised >= softCap) {
+    if (!endBlockUpdatedAtSoftCap && totalRaised >= softCap) {
       uint updatedEndBlock;
       uint currentBlock = block.number;
       uint blocksInSale = sub(currentBlock, startBlock);
@@ -157,6 +159,8 @@ contract ColonyTokenSale is DSMath {
 
       // We cannot exceed the longest sale duration
       endBlock = min(updatedEndBlock, endBlock);
+      endBlockUpdatedAtSoftCap = true;
+      updatedSaleEndBlock(endBlock);
     }
 
     Purchase(_owner, msg.value);

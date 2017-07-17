@@ -300,12 +300,12 @@ contract('ColonyTokenSale', function(accounts) {
 
     it('while over postSoftCapMinBlocks but under postSoftCapMaxBlocks, should set remainder duration to that amount of blocks', async function () {
       const startBlock = await colonySale.startBlock.call();
-      testHelper.forwardToBlock(startBlock.plus(postSoftCapMinBlocks - 1).toNumber());
+      testHelper.forwardToBlock(startBlock.plus(5).toNumber());
       // Reach the softCap
       testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
       const currentBlock = web3.eth.blockNumber;
       const endBlock = await colonySale.endBlock.call();
-      assert.equal(endBlock.toNumber(), currentBlock + postSoftCapMinBlocks);
+      assert.equal(endBlock.toNumber(), currentBlock + 6);
     });
 
     it('while over postSoftCapMaxBlocks, should set remainder duration to postSoftCapMaxBlocks', async function () {
@@ -326,6 +326,24 @@ contract('ColonyTokenSale', function(accounts) {
       testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
       const endBlock = await colonySale.endBlock.call();
       assert.equal(endBlock.toNumber(), startBlock.plus(maxSaleDuration).toNumber());
+    });
+
+    it('when softCap reached and endBlock reset, should not reset endBlock again', async function () {
+      const startBlock = await colonySale.startBlock.call();
+      testHelper.forwardToBlock(startBlock.plus(5).toNumber());
+
+      // Reach the softCap and check the endBlock is reset correctly
+      const tx1 = await colonySale.send(web3.toWei(10, 'finney'), { from: BUYER_TWO });
+      const currentBlock = web3.eth.blockNumber;
+      const endBlock = await colonySale.endBlock.call();
+      assert.equal(endBlock.toNumber(), currentBlock + 6);
+      assert.equal(tx1.logs[0].event, 'updatedSaleEndBlock');
+
+      // Execute another buy tx and check endBlock hasn't been updated
+      const tx2 = await colonySale.send(web3.toWei(3, 'finney'), { from: BUYER_TWO });
+      assert.notEqual(tx2.logs[0].event, 'updatedSaleEndBlock');
+      const endBlockNew = await colonySale.endBlock.call();
+      assert.equal(endBlockNew.toNumber(), endBlock.toNumber());
     });
 
     it("should NOT be able to finalize sale", async function () {
