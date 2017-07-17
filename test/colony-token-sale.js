@@ -152,6 +152,16 @@ contract('ColonyTokenSale', function(accounts) {
       const tokenAddress = await colonySale.token.call();
       assert.equal(tokenAddress, etherRouter.address);
     });
+
+    it("should have saleStopped set to false", async function () {
+      const saleStopped = await colonySale.saleStopped.call();
+      assert.isFalse(saleStopped);
+    });
+
+    it("should have saleFinalized set to false", async function () {
+      const saleFinalized = await colonySale.saleFinalized.call();
+      assert.isFalse(saleFinalized);
+    });
   });
 
   describe('before sale start block is reached', () => {
@@ -243,8 +253,38 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(balanceOfTokenholder.toNumber(), 0);
     });
 
-    it.skip('should fail to transfer tokens too early', async function () {
+    it("should be able to STOP the sale", async function () {
+      let txData = await colonySale.contract.stop.getData();
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
 
+      const saleStopped = await colonySale.saleStopped.call();
+      assert.isTrue(saleStopped);
+
+      try {
+        await testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'finney');
+      } catch(err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+      const colonySaleBalanceAfter = web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(colonySaleBalanceAfter.toNumber(), web3.toWei(1, 'finney'));
+    });
+
+    it("should be able to START a stopped sale", async function () {
+      let txData = await colonySale.contract.stop.getData();
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
+
+      txData = await colonySale.contract.start.getData();
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
+
+      const saleStopped = await colonySale.saleStopped.call();
+      assert.isFalse(saleStopped);
+
+      await testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'finney');
+      const colonySaleBalanceAfter = await web3.eth.getBalance(colonyMultisig.address);
+      const TwoFinney = web3.toWei(2, 'finney');
+      assert.equal(colonySaleBalanceAfter.toNumber(), TwoFinney);
+      const userBuy = await colonySale.userBuys.call(BUYER_ONE);
+      assert.equal(userBuy.toNumber(), TwoFinney);
     });
   });
 
@@ -297,6 +337,9 @@ contract('ColonyTokenSale', function(accounts) {
     });
 
     it("should NOT be able to finalize sale", async function () {
+      // Reach the softCap
+      await colonySale.send(softCap, { from: BUYER_TWO });
+
       try {
         await colonySale.finalize();
       } catch (err) {
@@ -308,15 +351,56 @@ contract('ColonyTokenSale', function(accounts) {
     });
 
     it("should NOT be able to claim tokens", async function () {
+      // Reach the softCap
+      await colonySale.send(softCap, { from: BUYER_TWO });
+
       try {
-        let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
+        let txData = await colonySale.contract.claimPurchase.getData(BUYER_TWO);
         await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       } catch (err) {
         testHelper.ifUsingTestRPC(err);
       }
 
-      const balanceOfTokenholder = await token.balanceOf.call(BUYER_ONE);
+      const balanceOfTokenholder = await token.balanceOf.call(BUYER_TWO);
       assert.equal(balanceOfTokenholder.toNumber(), 0);
+    });
+
+    it("should be able to STOP the sale", async function () {
+      // Reach the softCap
+      await colonySale.send(softCap, { from: BUYER_TWO });
+
+      let txData = await colonySale.contract.stop.getData();
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
+
+      const saleStopped = await colonySale.saleStopped.call();
+      assert.isTrue(saleStopped);
+
+      try {
+        await testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'finney');
+      } catch(err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+      const colonySaleBalanceAfter = web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(colonySaleBalanceAfter.toNumber(), softCap);
+    });
+
+    it("should be able to START a stopped sale", async function () {
+      // Reach the softCap
+      await colonySale.send(softCap, { from: BUYER_TWO });
+
+      let txData = await colonySale.contract.stop.getData();
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
+
+      txData = await colonySale.contract.start.getData();
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
+
+      const saleStopped = await colonySale.saleStopped.call();
+      assert.isFalse(saleStopped);
+
+      await testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'finney');
+      const OneFinney = web3.toWei(1, 'finney');
+      const userBuy = await colonySale.userBuys.call(BUYER_ONE);
+      assert.equal(userBuy.toNumber(), OneFinney);
     });
   });
 
@@ -462,7 +546,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("when sale is finalized and tokens claimed, that account balance in userBuys should be set to 0", async function () {
       await colonySale.finalize();
-      const txData = await colonySale.contract.claimPurchase.getData(COLONY_ACCOUNT);
+      let txData = await colonySale.contract.claimPurchase.getData(COLONY_ACCOUNT);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
 
       const userBuy = await colonySale.userBuys.call(COLONY_ACCOUNT);
@@ -471,7 +555,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it.skip("when sale is finalized and tokens claimed, claim event should be logged", async function () {
       await colonySale.finalize();
-      const txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
+      let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
       const tx = await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       // Cannot get the logs below the multisig parent transaction
       assert.equal(tx.logs[2].event, 'Claim');

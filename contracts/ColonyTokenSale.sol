@@ -29,7 +29,9 @@ contract ColonyTokenSale is DSMath {
   address public colonyMultisig;
   // The address of the Colony Network Token
   Token public token;
-  // Has the sale been finalised by Colony
+  // Has Colony stopped the sale
+  bool public saleStopped = false;
+  // Has the sale been finalized
   bool public saleFinalized = false;
   uint saleFinalisedTime;
   uint constant public secondsPerMonth = 2592000;
@@ -66,6 +68,11 @@ contract ColonyTokenSale is DSMath {
 
   modifier saleClosed {
     require(getBlockNumber() >= endBlock);
+    _;
+  }
+
+  modifier saleNotStopped {
+    assert (!saleStopped);
     _;
   }
 
@@ -127,6 +134,7 @@ contract ColonyTokenSale is DSMath {
 
   function buy(address _owner) internal
   saleOpen
+  saleNotStopped
   contributionOverMinimum
   {
     // Send funds to multisig, revert op performed on failure
@@ -227,5 +235,17 @@ contract ColonyTokenSale is DSMath {
     saleFinalized = true;
     saleFinalisedTime = now;
     SaleFinalized(msg.sender, totalRaised, totalSupply);
+  }
+
+  function stop()
+  onlyColonyMultisig
+  {
+    saleStopped = true;
+  }
+
+  function start()
+  onlyColonyMultisig
+  {
+    saleStopped = false;
   }
 }
