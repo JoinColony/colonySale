@@ -300,7 +300,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it('while under the postSoftCapMinBlocks, should set remainder duration to postSoftCapMinBlocks', async function () {
       // Reach the softCap
-      await colonySale.send(softCap, { from: BUYER_TWO });
+      testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
       const currentBlock = web3.eth.blockNumber;
       const endBlock = await colonySale.endBlock.call();
       assert.equal(endBlock.toNumber(), currentBlock + postSoftCapMinBlocks);
@@ -310,7 +310,7 @@ contract('ColonyTokenSale', function(accounts) {
       const startBlock = await colonySale.startBlock.call();
       testHelper.forwardToBlock(startBlock.plus(postSoftCapMinBlocks - 1).toNumber());
       // Reach the softCap
-      await colonySale.send(softCap, { from: BUYER_TWO });
+      testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
       const currentBlock = web3.eth.blockNumber;
       const endBlock = await colonySale.endBlock.call();
       assert.equal(endBlock.toNumber(), currentBlock + postSoftCapMinBlocks);
@@ -320,7 +320,7 @@ contract('ColonyTokenSale', function(accounts) {
       const startBlock = await colonySale.startBlock.call();
       testHelper.forwardToBlock(startBlock.plus(postSoftCapMaxBlocks).toNumber());
       // Reach the softCap
-      await colonySale.send(softCap, { from: BUYER_TWO });
+      testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
       const currentBlock = web3.eth.blockNumber;
       const endBlock = await colonySale.endBlock.call();
       assert.equal(endBlock.toNumber(), currentBlock + postSoftCapMaxBlocks);
@@ -331,14 +331,14 @@ contract('ColonyTokenSale', function(accounts) {
       const startBlock = await colonySale.startBlock.call();
       testHelper.forwardToBlock(startBlock.plus(15).toNumber());
       // Reach the softCap
-      await colonySale.send(softCap, { from: BUYER_TWO });
+      testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
       const endBlock = await colonySale.endBlock.call();
       assert.equal(endBlock.toNumber(), startBlock.plus(maxSaleDuration).toNumber());
     });
 
     it("should NOT be able to finalize sale", async function () {
       // Reach the softCap
-      await colonySale.send(softCap, { from: BUYER_TWO });
+      testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
 
       try {
         await colonySale.finalize();
@@ -352,7 +352,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should NOT be able to claim tokens", async function () {
       // Reach the softCap
-      await colonySale.send(softCap, { from: BUYER_TWO });
+      testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
 
       try {
         let txData = await colonySale.contract.claimPurchase.getData(BUYER_TWO);
@@ -367,7 +367,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should be able to STOP the sale", async function () {
       // Reach the softCap
-      await colonySale.send(softCap, { from: BUYER_TWO });
+      testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
 
       let txData = await colonySale.contract.stop.getData();
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
@@ -386,7 +386,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should be able to START a stopped sale", async function () {
       // Reach the softCap
-      await colonySale.send(softCap, { from: BUYER_TWO });
+      testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
 
       let txData = await colonySale.contract.stop.getData();
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
@@ -583,8 +583,6 @@ contract('ColonyTokenSale', function(accounts) {
       const softCap = web3.toWei(10, 'finney');
       const currentBlock = web3.eth.blockNumber;
       await createColonyTokenSale(currentBlock, web3.toWei(3, 'finney'), softCap, 5, 10, 20);
-      // Reach the soft cap
-      //TODO: standardise the way we send ether. testHelper vs .send
       testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'finney');
       testHelper.sendEther(BUYER_TWO, colonySale.address, 1, 'finney');
       // Get the endBlock and fast forward to it
