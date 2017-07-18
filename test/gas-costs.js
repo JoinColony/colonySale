@@ -44,7 +44,8 @@ contract('ColonyTokenSale', function(accounts) {
   describe('gas costs', async () => {
     const minToRaise = web3.toWei(2, 'ether');
     const softCap = web3.toWei(10, 'ether');
-    const value = web3.toWei(1, 'finney');
+    const oneEther = web3.toWei(1, 'ether');
+    const fiveFinney = web3.toWei(5, 'finney');
 
     beforeEach('setup sale at startBlock', async () => {
       const currentBlock = await web3.eth.blockNumber;
@@ -52,12 +53,20 @@ contract('ColonyTokenSale', function(accounts) {
     });
 
     it("functions", async function () {
-      const txBuy = await colonySale.send(value, { FROM: ACCOUNT_TWO });
-      console.error('buy() cost', txBuy.receipt.gasUsed);
+      const txBuy1 = await colonySale.send(oneEther, { FROM: COINBASE_ACCOUNT });
+      console.error('First buy() cost', txBuy1.receipt.gasUsed);
+
+      const txBuy2 = await colonySale.send(fiveFinney, { FROM: ACCOUNT_TWO });
+      console.error('Second buy() cost', txBuy2.receipt.gasUsed);
 
       // Reach the soft cap
       const txBuySoftCapSet = await colonySale.send(softCap, { from: ACCOUNT_THREE });
+      // Check it's the right transaction we're measuring
+      assert.equal(txBuySoftCapSet.logs[0].event, 'updatedSaleEndBlock');
       console.error('buy() cost when endBlock updated', txBuySoftCapSet.receipt.gasUsed);
+
+      const txBuy3 = await colonySale.send(fiveFinney, { FROM: ACCOUNT_TWO });
+      console.error('Third buy() cost', txBuy2.receipt.gasUsed);
 
       // Get the endBlock and fast forward to it
       const endBlock = await colonySale.endBlock.call();
