@@ -22,8 +22,9 @@ contract ColonyTokenSale is DSMath {
   uint constant public minimumContribution = 1 finney;
   // Minimum amount to raise for sale to be successful
   uint public minToRaise;
-  // Total amount raised
-  uint public totalRaised = 0 ether;
+  // Total amount raised in sale
+  // Contains a small starting amount which gets deducted in `finalize()` in order to bring down the cost of very first `buy()` transaction
+  uint public totalRaised = 1 finney;
   // Sale soft cap
   uint public softCap;
   // The address to hold the funds donated
@@ -202,6 +203,9 @@ contract ColonyTokenSale is DSMath {
   raisedMinimumAmount
   saleNotFinalised
   {
+    // Deduct initial 1 finney, see note on `totalRaised` prop
+    totalRaised = sub(totalRaised, 10 ** 15);
+
     // Mint as much retained tokens as raised in sale, i.e. 51% is sold, 49% retained
     uint purchasedSupply = mul(totalRaised, tokenPriceMultiplier);
     uint128 totalSupply = cast(div(mul(purchasedSupply, 100), 51));

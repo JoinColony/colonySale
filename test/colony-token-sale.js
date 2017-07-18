@@ -165,7 +165,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should NOT accept contributions", async function () {
       const colonySaleBalanceBefore = web3.eth.getBalance(colonyMultisig.address);
-      const amountInWei = web3.toWei(1, 'finney');
+      const amountInWei = web3.toWei(4, 'finney');
       try {
         web3.eth.sendTransaction({ from: BUYER_ONE, to: colonySale.address, value: amountInWei });
       } catch(err) {
@@ -174,7 +174,8 @@ contract('ColonyTokenSale', function(accounts) {
       const colonySaleBalanceAfter = web3.eth.getBalance(colonyMultisig.address);
       assert.equal(colonySaleBalanceAfter.toNumber(), colonySaleBalanceBefore.toNumber());
       const totalRaised = await colonySale.totalRaised.call();
-      assert.equal(totalRaised.toNumber(), 0);
+      const startingTotalRaised = web3.toWei(1, 'finney');
+      assert.equal(totalRaised.toNumber(), startingTotalRaised);
     });
   });
 
