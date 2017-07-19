@@ -49,7 +49,9 @@ contract('ColonyTokenSale', function(accounts) {
 
     beforeEach('setup sale at startBlock', async () => {
       const currentBlock = await web3.eth.blockNumber;
-      await createColonyTokenSale(currentBlock, minToRaise, softCap, 5, 7, 18);
+      await createColonyTokenSale(currentBlock + 10, minToRaise, softCap, 5, 7, 18);
+      const startBlock = await colonySale.startBlock.call();
+      testHelper.forwardToBlock(startBlock.toNumber());
     });
 
     it("functions", async function () {

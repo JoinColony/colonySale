@@ -65,23 +65,27 @@ contract('ColonyTokenSale', function(accounts) {
   const createSale_testValues = async function () {
     const currentBlock = web3.eth.blockNumber;
     colonyMultisig = await MultiSigWallet.new([COLONY_ACCOUNT], 1);
-    await _createColonyTokenSale(currentBlock, t_minAmountToRaise, t_softCap, t_postSoftCapMinBlocks, t_postSoftCapMaxBlocks, t_maxSaleDuration, colonyMultisig.address);
+    await _createColonyTokenSale(currentBlock + 10, t_minAmountToRaise, t_softCap, t_postSoftCapMinBlocks, t_postSoftCapMaxBlocks, t_maxSaleDuration, colonyMultisig.address);
   };
 
   const createSale_invalidMultiSig = async function () {
     const currentBlock = web3.eth.blockNumber;
-    //currentBlock, web3.toWei(1, 'ether'), 5, 7, 18
     etherRouter = await EtherRouter.new();
     await etherRouter.setResolver(resolver.address);
     token = await Token.at(etherRouter.address);
-    await _createColonyTokenSale(currentBlock, t_minAmountToRaise, t_softCap, t_postSoftCapMinBlocks, t_postSoftCapMaxBlocks, t_maxSaleDuration, ownable.address);
+    await _createColonyTokenSale(currentBlock + 10, t_minAmountToRaise, t_softCap, t_postSoftCapMinBlocks, t_postSoftCapMaxBlocks, t_maxSaleDuration, ownable.address);
   };
 
-  const _createColonyTokenSale = async function (_currentBlock, _minAmountToRaise, _softCap, _postSoftCapMinBlocks, _postSoftCapMaxBlocks, _maxSaleDuration, _colonyMultisig) {
+  const _createColonyTokenSale = async function (_startBlock, _minAmountToRaise, _softCap, _postSoftCapMinBlocks, _postSoftCapMaxBlocks, _maxSaleDuration, _colonyMultisig) {
     etherRouter = await EtherRouter.new();
     await etherRouter.setResolver(resolver.address);
     token = await Token.at(etherRouter.address);
-    colonySale = await ColonyTokenSale.new(_currentBlock, _minAmountToRaise, _softCap, _postSoftCapMinBlocks, _postSoftCapMaxBlocks, _maxSaleDuration, etherRouter.address, _colonyMultisig);
+    colonySale = await ColonyTokenSale.new(_startBlock, _minAmountToRaise, _softCap, _postSoftCapMinBlocks, _postSoftCapMaxBlocks, _maxSaleDuration, etherRouter.address, _colonyMultisig);
+  };
+
+  const forwardToStartBlock = async function () {
+    const startBlock = await colonySale.startBlock.call();
+    testHelper.forwardToBlock(startBlock.toNumber());
   };
 
   describe('sale initialisation', () => {
@@ -178,9 +182,7 @@ contract('ColonyTokenSale', function(accounts) {
 
   describe('before sale start block is reached', () => {
     beforeEach('setup future startBlock', async () => {
-      const currentBlock = web3.eth.blockNumber;
-      const startBlock = currentBlock + 30;
-      await _createColonyTokenSale(startBlock, 300, 1000, 5, 10, 20, colonyMultisig.address);
+      await createSale_testValues();
     });
 
     it("should NOT accept contributions", async function () {
@@ -202,6 +204,7 @@ contract('ColonyTokenSale', function(accounts) {
   describe('when sale start block is reached', async () => {
     beforeEach('setup sale at startBlock', async () => {
       await createSale_testValues();
+      await forwardToStartBlock();
       // Send the min contribution as a start
       testHelper.sendWei(BUYER_ONE, colonySale.address, t_minContribution);
     });
@@ -301,6 +304,7 @@ contract('ColonyTokenSale', function(accounts) {
   describe('when soft cap reached', async () => {
     beforeEach(async () => {
       await createSale_testValues();
+      await forwardToStartBlock();
     });
 
     it('while under the postSoftCapMinBlocks, should set remainder duration to postSoftCapMinBlocks', async function () {
@@ -422,6 +426,7 @@ contract('ColonyTokenSale', function(accounts) {
   describe('when sale is successful, i.e. endBlock reached and raised minimum amount', () => {
     beforeEach('setup a closed sale', async () => {
       await createSale_testValues();
+      await forwardToStartBlock();
       // Add purchases for 3 ether 18 finney 1001 szabo in total
       testHelper.sendEther(COLONY_ACCOUNT, colonySale.address, 4, 'finney');
       testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'ether');
@@ -592,6 +597,7 @@ contract('ColonyTokenSale', function(accounts) {
   describe('when sale is unsuccessful, i.e. endBlock reached without raising minimum amount', () => {
     beforeEach('setup unsuccessful sale', async () => {
       await createSale_testValues();
+      await forwardToStartBlock();
       testHelper.sendWei(BUYER_ONE, colonySale.address, t_minContribution);
       testHelper.sendWei(BUYER_TWO, colonySale.address, t_minContribution);
       // Get the endBlock and fast forward to it

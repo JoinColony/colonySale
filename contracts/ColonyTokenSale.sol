@@ -118,12 +118,12 @@ contract ColonyTokenSale is DSMath {
     address _colonyMultisig)
     nonZeroAddress(_token)
     nonZeroAddress(_colonyMultisig)
-    {
+  {
+    require(_startBlock >= block.number);
     // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
     require(_postSoftCapMinBlocks != 0);
     require(_postSoftCapMinBlocks < _postSoftCapMaxBlocks);
 
-    // TODO validate startBLock > block.number;
     startBlock = _startBlock;
     endBlock = add(startBlock, _maxSaleDurationBlocks);
     minToRaise = _minToRaise;
