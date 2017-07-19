@@ -1,3 +1,25 @@
+var _sendWei = function(source, dest, amountInWei) {
+  const amountInHex = web3.toHex(amountInWei);
+  const request = {
+    jsonrpc: '2.0',
+    method: 'eth_sendTransaction',
+    params: [
+      {
+        from: source,
+        to: dest,
+        gas: '0x30D40', // Buy tx costs ~72,000 gas but solidity-coverage needs more than that, send 200,000
+        value: amountInHex
+      }
+    ],
+    id: new Date().getTime() };
+
+  return web3.currentProvider.send(request, function(err, done) {
+    if (err) {
+      console.log(err);
+    }
+  });
+}
+
 module.exports = {
   ifUsingTestRPC(err) {
     // Make sure this is a throw we expect.
@@ -88,24 +110,9 @@ module.exports = {
   },
   sendEther(source, dest, amount, denomination) {
     const amountInWei = web3.toWei(amount, denomination);
-    const amountInHex = web3.toHex(amountInWei);
-    const request = {
-      jsonrpc: '2.0',
-      method: 'eth_sendTransaction',
-      params: [
-        {
-          from: source,
-          to: dest,
-          gas: '0x30D40', // Buy tx costs ~72,000 gas but solidity-coverage needs more than that, send 200,000
-          value: amountInHex
-        }
-      ],
-      id: new Date().getTime() };
-
-    return web3.currentProvider.send(request, function(err, done) {
-      if (err) {
-        console.log(err);
-      }
-    });
+    return _sendWei(source, dest, amountInWei);
+  },
+  sendWei(source, dest, amountInWei) {
+    return _sendWei(source, dest, amountInWei);
   }
  };
