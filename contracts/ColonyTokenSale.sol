@@ -19,7 +19,7 @@ contract ColonyTokenSale is DSMath {
   // 1 Wei = 1000 CLNY Wei
   uint constant public tokenPriceMultiplier = 1000;
   // Minimum contribution amount
-  uint constant public minimumContribution = 1 finney;
+  uint constant public minimumContribution = 10 finney;
   // Minimum amount to raise for sale to be successful
   uint public minToRaise;
   // Total amount raised in sale

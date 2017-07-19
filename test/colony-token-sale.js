@@ -38,15 +38,15 @@ contract('ColonyTokenSale', function(accounts) {
   const r_startBlock = 4000000;
   const r_minAmountToRaise = web3.toWei(20000, 'ether');
   const r_softCap = web3.toWei(50000, 'ether');
-  const r_minContribution = web3.toWei(1, 'finney');
+  const r_minContribution = web3.toWei(10, 'finney');
   const r_postSoftCapMinBlocks = 540;
   const r_postSoftCapMaxBlocks = 4320;
   const r_maxSaleDuration = 60480;
 
   // Sale test properties
-  const t_minAmountToRaise = web3.toWei(1, 'finney');;
+  const t_minAmountToRaise = web3.toWei(10, 'finney');;
   const t_softCap = web3.toWei(3, 'ether');
-  const t_minContribution = web3.toWei(1, 'finney');
+  const t_minContribution = web3.toWei(10, 'finney');
   const t_postSoftCapMinBlocks = 5;
   const t_postSoftCapMaxBlocks = 9;
   const t_maxSaleDuration = 22;
@@ -187,9 +187,8 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should NOT accept contributions", async function () {
       const colonySaleBalanceBefore = web3.eth.getBalance(colonyMultisig.address);
-      const amountInWei = web3.toWei(4, 'finney');
       try {
-        web3.eth.sendTransaction({ from: BUYER_ONE, to: colonySale.address, value: amountInWei });
+        testHelper.sendWei(BUYER_ONE, colonySale.address, t_minContribution);
       } catch(err) {
         testHelper.ifUsingTestRPC(err);
       }
@@ -352,7 +351,7 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(tx1.logs[0].event, 'updatedSaleEndBlock');
 
       // Execute another buy tx and check endBlock hasn't been updated
-      const tx2 = await colonySale.send(web3.toWei(3, 'finney'), { from: BUYER_TWO });
+      const tx2 = await colonySale.send(t_minContribution, { from: BUYER_TWO });
       assert.notEqual(tx2.logs[0].event, 'updatedSaleEndBlock');
       const endBlockNew = await colonySale.endBlock.call();
       assert.equal(endBlockNew.toNumber(), endBlock.toNumber());
@@ -427,12 +426,10 @@ contract('ColonyTokenSale', function(accounts) {
     beforeEach('setup a closed sale', async () => {
       await createSale_testValues();
       await forwardToStartBlock();
-      // Add purchases for 3 ether 18 finney 1001 szabo in total
-      testHelper.sendEther(COLONY_ACCOUNT, colonySale.address, 4, 'finney');
-      testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'ether');
-      testHelper.sendEther(BUYER_TWO, colonySale.address, 12, 'finney');
-      testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'finney');
-      testHelper.sendEther(BUYER_THREE, colonySale.address, 1001, 'szabo');
+      // Add purchases for 3 ether 18 finney 1 szabo in total
+      testHelper.sendEther(BUYER_ONE, colonySale.address, 998, 'finney');
+      testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
+      testHelper.sendEther(BUYER_THREE, colonySale.address, 10001, 'szabo');
       testHelper.sendEther(BUYER_TWO, colonySale.address, 2, 'ether');
       // Get the endBlock and fast forward to it
       const endBlock = await colonySale.endBlock.call();
@@ -452,7 +449,7 @@ contract('ColonyTokenSale', function(accounts) {
       const totalRaisedAfter = await colonySale.totalRaised.call();
       assert.equal(totalRaisedAfter.toNumber(), totalRaisedBefore.toNumber());
       const userBuy = await colonySale.userBuys.call(BUYER_ONE);
-      assert.equal(userBuy.toNumber(), web3.toWei(1001, 'finney'));
+      assert.equal(userBuy.toNumber(), web3.toWei(998, 'finney'));
     });
 
     it("when sale NOT yet finalized, should NOT be able to claim tokens", async function () {
@@ -538,26 +535,21 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(tokenBalance2Pre.toNumber(), 0);
       const tokenBalance3Pre = await token.balanceOf.call(BUYER_TWO);
       assert.equal(tokenBalance3Pre.toNumber(), 0);
-      // Claim tokens for account
-      let txData = await colonySale.contract.claimPurchase.getData(COLONY_ACCOUNT);
-      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
-      const tokenBalance1 = await token.balanceOf.call(COLONY_ACCOUNT);
-      assert.equal(tokenBalance1.toNumber(), 4 * 1e18);
-
-      txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
+      // Claim tokens
+      let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance2 = await token.balanceOf.call(BUYER_ONE);
-      assert.equal(tokenBalance2.toNumber(), 1001 * 1e18);
+      assert.equal(tokenBalance2.toNumber(), 998 * 1e18);
 
       txData = await colonySale.contract.claimPurchase.getData(BUYER_TWO);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance3 = await token.balanceOf.call(BUYER_TWO);
-      assert.equal(tokenBalance3.toNumber(), 2012 * 1e18);
+      assert.equal(tokenBalance3.toNumber(), 2010 * 1e18);
 
       txData = await colonySale.contract.claimPurchase.getData(BUYER_THREE);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance4 = await token.balanceOf.call(BUYER_THREE);
-      assert.equal(tokenBalance4.toNumber(), 1001 * 1e15);
+      assert.equal(tokenBalance4.toNumber(), 10001 * 1e15);
     });
 
     it("when sale is finalized and tokens claimed, that account balance in userBuys should be set to 0", async function () {
@@ -638,12 +630,12 @@ contract('ColonyTokenSale', function(accounts) {
     beforeEach('setup a finalized sale', async () => {
       const currentBlock = web3.eth.blockNumber;
 
-      await createColonyTokenSale(currentBlock, web3.toWei(1, 'finney'), t_softCap, 5, 10, 20, colonyMultisig.address);
-      // Add purchases for 3 ether 18 finney in total
-      testHelper.sendEther(COLONY_ACCOUNT, colonySale.address, 4, 'finney');
+      await createColonyTokenSale(currentBlock, t_minAmountToRaise, t_softCap, 5, 10, 20, colonyMultisig.address);
+      // Add purchases for 3 ether 62 finney 1001 szabo in total
+      testHelper.sendEther(COLONY_ACCOUNT, colonySale.address, 40, 'finney');
       testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'ether');
       testHelper.sendEther(BUYER_TWO, colonySale.address, 12, 'finney');
-      testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'finney');
+      testHelper.sendEther(BUYER_ONE, colonySale.address, 10, 'finney');
       testHelper.sendEther(BUYER_THREE, colonySale.address, 1001, 'szabo');
       testHelper.sendEther(BUYER_TWO, colonySale.address, 2, 'ether');
       // Get the endBlock and fast forward to it
