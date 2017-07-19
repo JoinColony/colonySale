@@ -76,9 +76,13 @@ contract('ColonyTokenSale', function(accounts) {
       const txClaimPurchase = await colonyMultisig.submitTransaction(etherRouter.address, 0, txData, { from: COINBASE_ACCOUNT });
       console.log('claimPurchase() cost', txClaimPurchase.receipt.gasUsed);
 
-      testHelper.forwardTime(15552000);
-      const txClaimVestedTokens = await colonySale.claimVestedTokens({ from: FOUNDATION });
-      console.log('claimVestedTokens() cost', txClaimVestedTokens.receipt.gasUsed);
+      testHelper.forwardTime(2628000 * 6);
+      const txClaimVestedTokens1 = await colonySale.claimVestedTokens({ from: FOUNDATION });
+      console.log('First claimVestedTokens() cost', txClaimVestedTokens1.receipt.gasUsed);
+
+      testHelper.forwardTime(2628000 * 6);
+      const txClaimVestedTokens2 = await colonySale.claimVestedTokens({ from: FOUNDATION });
+      console.log('Second claimVestedTokens() cost', txClaimVestedTokens2.receipt.gasUsed);
     });
   });
 });

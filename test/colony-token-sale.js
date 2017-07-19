@@ -623,20 +623,18 @@ contract('ColonyTokenSale', function(accounts) {
     });
   });
 
-  describe.skip('6-24 months after public sale is finalized', () => {
+  describe('6-24 months after public sale is finalized', () => {
     let foundationTotal = new BigNumber('887647352941176470588');
     let teamTotal = new BigNumber('481764901960784313725');
+    const secondsPerMonth = 2628000;
 
     beforeEach('setup a finalized sale', async () => {
-      const currentBlock = web3.eth.blockNumber;
-
-      await createColonyTokenSale(currentBlock, t_minAmountToRaise, t_softCap, 5, 10, 20, colonyMultisig.address);
-      // Add purchases for 3 ether 62 finney 1001 szabo in total
-      testHelper.sendEther(COLONY_ACCOUNT, colonySale.address, 40, 'finney');
-      testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'ether');
-      testHelper.sendEther(BUYER_TWO, colonySale.address, 12, 'finney');
-      testHelper.sendEther(BUYER_ONE, colonySale.address, 10, 'finney');
-      testHelper.sendEther(BUYER_THREE, colonySale.address, 1001, 'szabo');
+      await createSale_testValues();
+      await forwardToStartBlock();
+      // Add purchases for 3 ether 18 finney 1 szabo in total
+      testHelper.sendEther(BUYER_ONE, colonySale.address, 998, 'finney');
+      testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
+      testHelper.sendEther(BUYER_THREE, colonySale.address, 10001, 'szabo');
       testHelper.sendEther(BUYER_TWO, colonySale.address, 2, 'ether');
       // Get the endBlock and fast forward to it
       const endBlock = await colonySale.endBlock.call();
@@ -645,7 +643,7 @@ contract('ColonyTokenSale', function(accounts) {
     });
 
     it("Less than 6 months after sale finalized, team should NOT be able to claim token grant", async function () {
-      testHelper.forwardTime(7776000);
+      testHelper.forwardTime(secondsPerMonth * 5);
       const balanceBefore = await token.balanceOf.call(TEAM_MULTISIG);
       assert.equal(balanceBefore.toNumber(), 0);
 
@@ -658,13 +656,10 @@ contract('ColonyTokenSale', function(accounts) {
 
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
       assert.equal(balanceAfter.toNumber(), 0);
-
-      const tokenGrant = await colonySale.tokenGrants.call(TEAM_MULTISIG);
-      assert.equal(tokenGrant.toNumber(), teamTotal.toNumber());
     });
 
     it("Less than 6 months after sale finalized, foundation should NOT be able to claim token grant", async function () {
-      testHelper.forwardTime(7776000);
+      testHelper.forwardTime(secondsPerMonth * 5);
       const balanceBefore = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceBefore.toNumber(), 0);
 
@@ -676,26 +671,23 @@ contract('ColonyTokenSale', function(accounts) {
       }
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceAfter.toNumber(), 0);
-
-      const tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
-      assert.equal(tokenGrant.toNumber(), foundationTotal.toNumber());
     });
 
     it("6 months after sale finalized, team should be able to claim 25% of their total token grant", async function () {
-      testHelper.forwardTime(15552000);
+      testHelper.forwardTime(secondsPerMonth * 6);
       const balanceBefore = await token.balanceOf.call(TEAM_MULTISIG);
       assert.equal(balanceBefore.toNumber(), 0);
 
       await colonySale.claimVestedTokens({ from: TEAM_MULTISIG });
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
-      assert.equal(balanceAfter.toNumber(), teamTotal.div(4).toNumber());
+      assert.equal(balanceAfter.toNumber(), teamTotal.div(24).mul(6).toNumber());
 
-      const tokenGrant = await colonySale.tokenGrants.call(TEAM_MULTISIG);
-      assert.equal(tokenGrant.toNumber(), teamTotal.sub(balanceAfter).toNumber());
+      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(TEAM_MULTISIG);
+      assert.equal(tokenGrantClaimed[1].toNumber(), teamTotal.div(24).mul(6).toNumber());
     });
 
     it("6 months after sale finalized, foundation should be able to claim 25% of their total token grant", async function () {
-      testHelper.forwardTime(15552000);
+      testHelper.forwardTime(secondsPerMonth * 6);
       const balanceBefore = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceBefore.toNumber(), 0);
 
@@ -703,81 +695,134 @@ contract('ColonyTokenSale', function(accounts) {
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceAfter.toNumber(), foundationTotal.div(4).toNumber());
 
-      const tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
-      assert.equal(tokenGrant.toNumber(), foundationTotal.sub(balanceAfter).toNumber());
+      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
+      assert.equal(tokenGrantClaimed[1].toNumber(), foundationTotal.div(4).toNumber());
     });
 
     it("12 months after sale finalized, team should be able to claim 50% of their total token grant", async function () {
-      testHelper.forwardTime(15552000*2);
+      testHelper.forwardTime(secondsPerMonth * 12);
       await colonySale.claimVestedTokens({ from: TEAM_MULTISIG });
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
       assert.equal(balanceAfter.toNumber(), teamTotal.div(2).toNumber());
 
-      const tokenGrant = await colonySale.tokenGrants.call(TEAM_MULTISIG);
-      assert.equal(tokenGrant.toNumber(), teamTotal.sub(balanceAfter).toNumber());
+      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(TEAM_MULTISIG);
+      assert.equal(tokenGrantClaimed[1].toNumber(), teamTotal.div(2).toNumber());
     });
 
     it("12 months after sale finalized, foundation should be able to claim 50% of their total token grant", async function () {
-      testHelper.forwardTime(15552000*2);
+      testHelper.forwardTime(secondsPerMonth * 12);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceAfter.toNumber(), foundationTotal.div(2).toNumber());
 
-      const tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
-      assert.equal(tokenGrant.toNumber(), foundationTotal.sub(balanceAfter).toNumber());
+      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
+      assert.equal(tokenGrantClaimed[1].toNumber(), foundationTotal.div(2).toNumber());
     });
 
     it("18 months after sale finalized, team should be able to claim 75% of their total token grant", async function () {
-      testHelper.forwardTime(15552000*3);
+      testHelper.forwardTime(secondsPerMonth * 18);
       await colonySale.claimVestedTokens({ from: TEAM_MULTISIG });
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
       assert.equal(balanceAfter.toNumber(), teamTotal.div(4).mul(3).toNumber());
 
-      const tokenGrant = await colonySale.tokenGrants.call(TEAM_MULTISIG);
-      assert.equal(tokenGrant.toNumber(), teamTotal.sub(balanceAfter).toNumber());
+      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(TEAM_MULTISIG);
+      assert.equal(tokenGrantClaimed[1].toNumber(), teamTotal.div(4).mul(3).toNumber());
     });
 
     it("18 months after sale finalized, foundation should be able to claim 75% of their total token grant", async function () {
-      testHelper.forwardTime(15552000*3);
+      testHelper.forwardTime(secondsPerMonth * 18);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceAfter.toNumber(), foundationTotal.div(4).mul(3).toNumber());
 
-      const tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
-      assert.equal(tokenGrant.toNumber(), foundationTotal.sub(balanceAfter).toNumber());
+      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
+      assert.equal(tokenGrantClaimed[1].toNumber(), foundationTotal.div(4).mul(3).toNumber());
+    });
+
+    it("21 months after sale finalized, foundation should be able to claim 87.5% of their total token grant", async function () {
+      testHelper.forwardTime(secondsPerMonth * 21 + 2000);
+      await colonySale.claimVestedTokens({ from: FOUNDATION });
+      const balanceAfter = await token.balanceOf.call(FOUNDATION);
+      assert.equal(balanceAfter.toNumber(), foundationTotal.div(24).mul(21).toNumber());
+
+      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
+      assert.equal(tokenGrantClaimed[1].toNumber(), foundationTotal.div(24).mul(21).toNumber());
     });
 
     it("24 months after sale finalized, team should be able to claim 100% of their total token grant", async function () {
-      testHelper.forwardTime(15552000*4);
+      testHelper.forwardTime(secondsPerMonth * 24);
       await colonySale.claimVestedTokens({ from: TEAM_MULTISIG });
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
       assert.equal(balanceAfter.toNumber(), teamTotal.toNumber());
 
-      const tokenGrant = await colonySale.tokenGrants.call(TEAM_MULTISIG);
-      assert.equal(tokenGrant.toNumber(), 0);
+      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(TEAM_MULTISIG);
+      assert.equal(tokenGrantClaimed[1].toNumber(), teamTotal.toNumber());
     });
 
     it("24 months after sale finalized, foundation should be able to claim 100% of their total token grant", async function () {
-      testHelper.forwardTime(15552000*4);
+      testHelper.forwardTime(secondsPerMonth * 24);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceAfter.toNumber(), foundationTotal.toNumber());
 
-      const tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
-      assert.equal(tokenGrant.toNumber(), 0);
+      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
+      assert.equal(tokenGrantClaimed[1].toNumber(), foundationTotal.toNumber());
+    });
+
+    it("token grants should be claimed correctly over time", async function () {
+      testHelper.forwardTime(secondsPerMonth * 6.9);
+      await colonySale.claimVestedTokens({ from: FOUNDATION });
+      let foundationBalance = await token.balanceOf.call(FOUNDATION);
+      assert.equal(foundationBalance.toNumber(), foundationTotal.div(24).mul(6).toNumber());
+
+      testHelper.forwardTime(secondsPerMonth * 0.2);
+      await colonySale.claimVestedTokens({ from: FOUNDATION });
+      foundationBalance = await token.balanceOf.call(FOUNDATION);
+      assert.equal(foundationBalance.toNumber(), foundationTotal.div(24).mul(7).toNumber());
+
+      testHelper.forwardTime(secondsPerMonth * 16.6);
+      await colonySale.claimVestedTokens({ from: FOUNDATION });
+      foundationBalance = await token.balanceOf.call(FOUNDATION);
+      assert.equal(foundationBalance.toNumber(), foundationTotal.div(24).mul(23).toNumber());
+
+      testHelper.forwardTime(secondsPerMonth);
+      await colonySale.claimVestedTokens({ from: FOUNDATION });
+      foundationBalance = await token.balanceOf.call(FOUNDATION);
+      assert.equal(foundationBalance.toNumber(), foundationTotal.toNumber());
+    });
+
+    it("token grants should be claimed correctly over long periods of time", async function () {
+      testHelper.forwardTime(secondsPerMonth * 10);
+      await colonySale.claimVestedTokens({ from: FOUNDATION });
+      let foundationBalance = await token.balanceOf.call(FOUNDATION);
+      assert.equal(foundationBalance.toNumber(), foundationTotal.div(24).mul(10).toNumber());
+
+      testHelper.forwardTime(secondsPerMonth * (256 -2));
+      await colonySale.claimVestedTokens({ from: FOUNDATION });
+      foundationBalance = await token.balanceOf.call(FOUNDATION);
+      assert.equal(foundationBalance.toNumber(), foundationTotal.toNumber());
+    });
+
+    it("when submitting multiple successive claims, token grants should be claimed correctly", async function () {
+      testHelper.forwardTime(secondsPerMonth * 10);
+      await colonySale.claimVestedTokens({ from: FOUNDATION });
+      const foundationBalanceBefore = await token.balanceOf.call(FOUNDATION);
+      assert.equal(foundationBalanceBefore.toNumber(), foundationTotal.div(24).mul(10).toNumber());
+
+      await colonySale.claimVestedTokens({ from: FOUNDATION });
+      const foundationBalanceAfter = await token.balanceOf.call(FOUNDATION);
+      assert.equal(foundationBalanceBefore.toNumber(), foundationBalanceAfter.toNumber());
     });
 
     it("when all purchases and grants have been claimed, colonySale token balance should be 0", async function () {
-      let txData = await colonySale.contract.claimPurchase.getData(COLONY_ACCOUNT);
-      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
-      txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
+      let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       txData = await colonySale.contract.claimPurchase.getData(BUYER_TWO);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       txData = await colonySale.contract.claimPurchase.getData(BUYER_THREE);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
 
-      testHelper.forwardTime(15552000*4);
+      testHelper.forwardTime(secondsPerMonth * 24);
       await colonySale.claimVestedTokens({ from: TEAM_MULTISIG });
       await colonySale.claimVestedTokens({ from: FOUNDATION });
 
