@@ -492,6 +492,14 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(tokenSupply.toNumber(), expected.toNumber()); // = 3018001 * 1e15 * CLNY tokens sold / 0.51
     });
 
+    it("when sale finalized, should transfer token ownership to Colony MultiSig", async function () {
+      let tokenOwner = await etherRouter.owner.call();
+      assert.equal(tokenOwner, colonySale.address);
+      await colonySale.finalize();
+      tokenOwner = await etherRouter.owner.call();
+      assert.equal(tokenOwner, colonyMultisig.address);
+    });
+
     it("when sale finalized, should assign correct retained allocations", async function () {
       await colonySale.finalize();
 

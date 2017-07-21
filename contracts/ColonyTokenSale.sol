@@ -233,6 +233,7 @@ contract ColonyTokenSale is DSMath {
     uint purchasedSupply = mul(totalRaised, tokenPriceMultiplier);
     uint128 totalSupply = cast(div(mul(purchasedSupply, 100), 51));
     token.mint(totalSupply);
+    token.changeOwner(colonyMultisig);
 
     // 5% allocated to Investor
     uint128 earlyInvestorAllocation = wmul(wdiv(totalSupply, 100), 5);
