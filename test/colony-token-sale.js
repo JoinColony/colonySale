@@ -81,6 +81,7 @@ contract('ColonyTokenSale', function(accounts) {
     await etherRouter.setResolver(resolver.address);
     token = await Token.at(etherRouter.address);
     colonySale = await ColonyTokenSale.new(_startBlock, _minAmountToRaise, _softCap, _postSoftCapMinBlocks, _postSoftCapMaxBlocks, _maxSaleDuration, etherRouter.address, _colonyMultisig);
+    await etherRouter.changeOwner(colonySale.address);
   };
 
   const forwardToStartBlock = async function () {

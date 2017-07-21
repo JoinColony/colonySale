@@ -5,6 +5,8 @@ const EtherRouter = artifacts.require('EtherRouter');
 const Resolver = artifacts.require('Resolver');
 const Token = artifacts.require('Token');
 
+import testHelper from '../helpers/test-helper';
+
 contract('CLNY Token', function (accounts) {
   const COINBASE_ACCOUNT = accounts[0];
   const ACCOUNT_TWO = accounts[1];
@@ -105,8 +107,8 @@ contract('CLNY Token', function (accounts) {
   });
 
   describe('when working with additional functions', function () {
-    it('should be able to mint new tokens', async function () {
-      await token.mint(1500000);
+    it('should be able to mint new tokens, when called by the Token owner', async function () {
+      await token.mint(1500000, { from: COINBASE_ACCOUNT });
       var totalSupply = await token.totalSupply.call();
       assert.equal(1500000, totalSupply.toNumber());
 
@@ -120,6 +122,17 @@ contract('CLNY Token', function (accounts) {
 
       balance = await token.balanceOf.call(COINBASE_ACCOUNT);
       assert.equal(1500001, balance.toNumber());
+    });
+
+    it('should NOT be able to mint new tokens, when called by anyone NOT the Token owner', async function () {
+      try {
+        await token.mint(1500000, { from: ACCOUNT_THREE });
+      } catch(err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+
+      var totalSupply = await token.totalSupply.call();
+      assert.equal(0, totalSupply.toNumber());
     });
   });
 });
