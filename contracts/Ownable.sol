@@ -6,7 +6,7 @@ contract Ownable {
 
   /// @notice check if the msg.sender is the owner of the contract
 	modifier onlyOwner {
-		if (msg.sender != owner) { throw; }
+		require(msg.sender == owner);
 		_;
 	}
 
@@ -15,8 +15,7 @@ contract Ownable {
   function changeOwner(address _newOwner)
   onlyOwner
   {
-    if(_newOwner == 0x0) { throw; }
-
+    require(_newOwner != 0x0);
     owner = _newOwner;
   }
 }

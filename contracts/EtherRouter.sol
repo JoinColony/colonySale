@@ -2,11 +2,12 @@ pragma solidity ^0.4.11;
 import "./Resolver.sol";
 import "./Ownable.sol";
 
-contract EtherRouter is Ownable{
+
+contract EtherRouter is Ownable {
   Resolver public resolver;
-  bytes32 public symbol = 'CLNY';
+  bytes32 public symbol = "CLNY";
   uint256 public decimals = 18;
-  bytes32 public name = 'Colony Network Token';
+  bytes32 public name = "Colony Network Token";
 
   function() payable {
     uint r;
@@ -21,7 +22,7 @@ contract EtherRouter is Ownable{
     }
 
     // Throw if the call failed
-    if (r != 1) { throw;}
+    assert(r == 1);
 
     // Pass on the return value
     assembly {
