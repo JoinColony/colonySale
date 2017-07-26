@@ -151,12 +151,12 @@ contract('ColonyTokenSale', function(accounts) {
     });
 
     it("should have CLNY token wei price multiplier of 1000", async function () {
-      const tokenPriceMultiplier = await colonySale.tokenPriceMultiplier.call();
+      const tokenPriceMultiplier = await colonySale.TOKEN_PRICE_MULTIPLIER.call();
       assert.equal(tokenPriceMultiplier.toNumber(), 1000);
     });
 
     it("should have correct minimum contribution", async function () {
-      const minimumContribution = await colonySale.minimumContribution.call();
+      const minimumContribution = await colonySale.MIN_CONTRIBUTION.call();
       assert.equal(minimumContribution.toNumber(), r_minContribution);
     });
 
@@ -349,11 +349,11 @@ contract('ColonyTokenSale', function(accounts) {
       const currentBlock = web3.eth.blockNumber;
       const endBlock = await colonySale.endBlock.call();
       assert.equal(endBlock.toNumber(), currentBlock + t_postSoftCapMinBlocks);
-      assert.equal(tx1.logs[0].event, 'updatedSaleEndBlock');
+      assert.equal(tx1.logs[0].event, 'UpdatedSaleEndBlock');
 
       // Execute another buy tx and check endBlock hasn't been updated
       const tx2 = await colonySale.send(t_minContribution, { from: BUYER_TWO });
-      assert.notEqual(tx2.logs[0].event, 'updatedSaleEndBlock');
+      assert.notEqual(tx2.logs[0].event, 'UpdatedSaleEndBlock');
       const endBlockNew = await colonySale.endBlock.call();
       assert.equal(endBlockNew.toNumber(), endBlock.toNumber());
     });

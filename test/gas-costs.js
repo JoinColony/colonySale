@@ -60,7 +60,7 @@ contract('ColonyTokenSale', function(accounts) {
       // Reach the soft cap
       const txBuySoftCapSet = await colonySale.send(softCap, { from: ACCOUNT_THREE });
       // Check it's the right transaction we're measuring
-      assert.equal(txBuySoftCapSet.logs[0].event, 'updatedSaleEndBlock');
+      assert.equal(txBuySoftCapSet.logs[0].event, 'UpdatedSaleEndBlock');
       console.error('buy() cost when endBlock updated', txBuySoftCapSet.receipt.gasUsed);
 
       const txBuy3 = await colonySale.send(tenFinney, { FROM: ACCOUNT_TWO });
