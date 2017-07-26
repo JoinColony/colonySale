@@ -22,7 +22,7 @@ contract EtherRouter is Ownable {
     }
 
     // Throw if the call failed
-    if (r != 1) { throw;}
+    assert(r == 1);
 
     // Pass on the return value
     assembly {

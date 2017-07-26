@@ -124,8 +124,8 @@ contract ColonyTokenSale is DSMath {
     address _token,
     address _colonyMultisig)
     nonZeroAddress(_token)
-    nonZeroAddress(_colonyMultisig)
   {
+    require(_colonyMultisig != 0); // Switch to nonZeroAddress modifier when solidity#2621 is fixed
     require(_startBlock >= block.number);
     // Validate duration params that 0 < postSoftCapMinBlocks < postSoftCapMaxBlocks
     require(_postSoftCapMinBlocks != 0);
@@ -196,7 +196,7 @@ contract ColonyTokenSale is DSMath {
   saleFinalised
   {
     uint128 grant = tokenGrants[msg.sender];
-    GrantClaimTotal grantClaimTotal = grantClaimTotals[msg.sender];
+    GrantClaimTotal memory grantClaimTotal = grantClaimTotals[msg.sender];
     uint64 monthsClaimed = grantClaimTotal.monthsClaimed;
     uint128 totalClaimed = grantClaimTotal.totalClaimed;
 

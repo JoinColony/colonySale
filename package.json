@@ -34,6 +34,6 @@
     "rimraf": "^2.6.1",
     "solidity-coverage": "0.1.8",
     "solium": "^0.5.4",
-    "truffle": "^3.4.5"
+    "truffle": "^3.4.6"
   }
 }
