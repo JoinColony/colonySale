@@ -1,4 +1,4 @@
-pragma solidity^0.4.11;
+pragma solidity^0.4.13;
 
 import "./Token.sol";
 import "./dappsys/math.sol";
