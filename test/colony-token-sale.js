@@ -7,6 +7,9 @@ var MultiSigWallet = artifacts.require('multisig-wallet/MultiSigWallet.sol');
 
 import BigNumber from 'bignumber.js';
 import testHelper from '../helpers/test-helper';
+import Promise from 'bluebird';
+const refund = require('../helpers/refund.js');
+const refundPromise = Promise.promisify(refund);
 
 contract('ColonyTokenSale', function(accounts) {
   //Starting balance 100 ETH for each account
@@ -67,6 +70,14 @@ contract('ColonyTokenSale', function(accounts) {
     colonyMultisig = await MultiSigWallet.new([COLONY_ACCOUNT], 1);
     await _createColonyTokenSale(currentBlock + 10, t_minAmountToRaise, t_softCap, t_postSoftCapMinBlocks, t_postSoftCapMaxBlocks, t_maxSaleDuration, colonyMultisig.address);
   };
+
+  const createSale_failValues = async function () {
+    const currentBlock = web3.eth.blockNumber;
+    // colonyMultisig = await MultiSigWallet.new([COLONY_ACCOUNT], 1);
+    colonyMultisig = await MultiSigWallet.new([COLONY_ACCOUNT, BUYER_ONE], 2);
+    console.log("multisigaddress: " + colonyMultisig.address);
+    await _createColonyTokenSale(currentBlock + 10, web3.toWei(1, 'ether'), t_softCap, t_postSoftCapMinBlocks, t_postSoftCapMaxBlocks, t_maxSaleDuration, colonyMultisig.address);
+  }
 
   const createSale_invalidMultiSig = async function () {
     const currentBlock = web3.eth.blockNumber;
@@ -839,4 +850,23 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(tokenBalanceLeft.toNumber(), 0);
     });
   });
+
+    describe('when sale is unsuccessful, i.e. endBlock reached and did not raise minimum amount', () => {
+      beforeEach('setup a failed sale', async () => {
+        await createSale_failValues();
+        await forwardToStartBlock();
+        testHelper.sendEther(BUYER_ONE, colonySale.address, 11, 'finney');
+        testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
+        testHelper.sendEther(BUYER_THREE, colonySale.address, 12, 'finney');
+        testHelper.sendEther(BUYER_TWO, colonySale.address, 13, 'finney');
+        // Get the endBlock and fast forward to it
+        const endBlock = await colonySale.endBlock.call();
+        testHelper.forwardToBlock(endBlock.toNumber());
+      });
+
+      it.only("the scripts should refund everyone", async function () {
+        await refundPromise();
+
+        });
+      })
 });
