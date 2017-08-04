@@ -28,6 +28,31 @@ module.exports = function(callback) {
       return callback(err);
     }
     // Otherwise, no error
+
+
+    //First, check we ran a successful sale.
+    let saleEndBlock = await cs.endBlock();
+    let currentBlock = await web3.eth.blockNumber;
+    let minToRaise = await cs.minToRaise();
+    let totalRaised = await cs.totalRaised();
+    if (totalRaised.lessThan(minToRaise) || saleEndBlock.greaterThan(currentBlock)){
+      console.log("Either less than minimum raised or sale not yet finished.")
+      console.log("Minimum raise: " + minToRaise.toString())
+      console.log("Total raised: " + totalRaised.toString())
+      console.log("Sale ends at block: " + saleEndBlock.toString())
+      console.log("Current block: " + currentBlock.toString())
+      console.log("Cowardly refusing to try and pay tokens to anyone.")
+      return callback(new Error("Did not run a successful sale"))
+    }
+
+    //Finalize the sale if needed.
+    let saleFinalized = await cs.saleFinalized.call();
+    if (!saleFinalized){
+      console.log("Finalize sale...");
+      await cs.finalize();
+      console.log("Sale finalized");
+    }
+
     let payoutsThisRun = {};
 
     // See who we've already paid out, either from a pending transaction or a completed

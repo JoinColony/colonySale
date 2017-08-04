@@ -24,7 +24,6 @@ module.exports = function(callback) {
   let colonyMultisig = MultiSigWallet.at(MULTISIG_ADDRESS)
   var cs = ColonyTokenSale.at(TOKEN_SALE_ADDRESS)
 
-  console.log(TOKEN_SALE_ADDRESS)
   try {
     cs.Purchase({}, {fromBlock: FROM_BLOCK, toBlock: TO_BLOCK}).get(async (err, res) => {
       if (err){
@@ -44,7 +43,7 @@ module.exports = function(callback) {
         console.log("Sale ends at block: " + saleEndBlock.toString())
         console.log("Current block: " + currentBlock.toString())
         console.log("Cowardly refusing to refund anyone.")
-        return callback(1)
+        return callback(new Error("Ran a successful sale"))
       }
       const payoutsThisRun = {};
 
