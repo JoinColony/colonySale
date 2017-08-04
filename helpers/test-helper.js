@@ -13,11 +13,7 @@ var _sendWei = function(source, dest, amountInWei) {
     ],
     id: new Date().getTime() };
 
-  return web3.currentProvider.send(request, function(err, done) {
-    if (err) {
-      console.log(err);
-    }
-  });
+  return web3.currentProvider.send(request);
 }
 
 module.exports = {
