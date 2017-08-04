@@ -40,7 +40,7 @@ module.exports = function(callback) {
         console.log("Sale ends at block: " + saleEndBlock.toString())
         console.log("Current block: " + currentBlock.toString())
         console.log("Cowardly refusing to refund anyone.")
-        return callback(1)
+        return callback(new Error("Ran a successful sale"))
       }
 
       const payoutsThisRun = {};

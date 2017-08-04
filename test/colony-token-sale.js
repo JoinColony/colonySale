@@ -908,13 +908,28 @@ contract('ColonyTokenSale', function(accounts) {
 
       });
 
-      it("the scripts should refuse to pay tokens out", async function (){
+      it("the first script should refuse to pay tokens out", async function (){
         process.env['TOKEN_SALE_ADDRESS'] = colonySale.address;
         process.env['MULTISIG_ADDRESS'] = colonyMultisig.address;
         process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
         let error_thrown = false;
         try {
           await payoutPromise();
+        }catch (err){
+          assert.equal(err.message, "Did not run a successful sale")
+          error_thrown = true;
+        }
+        assert(error_thrown, "no error was thrown")
+      })
+
+      it("the second script should refuse to pay tokens out", async function (){
+        process.env['TOKEN_SALE_ADDRESS'] = colonySale.address;
+        process.env['MULTISIG_ADDRESS'] = colonyMultisig.address;
+        process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+        let error_thrown = false;
+        await refundPromise();
+        try {
+          await payoutConfirmPromise();
         }catch (err){
           assert.equal(err.message, "Did not run a successful sale")
           error_thrown = true;
@@ -944,11 +959,24 @@ contract('ColonyTokenSale', function(accounts) {
         process.env['MULTISIG_SIGNEE'] = "";
       })
 
-      it("the scripts should refuse to refund ether", async function (){
+      it("the first script should refuse to refund ether", async function (){
         process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
         let error_thrown = false;
         try {
           await refundPromise();
+        }catch (err){
+          assert.equal(err.message, "Ran a successful sale")
+          error_thrown = true;
+        }
+        assert(error_thrown, "no error was thrown")
+      })
+
+      it("the second script should refuse to refund ether", async function (){
+        process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+        let error_thrown = false;
+        await payoutPromise();
+        try {
+          await refundConfirmPromise();
         }catch (err){
           assert.equal(err.message, "Ran a successful sale")
           error_thrown = true;

@@ -12,7 +12,7 @@ module.exports = function(callback) {
   const MULTISIG_ADDRESS = process.env.MULTISIG_ADDRESS || "ADD_ADDRESS_HERE"
   let MULTISIG_SIGNEE = process.env.MULTISIG_SIGNEE || "ADD_ADDRESS_HERE"
   let DRY_RUN = false;
-  
+
   const FROM_BLOCK = 0; //Set to block sale started. Or a few before, just to be safe?!
   const TO_BLOCK = "latest"; //Set to block sale finished. Or a few after, just to be safe!?
 
@@ -28,6 +28,22 @@ module.exports = function(callback) {
     if (err){
       console.log('Error: ', exit);
       return process.exit()
+    }
+
+
+    //First, check we ran a successful sale.
+    let saleEndBlock = await cs.endBlock();
+    let currentBlock = await web3.eth.blockNumber;
+    let minToRaise = await cs.minToRaise();
+    let totalRaised = await cs.totalRaised();
+    if (totalRaised.lessThan(minToRaise) || saleEndBlock.greaterThan(currentBlock)){
+      console.log("Either less than minimum raised or sale not yet finished.")
+      console.log("Minimum raise: " + minToRaise.toString())
+      console.log("Total raised: " + totalRaised.toString())
+      console.log("Sale ends at block: " + saleEndBlock.toString())
+      console.log("Current block: " + currentBlock.toString())
+      console.log("Cowardly refusing to try and pay tokens to anyone.")
+      return callback(new Error("Did not run a successful sale"))
     }
 
     //Iterate through pending transactions on the multisig
