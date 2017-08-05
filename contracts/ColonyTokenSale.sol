@@ -7,12 +7,10 @@ import "../lib/ds-math/src/math.sol";
 contract ColonyTokenSale is DSMath {
   // Block number in which the sale starts. Inclusive. Sale will be opened at start block.
   uint public startBlock;
-  // Sale will continue for a maximum of 60480 blocks (~14 days). Initialised as the latest possible block number at which the sale ends.
-  // Updated if softCap reached to the number of blocks it took to reach the soft cap and it is a min of 540 and max 4320.
-  // Exclusive. Sale will be closed at end block.
+  // Block number at which the sale ends. Exclusive. Sale will be closed at end block.
   uint public endBlock;
   // Once softCap is reached, the remaining sale duration is set to the same amount of blocks it's taken the sale to reach the softCap
-  // minumum and maximum are 540 and 4320 blocks corresponding to roughly 3 and 24 hours.
+  // where the minimum is `postSoftCapMinBlocks` and the maximum is `postSoftCapMaxBlocks`
   uint public postSoftCapMinBlocks;
   uint public postSoftCapMaxBlocks;
   // CLNY token price = 1 finney
@@ -31,13 +29,13 @@ contract ColonyTokenSale is DSMath {
   address public colonyMultisig;
   // The address of the Colony Network Token
   Token public token;
-  // endBlock updated once after softCap met
+  // Has `endBlock` been updated after softCap met
   bool endBlockUpdatedAtSoftCap = false;
   // Has Colony stopped the sale
   bool public saleStopped = false;
   // Has the sale been finalized
   bool public saleFinalized = false;
-  // The block time when sale was finalized. Used in token vesting calculations.
+  // The block time when sale was finalized. (Used in token vesting calculations)
   uint public saleFinalisedTime;
   // Seconds per month, calculated as seconds in a (non-leap) year divided by 12, i.e. 31536000 / 12
   uint constant internal SECONDS_PER_MONTH = 2628000;
@@ -50,7 +48,6 @@ contract ColonyTokenSale is DSMath {
   address public FOUNDATION = 0x4e7DBb49018489a27088FE304b18849b02F708F6;
   address public STRATEGY_FUND = 0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F;
 
-  // Colony Token wei allocation for each team member
   uint128 constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** 18;
   uint128 constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
   uint128 constant public ALLOCATION_TEAM_MEMBERS_TOTAL = 110 * 10 ** 18;
