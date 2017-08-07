@@ -73,7 +73,7 @@ module.exports = function(callback) {
           continue;
         }
         // Is it the amount we expect?
-        if (!payoutsThisRun[tx[1]].equals(payoutsThisRun[tx[0].expectedAmount])){
+        if (!tx[1].equals(payoutsThisRun[tx[0]].expectedAmount)){
           console.log("There is a payment to address ", tx[1], " already at txid ", idx)
           console.log("But for an unexpected amount")
           console.log("Investigate before continuing")

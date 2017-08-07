@@ -906,7 +906,40 @@ contract('ColonyTokenSale', function(accounts) {
       b3 = await web3.eth.getBalance(BUYER_THREE);
       assert.equal(b3.toString(), buyer3StartBalance.toString(), "Wrong balance");
 
-      });
+    });
+
+    it("running the scripts more than once or in the wrong order shouldn't affect the outcome", async function () {
+      let buyer1StartBalance = await web3.eth.getBalance(BUYER_ONE).plus(web3.toWei(11, 'finney'));
+      let buyer2StartBalance = await web3.eth.getBalance(BUYER_TWO).plus(web3.toWei(23, 'finney'));
+      let buyer3StartBalance = await web3.eth.getBalance(BUYER_THREE).plus(web3.toWei(12, 'finney'));
+      process.env['TOKEN_SALE_ADDRESS'] = colonySale.address;
+      process.env['MULTISIG_ADDRESS'] = colonyMultisig.address;
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let b1,b2,b3;
+      let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "46000000000000000")
+      try {
+        await refundPromise();
+        await refundPromise();
+        process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
+        await refundConfirmPromise();
+        await refundPromise();
+        await refundConfirmPromise();
+
+      } catch (err){
+        assert(false, err);
+      }
+      multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "0")
+
+      b1 = await web3.eth.getBalance(BUYER_ONE);
+      assert.equal(b1.toString(), buyer1StartBalance.toString(), "Wrong balance");
+      b2 = await web3.eth.getBalance(BUYER_TWO);
+      assert.equal(b2.toString(), buyer2StartBalance.toString(), "Wrong balance");
+      b3 = await web3.eth.getBalance(BUYER_THREE);
+      assert.equal(b3.toString(), buyer3StartBalance.toString(), "Wrong balance");
+
+    });
 
       it("the first script should refuse to pay tokens out", async function (){
         process.env['TOKEN_SALE_ADDRESS'] = colonySale.address;
@@ -936,6 +969,7 @@ contract('ColonyTokenSale', function(accounts) {
         }
         assert(error_thrown, "no error was thrown")
       })
+
     })
 
     describe('when sale is successful, i.e. endBlock reached raised minimum amount', () => {
@@ -1005,6 +1039,34 @@ contract('ColonyTokenSale', function(accounts) {
         b3 = await token.balanceOf(BUYER_THREE);
         assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
 
-        });
-      })
+      });
+
+      it("running either or both scripts more than once or in the wrong order should have no effect on the final state", async function () {
+        process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+        let b1,b2,b3;
+        let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+        assert.equal(multisigBalance.toString(), "1035000000000000000")
+        try {
+          await payoutPromise();
+          await payoutPromise();
+          process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
+          await payoutConfirmPromise();
+          await payoutPromise();
+          await payoutConfirmPromise();
+          await payoutPromise();
+
+        } catch (err){
+          assert(false, err);
+        }
+
+        b1 = await token.balanceOf(BUYER_ONE);
+        assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
+        b2 = await token.balanceOf(BUYER_TWO);
+        assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
+        b3 = await token.balanceOf(BUYER_THREE);
+        assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
+
+      });
+
+    })
 });
