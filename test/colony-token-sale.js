@@ -1034,206 +1034,203 @@ contract('ColonyTokenSale', function(accounts) {
 
     });
 
-      it("the first script should refuse to pay tokens out", async function (){
-        process.env['TOKEN_SALE_ADDRESS'] = colonySale.address;
-        process.env['MULTISIG_ADDRESS'] = colonyMultisig.address;
-        process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
-        let error_thrown = false;
-        try {
-          await payoutPromise();
-        }catch (err){
-          assert.equal(err.message, "Did not run a successful sale")
-          error_thrown = true;
-        }
-        assert(error_thrown, "no error was thrown")
-      })
-
-      it("the second script should refuse to pay tokens out", async function (){
-        process.env['TOKEN_SALE_ADDRESS'] = colonySale.address;
-        process.env['MULTISIG_ADDRESS'] = colonyMultisig.address;
-        process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
-        let error_thrown = false;
-        await refundPromise();
-        try {
-          await payoutConfirmPromise();
-        }catch (err){
-          assert.equal(err.message, "Did not run a successful sale")
-          error_thrown = true;
-        }
-        assert(error_thrown, "no error was thrown")
-      })
-
+    it("the first script should refuse to pay tokens out", async function (){
+      process.env['TOKEN_SALE_ADDRESS'] = colonySale.address;
+      process.env['MULTISIG_ADDRESS'] = colonyMultisig.address;
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let error_thrown = false;
+      try {
+        await payoutPromise();
+      }catch (err){
+        assert.equal(err.message, "Did not run a successful sale")
+        error_thrown = true;
+      }
+      assert(error_thrown, "no error was thrown")
     })
 
-    describe('when sale is successful, i.e. endBlock reached raised minimum amount', () => {
-      beforeEach('setup a sale with multisig', async () => {
-        await createSale_withGenuineMultisig();
-        await forwardToStartBlock();
-        await testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'ether');
-        await testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
-        await testHelper.sendEther(BUYER_THREE, colonySale.address, 12, 'finney');
-        await testHelper.sendEther(BUYER_TWO, colonySale.address, 13, 'finney');
-        // Get the endBlock and fast forward to it
-        const endBlock = await colonySale.endBlock.call();
-        testHelper.forwardToBlock(endBlock.toNumber());
-        process.env['TOKEN_SALE_ADDRESS'] = colonySale.address;
-        process.env['MULTISIG_ADDRESS'] = colonyMultisig.address;
-      });
+    it("the second script should refuse to pay tokens out", async function (){
+      process.env['TOKEN_SALE_ADDRESS'] = colonySale.address;
+      process.env['MULTISIG_ADDRESS'] = colonyMultisig.address;
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let error_thrown = false;
+      await refundPromise();
+      try {
+        await payoutConfirmPromise();
+      }catch (err){
+        assert.equal(err.message, "Did not run a successful sale")
+        error_thrown = true;
+      }
+      assert(error_thrown, "no error was thrown")
+    })
 
-      afterEach('undo the env setting', async () => {
-        process.env['TOKEN_SALE_ADDRESS'] = "";
-        process.env['MULTISIG_ADDRESS'] = "";
-        process.env['MULTISIG_SIGNEE'] = "";
-      })
+  })
 
-      it("the first script should refuse to refund ether", async function (){
-        process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
-        let error_thrown = false;
-        try {
-          await refundPromise();
-        }catch (err){
-          assert.equal(err.message, "Ran a successful sale")
-          error_thrown = true;
-        }
-        assert(error_thrown, "no error was thrown")
-      })
+  describe('when sale is successful, i.e. endBlock reached raised minimum amount', () => {
+    beforeEach('setup a sale with multisig', async () => {
+      await createSale_withGenuineMultisig();
+      await forwardToStartBlock();
+      await testHelper.sendEther(BUYER_ONE, colonySale.address, 1, 'ether');
+      await testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
+      await testHelper.sendEther(BUYER_THREE, colonySale.address, 12, 'finney');
+      await testHelper.sendEther(BUYER_TWO, colonySale.address, 13, 'finney');
+      // Get the endBlock and fast forward to it
+      const endBlock = await colonySale.endBlock.call();
+      testHelper.forwardToBlock(endBlock.toNumber());
+      process.env['TOKEN_SALE_ADDRESS'] = colonySale.address;
+      process.env['MULTISIG_ADDRESS'] = colonyMultisig.address;
+    });
 
-      it("the second script should refuse to refund ether", async function (){
-        process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
-        let error_thrown = false;
+    afterEach('undo the env setting', async () => {
+      process.env['TOKEN_SALE_ADDRESS'] = "";
+      process.env['MULTISIG_ADDRESS'] = "";
+      process.env['MULTISIG_SIGNEE'] = "";
+    })
+
+    it("the first script should refuse to refund ether", async function (){
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let error_thrown = false;
+      try {
+        await refundPromise();
+      }catch (err){
+        assert.equal(err.message, "Ran a successful sale")
+        error_thrown = true;
+      }
+      assert(error_thrown, "no error was thrown")
+    })
+
+    it("the second script should refuse to refund ether", async function (){
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let error_thrown = false;
+      await payoutPromise();
+      try {
+        await refundConfirmPromise();
+      }catch (err){
+        assert.equal(err.message, "Ran a successful sale")
+        error_thrown = true;
+      }
+      assert(error_thrown, "no error was thrown")
+    })
+
+    it("the scripts should assign everyone their tokens", async function () {
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let b1,b2,b3;
+      let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "1035000000000000000")
+      try {
         await payoutPromise();
-        try {
-          await refundConfirmPromise();
-        }catch (err){
-          assert.equal(err.message, "Ran a successful sale")
-          error_thrown = true;
-        }
-        assert(error_thrown, "no error was thrown")
-      })
+        process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
+        await payoutConfirmPromise();
+      } catch (err){
+        assert(false, err);
+      }
 
-      it("the scripts should assign everyone their tokens", async function () {
-        process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
-        let b1,b2,b3;
-        let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
-        assert.equal(multisigBalance.toString(), "1035000000000000000")
-        try {
-          await payoutPromise();
-          process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
-          await payoutConfirmPromise();
+      b1 = await token.balanceOf(BUYER_ONE);
+      assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
+      b2 = await token.balanceOf(BUYER_TWO);
+      assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
+      b3 = await token.balanceOf(BUYER_THREE);
+      assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
 
-        } catch (err){
-          assert(false, err);
-        }
+    });
 
-        b1 = await token.balanceOf(BUYER_ONE);
-        assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
-        b2 = await token.balanceOf(BUYER_TWO);
-        assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
-        b3 = await token.balanceOf(BUYER_THREE);
-        assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
+    it("running either or both scripts more than once or in the wrong order should have no effect on the final state", async function () {
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let b1,b2,b3;
+      let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "1035000000000000000")
+      try {
+        await payoutPromise();
+        await payoutPromise();
+        process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
+        await payoutConfirmPromise();
+        await payoutPromise();
+        await payoutConfirmPromise();
+        await payoutPromise();
 
-      });
+      } catch (err){
+        assert(false, err);
+      }
 
-      it("running either or both scripts more than once or in the wrong order should have no effect on the final state", async function () {
-        process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
-        let b1,b2,b3;
-        let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
-        assert.equal(multisigBalance.toString(), "1035000000000000000")
-        try {
-          await payoutPromise();
-          await payoutPromise();
-          process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
-          await payoutConfirmPromise();
-          await payoutPromise();
-          await payoutConfirmPromise();
-          await payoutPromise();
+      b1 = await token.balanceOf(BUYER_ONE);
+      assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
+      b2 = await token.balanceOf(BUYER_TWO);
+      assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
+      b3 = await token.balanceOf(BUYER_THREE);
+      assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
+    });
 
-        } catch (err){
-          assert(false, err);
-        }
+    it("if there are already payouts queued, the first script still continues as expected", async function (){
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let b1,b2,b3;
+      let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "1035000000000000000")
+      let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT, gasPrice: 4e9 });
+      try {
+        await payoutPromise();
+        process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
+        await payoutConfirmPromise();
+      } catch (err){
+        assert(false, err);
+      }
 
-        b1 = await token.balanceOf(BUYER_ONE);
-        assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
-        b2 = await token.balanceOf(BUYER_TWO);
-        assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
-        b3 = await token.balanceOf(BUYER_THREE);
-        assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
+      b1 = await token.balanceOf(BUYER_ONE);
+      assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
+      b2 = await token.balanceOf(BUYER_TWO);
+      assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
+      b3 = await token.balanceOf(BUYER_THREE);
+      assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
+    })
 
-      });
+    it("if there are already payouts confirmed, the first script still continues as expected", async function (){
 
-      it("if there are already payouts queued, the first script still continues as expected", async function (){
-
-        process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
-        let b1,b2,b3;
-        let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
-        assert.equal(multisigBalance.toString(), "1035000000000000000")
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let b1,b2,b3;
+      let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "1035000000000000000")
+      try {
+        await colonySale.finalize();
         let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
         await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT, gasPrice: 4e9 });
-        try {
-          await payoutPromise();
-          process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
-          await payoutConfirmPromise();
-        } catch (err){
-          assert(false, err);
-        }
+        await colonyMultisig.confirmTransaction(0, {from: TEAM_MEMBER_1, gasPrice: 4e9 });
+        await payoutPromise();
+        process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
+        await payoutConfirmPromise();
+      } catch (err){
+        assert(false, err);
+      }
 
-        b1 = await token.balanceOf(BUYER_ONE);
-        assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
-        b2 = await token.balanceOf(BUYER_TWO);
-        assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
-        b3 = await token.balanceOf(BUYER_THREE);
-        assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
-      })
-
-      it("if there are already payouts confirmed, the first script still continues as expected", async function (){
-
-        process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
-        let b1,b2,b3;
-        let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
-        assert.equal(multisigBalance.toString(), "1035000000000000000")
-        try {
-          await colonySale.finalize();
-          let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
-          await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT, gasPrice: 4e9 });
-          await colonyMultisig.confirmTransaction(0, {from: TEAM_MEMBER_1, gasPrice: 4e9 });
-          await payoutPromise();
-          process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
-          await payoutConfirmPromise();
-        } catch (err){
-          assert(false, err);
-        }
-
-        b1 = await token.balanceOf(BUYER_ONE);
-        assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
-        b2 = await token.balanceOf(BUYER_TWO);
-        assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
-        b3 = await token.balanceOf(BUYER_THREE);
-        assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
-      })
-
-      it("if there are already payouts confirmed, the second script still continues as expected", async function (){
-
-        process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
-        let b1,b2,b3;
-        let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
-        assert.equal(multisigBalance.toString(), "1035000000000000000")
-        try {
-          await payoutPromise();
-          process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
-          await colonyMultisig.confirmTransaction(1, {from: TEAM_MEMBER_1, gasPrice: 4e9 });
-          await payoutConfirmPromise();
-        } catch (err){
-          assert(false, err);
-        }
-
-        b1 = await token.balanceOf(BUYER_ONE);
-        assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
-        b2 = await token.balanceOf(BUYER_TWO);
-        assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
-        b3 = await token.balanceOf(BUYER_THREE);
-        assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
-      })
-
-
+      b1 = await token.balanceOf(BUYER_ONE);
+      assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
+      b2 = await token.balanceOf(BUYER_TWO);
+      assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
+      b3 = await token.balanceOf(BUYER_THREE);
+      assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
     })
+
+    it("if there are already payouts confirmed, the second script still continues as expected", async function (){
+
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let b1,b2,b3;
+      let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "1035000000000000000")
+      try {
+        await payoutPromise();
+        process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
+        await colonyMultisig.confirmTransaction(1, {from: TEAM_MEMBER_1, gasPrice: 4e9 });
+        await payoutConfirmPromise();
+      } catch (err){
+        assert(false, err);
+      }
+
+      b1 = await token.balanceOf(BUYER_ONE);
+      assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
+      b2 = await token.balanceOf(BUYER_TWO);
+      assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
+      b3 = await token.balanceOf(BUYER_THREE);
+      assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
+    })
+
+
+  })
 });
