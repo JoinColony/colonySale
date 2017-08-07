@@ -280,8 +280,8 @@ contract('ColonyTokenSale', function(accounts) {
         testHelper.ifUsingTestRPC(err);
       }
 
-      const saleFinalised = await colonySale.saleFinalized.call();
-      assert.isFalse(saleFinalised);
+      const saleFinalized = await colonySale.saleFinalized.call();
+      assert.isFalse(saleFinalized);
     });
 
     it("should NOT be able to claim tokens", async function () {
@@ -422,8 +422,8 @@ contract('ColonyTokenSale', function(accounts) {
         testHelper.ifUsingTestRPC(err);
       }
 
-      const saleFinalised = await colonySale.saleFinalized.call();
-      assert.isFalse(saleFinalised);
+      const saleFinalized = await colonySale.saleFinalized.call();
+      assert.isFalse(saleFinalized);
     });
 
     it("should NOT be able to claim tokens", async function () {
@@ -523,8 +523,8 @@ contract('ColonyTokenSale', function(accounts) {
     it("when minToRaise has been reached, should be able to finalize sale", async function () {
       const tx = await colonySale.finalize();
       assert.equal(tx.logs[4].event, 'SaleFinalized');
-      const saleFinalised = await colonySale.saleFinalized.call();
-      assert.isTrue(saleFinalised);
+      const saleFinalized = await colonySale.saleFinalized.call();
+      assert.isTrue(saleFinalized);
     });
 
     it("when sale finalised, should NOT be able to finalize sale again", async function () {
@@ -536,8 +536,8 @@ contract('ColonyTokenSale', function(accounts) {
         testHelper.ifUsingTestRPC(err);
       }
 
-      const saleFinalised = await colonySale.saleFinalized.call();
-      assert.isTrue(saleFinalised);
+      const saleFinalized = await colonySale.saleFinalized.call();
+      assert.isTrue(saleFinalized);
     });
 
     it("when sale finalized, should mint correct total retained tokens", async function () {
@@ -668,8 +668,8 @@ contract('ColonyTokenSale', function(accounts) {
         testHelper.ifUsingTestRPC(err);
       }
 
-      const saleFinalised = await colonySale.saleFinalized.call();
-      assert.isFalse(saleFinalised);
+      const saleFinalized = await colonySale.saleFinalized.call();
+      assert.isFalse(saleFinalized);
     });
 
     it("should NOT be able to claim tokens", async function () {

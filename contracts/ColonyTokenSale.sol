@@ -36,7 +36,7 @@ contract ColonyTokenSale is DSMath {
   // Has the sale been finalized
   bool public saleFinalized = false;
   // The block time when sale was finalized. (Used in token vesting calculations)
-  uint public saleFinalisedTime;
+  uint public saleFinalizedTime;
   // Seconds per month, calculated as seconds in a (non-leap) year divided by 12, i.e. 31536000 / 12
   uint constant internal SECONDS_PER_MONTH = 2628000;
 
@@ -88,12 +88,12 @@ contract ColonyTokenSale is DSMath {
     _;
   }
 
-  modifier saleFinalised {
+  modifier saleIsFinalized {
     assert(saleFinalized);
     _;
   }
 
-  modifier saleNotFinalised {
+  modifier saleNotFinalized {
     assert(!saleFinalized);
     _;
   }
@@ -174,7 +174,7 @@ contract ColonyTokenSale is DSMath {
 
   function claimPurchase(address _owner) external
   onlyColonyMultisig
-  saleFinalised
+  saleIsFinalized
   {
     // Calculate token amount for given value and transfer tokens
     uint amount = userBuys[_owner];
@@ -186,7 +186,7 @@ contract ColonyTokenSale is DSMath {
   }
 
   function claimVestedTokens() external
-  saleFinalised
+  saleIsFinalized
   {
     uint128 grant = tokenGrants[msg.sender];
     GrantClaimTotal memory grantClaimTotal = grantClaimTotals[msg.sender];
@@ -194,30 +194,30 @@ contract ColonyTokenSale is DSMath {
     uint128 totalClaimed = grantClaimTotal.totalClaimed;
 
     // Check cliff was reached
-    uint elapsedTime = sub(now, saleFinalisedTime);
-    uint64 monthsSinceSaleFinalised = uint64(div(elapsedTime, SECONDS_PER_MONTH));
-    assert(monthsSinceSaleFinalised >= 6);
+    uint elapsedTime = sub(now, saleFinalizedTime);
+    uint64 monthsSinceSaleFinalized = uint64(div(elapsedTime, SECONDS_PER_MONTH));
+    assert(monthsSinceSaleFinalized >= 6);
 
     // If over 24 months, all tokens vested
-    if (monthsSinceSaleFinalised >= 24) {
+    if (monthsSinceSaleFinalized >= 24) {
       uint128 remainingGrant = hsub(grant, totalClaimed);
       grantClaimTotals[msg.sender] = GrantClaimTotal(24, grant);
       token.transfer(msg.sender, remainingGrant);
     } else {
       // Get the time period for which we claim
-      uint64 monthsPendingClaim = uint64(sub(monthsSinceSaleFinalised, monthsClaimed));
+      uint64 monthsPendingClaim = uint64(sub(monthsSincesaleFinalized, monthsClaimed));
       // Calculate vested tokens and transfer them to recipient
       uint128 amountVestedPerMonth = hdiv(grant, 24);
       uint128 amountVested = hmul(monthsPendingClaim, amountVestedPerMonth);
-      grantClaimTotals[msg.sender] = GrantClaimTotal(monthsSinceSaleFinalised, hadd(totalClaimed, amountVested));
-      token.transfer(msg.sender, amountVested);
+      grantClaimTotals[msg.sender] = GrantClaimTotal(monthsSinceSaleFinalized, hadd(totalClaimed, amountVested));
+      assert(token.transfer(msg.sender, amountVested));
     }
   }
 
   function finalize() external
   saleClosed
   raisedMinimumAmount
-  saleNotFinalised
+  saleNotFinalized
   {
     // Deduct initial 1 finney, see note on `totalRaised` prop
     totalRaised = sub(totalRaised, 10 ** 15);
@@ -256,7 +256,7 @@ contract ColonyTokenSale is DSMath {
     AllocatedReservedTokens(STRATEGY_FUND, strategyFundAllocation);
 
     saleFinalized = true;
-    saleFinalisedTime = now;
+    saleFinalizedTime = now;
     SaleFinalized(msg.sender, totalRaised, totalSupply);
   }
 
