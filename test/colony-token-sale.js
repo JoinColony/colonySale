@@ -543,8 +543,8 @@ contract('ColonyTokenSale', function(accounts) {
     it("when sale finalized, should mint correct total retained tokens", async function () {
       await colonySale.finalize();
       const tokenSupply = await token.totalSupply.call();
-      const expected = new BigNumber('5917649019607843137254');
-      assert.equal(tokenSupply.toNumber(), expected.toNumber()); // = 3018001 * 1e15 * CLNY tokens sold / 0.51
+      const expected = new BigNumber('5917649019607843137254'); // = 3018001 * 1e15 * CLNY tokens sold / 0.51
+      assert.isTrue(tokenSupply.equals(expected));
     });
 
     it("when sale finalized, should transfer token ownership to Colony MultiSig", async function () {
@@ -561,7 +561,7 @@ contract('ColonyTokenSale', function(accounts) {
       // Total number of tokens (wei) is 5917649019607843137254
       // Investor balance = 5% of total
       const investorTokenWeiBalance = await token.balanceOf.call(INVESTOR_1);
-      const expectedInvestorAllocation = new BigNumber('295882450980392156863'); // Actually 5% is exactly 295784313725490196078.5
+      const expectedInvestorAllocation = new BigNumber('295882450980392156862');
       assert.isTrue(investorTokenWeiBalance.equals(expectedInvestorAllocation), 'Investor allocation incorrect');
 
       // Team balance = 10% of total
@@ -575,7 +575,7 @@ contract('ColonyTokenSale', function(accounts) {
 
       // Strategy fund balance = 19% of total
       const strategyFundTokenWeiBalance = await token.balanceOf.call(STRATEGY_FUND);
-      const expectedStrategyFundAllocation = new BigNumber('1124353313725490196078');
+      const expectedStrategyFundAllocation = new BigNumber('1124353313725490196079');
       assert.isTrue(strategyFundTokenWeiBalance.equals(expectedStrategyFundAllocation), 'StrategyFund allocation incorrect');
     });
 

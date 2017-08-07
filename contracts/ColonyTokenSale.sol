@@ -48,22 +48,23 @@ contract ColonyTokenSale is DSMath {
   address public FOUNDATION = 0x4e7DBb49018489a27088FE304b18849b02F708F6;
   address public STRATEGY_FUND = 0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F;
 
-  uint128 constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** 18;
-  uint128 constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
-  uint128 constant public ALLOCATION_TEAM_MEMBERS_TOTAL = 110 * 10 ** 18;
+  // Colony Token wei allocation for each team member
+  uint constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** 18;
+  uint constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
+  uint constant public ALLOCATION_TEAM_MEMBERS_TOTAL = 110 * 10 ** 18;
 
   mapping (address => uint) public userBuys;
-  mapping (address => uint128) public tokenGrants;
+  mapping (address => uint) public tokenGrants;
   struct GrantClaimTotal {
     uint64 monthsClaimed;
-    uint128 totalClaimed;
+    uint totalClaimed;
   }
   mapping (address => GrantClaimTotal) public grantClaimTotals;
 
   event Purchase(address buyer, uint amount);
   event Claim(address buyer, uint amount, uint tokens);
   event UpdatedSaleEndBlock(uint endblockNumber);
-  event SaleFinalized(address user, uint totalRaised, uint128 totalSupply);
+  event SaleFinalized(address user, uint totalRaised, uint totalSupply);
   event AllocatedReservedTokens(address user, uint tokens);
 
   modifier onlyColonyMultisig {
@@ -188,10 +189,10 @@ contract ColonyTokenSale is DSMath {
   function claimVestedTokens() external
   saleIsFinalized
   {
-    uint128 grant = tokenGrants[msg.sender];
+    uint grant = tokenGrants[msg.sender];
     GrantClaimTotal memory grantClaimTotal = grantClaimTotals[msg.sender];
     uint64 monthsClaimed = grantClaimTotal.monthsClaimed;
-    uint128 totalClaimed = grantClaimTotal.totalClaimed;
+    uint totalClaimed = grantClaimTotal.totalClaimed;
 
     // Check cliff was reached
     uint elapsedTime = sub(now, saleFinalizedTime);
@@ -200,17 +201,17 @@ contract ColonyTokenSale is DSMath {
 
     // If over 24 months, all tokens vested
     if (monthsSinceSaleFinalized >= 24) {
-      uint128 remainingGrant = hsub(grant, totalClaimed);
+      uint remainingGrant = sub(grant, totalClaimed);
       grantClaimTotals[msg.sender] = GrantClaimTotal(24, grant);
       token.transfer(msg.sender, remainingGrant);
     } else {
       // Get the time period for which we claim
-      uint64 monthsPendingClaim = uint64(sub(monthsSincesaleFinalized, monthsClaimed));
+      uint64 monthsPendingClaim = uint64(sub(monthsSinceSaleFinalized, monthsClaimed));
       // Calculate vested tokens and transfer them to recipient
-      uint128 amountVestedPerMonth = hdiv(grant, 24);
-      uint128 amountVested = hmul(monthsPendingClaim, amountVestedPerMonth);
-      grantClaimTotals[msg.sender] = GrantClaimTotal(monthsSinceSaleFinalized, hadd(totalClaimed, amountVested));
-      assert(token.transfer(msg.sender, amountVested));
+      uint amountVestedPerMonth = div(grant, 24);
+      uint amountVested = mul(monthsPendingClaim, amountVestedPerMonth);
+      grantClaimTotals[msg.sender] = GrantClaimTotal(monthsSinceSaleFinalized, add(totalClaimed, amountVested));
+      token.transfer(msg.sender, amountVested);
     }
   }
 
@@ -224,17 +225,17 @@ contract ColonyTokenSale is DSMath {
 
     // Mint as much retained tokens as raised in sale, i.e. 51% is sold, 49% retained
     uint purchasedSupply = mul(totalRaised, TOKEN_PRICE_MULTIPLIER);
-    uint128 totalSupply = cast(div(mul(purchasedSupply, 100), 51));
-    token.mint(totalSupply);
+    uint totalSupply = div(mul(purchasedSupply, 100), 51);
+    token.mint(cast(totalSupply));
     token.changeOwner(colonyMultisig);
 
     // 5% allocated to Investor
-    uint128 earlyInvestorAllocation = wmul(wdiv(totalSupply, 100), 5);
+    uint earlyInvestorAllocation = div(mul(totalSupply, 5), 100);
     token.transfer(INVESTOR_1, earlyInvestorAllocation);
     AllocatedReservedTokens(INVESTOR_1, earlyInvestorAllocation);
 
     // 10% allocated to Team
-    uint128 totalTeamAllocation = wmul(wdiv(totalSupply, 100), 10);
+    uint totalTeamAllocation = div(mul(totalSupply, 10), 100);
 
     // Allocate to team members
     token.transfer(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1);
@@ -243,15 +244,15 @@ contract ColonyTokenSale is DSMath {
     AllocatedReservedTokens(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
 
     // Vest remainder to team multisig
-    uint128 teamRemainderAmount = hsub(totalTeamAllocation, ALLOCATION_TEAM_MEMBERS_TOTAL);
+    uint teamRemainderAmount = sub(totalTeamAllocation, ALLOCATION_TEAM_MEMBERS_TOTAL);
     tokenGrants[TEAM_MULTISIG] = teamRemainderAmount;
 
     // 15% allocated to Foundation
-    uint128 foundationAllocation = wmul(wdiv(totalSupply, 100), 15);
+    uint foundationAllocation = div(mul(totalSupply, 15), 100);
     tokenGrants[FOUNDATION] = foundationAllocation;
 
     // 19% allocated to Strategy fund
-    uint128 strategyFundAllocation = hsub(totalSupply, hadd(hadd(hadd(earlyInvestorAllocation, totalTeamAllocation), foundationAllocation), cast(purchasedSupply)));
+    uint strategyFundAllocation = sub(totalSupply, add(add(add(earlyInvestorAllocation, totalTeamAllocation), foundationAllocation), purchasedSupply));
     token.transfer(STRATEGY_FUND, strategyFundAllocation);
     AllocatedReservedTokens(STRATEGY_FUND, strategyFundAllocation);
 
