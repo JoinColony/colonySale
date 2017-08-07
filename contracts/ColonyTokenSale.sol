@@ -74,16 +74,12 @@ contract ColonyTokenSale is DSMath {
   modifier saleOpen {
     assert(block.number >= startBlock);
     assert(block.number < endBlock);
+    assert (!saleStopped);
     _;
   }
 
   modifier saleClosed {
     assert(block.number >= endBlock);
-    _;
-  }
-
-  modifier saleNotStopped {
-    assert (!saleStopped);
     _;
   }
 
@@ -141,7 +137,6 @@ contract ColonyTokenSale is DSMath {
 
   function buy(address _owner) internal
   saleOpen
-  saleNotStopped
   contributionMeetsMinimum
   {
     // Send funds to multisig, revert op performed on failure
