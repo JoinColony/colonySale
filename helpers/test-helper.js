@@ -1,19 +1,13 @@
 var _sendWei = function(source, dest, amountInWei) {
   const amountInHex = web3.toHex(amountInWei);
-  const request = {
-    jsonrpc: '2.0',
-    method: 'eth_sendTransaction',
-    params: [
-      {
-        from: source,
-        to: dest,
-        gas: '0x30D40', // Buy tx costs ~72,000 gas but solidity-coverage needs more than that, send 200,000
-        value: amountInHex
-      }
-    ],
-    id: new Date().getTime() };
+  const transactionObject = {
+    from: source,
+    to: dest,
+    gas: '0x30D40', // Buy tx costs ~72,000 gas but solidity-coverage needs more than that, send 200,000
+    value: amountInHex
+  };
 
-  return web3.currentProvider.send(request);
+  return web3.eth.sendTransaction(transactionObject);
 }
 
 module.exports = {
