@@ -74,7 +74,7 @@ module.exports = function(callback) {
         }
         // Is it the amount we expect?
         if (!tx[1].equals(payoutsThisRun[tx[0]].expectedAmount)){
-          console.log("There is a payment to address ", tx[1], " already at txid ", idx)
+          console.log("There is a payment to address ", tx[0], " already at txid ", idx)
           console.log("But for an unexpected amount")
           console.log("Investigate before continuing")
           return callback(1);
@@ -89,7 +89,6 @@ module.exports = function(callback) {
           console.log('Creating transaction to refund ether to ', buyerAddress);
           await colonyMultisig.submitTransaction(buyerAddress, payoutsThisRun[buyerAddress].expectedAmount, "", { from: MULTISIG_SIGNEE, gasPrice: 4e9 });
           console.log('Transaction created to refund ether to', buyerAddress);
-
         }
       }
     callback();
