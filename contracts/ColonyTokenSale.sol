@@ -73,29 +73,29 @@ contract ColonyTokenSale is DSMath {
   }
 
   modifier saleOpen {
-    assert(block.number >= startBlock);
-    assert(block.number < endBlock);
-    assert (!saleStopped);
+    require(block.number >= startBlock);
+    require(block.number < endBlock);
+    require (!saleStopped);
     _;
   }
 
   modifier saleClosed {
-    assert(block.number >= endBlock);
+    require(block.number >= endBlock);
     _;
   }
 
   modifier raisedMinimumAmount {
-    assert(totalRaised >= minToRaise);
+    require(totalRaised >= minToRaise);
     _;
   }
 
   modifier saleIsFinalized {
-    assert(saleFinalized);
+    require(saleFinalized);
     _;
   }
 
   modifier saleNotFinalized {
-    assert(!saleFinalized);
+    require(!saleFinalized);
     _;
   }
 
