@@ -969,6 +969,44 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(b2.toString(), buyer2StartBalance.toString(), "Wrong balance");
       b3 = await web3.eth.getBalance(BUYER_THREE);
       assert.equal(b3.toString(), buyer3StartBalance.toString(), "Wrong balance");
+
+      let nTransactions = await colonyMultisig.transactionCount.call();
+      assert.equal(nTransactions.toString(), 3);
+    });
+
+    it("if a refund transaction is already confirmed, but for an unexpected amount, the first script should not queue any transactions", async function () {
+      let buyer1StartBalance = await web3.eth.getBalance(BUYER_ONE).plus(web3.toWei(12, 'finney'));
+      let buyer2StartBalance = await web3.eth.getBalance(BUYER_TWO);
+      let buyer3StartBalance = await web3.eth.getBalance(BUYER_THREE);
+      process.env['TOKEN_SALE_ADDRESS'] = colonySale.address;
+      process.env['MULTISIG_ADDRESS'] = colonyMultisig.address;
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let b1,b2,b3;
+      let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "46000000000000000")
+      let errorThrown = false;
+      try {
+        await colonyMultisig.submitTransaction(BUYER_ONE, web3.toWei(12, 'finney'), "", { from:COLONY_ACCOUNT, gasPrice:4e9 });
+        await colonyMultisig.confirmTransaction(0, { from:TEAM_MEMBER_1, gasPrice:4e9 });
+        let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+        assert.equal(multisigBalance.toString(), "34000000000000000")
+        await refundPromise();
+      } catch (err){
+        assert.equal("Unexpected amount already paid to an expected address", err.message);
+        errorThrown = true;
+      }
+      multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "34000000000000000")
+
+      b1 = await web3.eth.getBalance(BUYER_ONE);
+      assert.equal(b1.toString(), buyer1StartBalance.toString(), "Wrong balance");
+      b2 = await web3.eth.getBalance(BUYER_TWO);
+      assert.equal(b2.toString(), buyer2StartBalance.toString(), "Wrong balance");
+      b3 = await web3.eth.getBalance(BUYER_THREE);
+      assert.equal(b3.toString(), buyer3StartBalance.toString(), "Wrong balance");
+
+      let nTransactions = await colonyMultisig.transactionCount.call();
+      assert.equal(nTransactions.toString(), 1);
     });
 
     it("if a refund transaction is already confirmed, the second script should continue as normal", async function () {
@@ -1229,7 +1267,127 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
       b3 = await token.balanceOf(BUYER_THREE);
       assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
+
+      let nTransactions = await colonyMultisig.transactionCount.call();
+      assert.equal(nTransactions.toString(), 3);
     })
+
+    it("The second script does not confirm transactions going to different addresses", async function (){
+
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let b1,b2,b3;
+      let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "1035000000000000000")
+      let t2Balance = await web3.eth.getBalance(TEAM_MEMBER_2);
+      try {
+        await payoutPromise();
+        await colonyMultisig.submitTransaction(TEAM_MEMBER_2, 100000000, "", { FROM: COLONY_ACCOUNT })
+        process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
+        await payoutConfirmPromise();
+      } catch (err){
+        assert(false, err.message);
+      }
+
+      b1 = await token.balanceOf(BUYER_ONE);
+      assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
+      b2 = await token.balanceOf(BUYER_TWO);
+      assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
+      b3 = await token.balanceOf(BUYER_THREE);
+      assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
+      let t2BalanceAfterwards = await web3.eth.getBalance(TEAM_MEMBER_2);
+      assert.equal(t2Balance.toString(), t2BalanceAfterwards.toString())
+      let extraTxStatus = await colonyMultisig.transactions.call(3)
+      assert.equal(extraTxStatus[3],false);
+    })
+
+    it("The second script does not confirm transactions with value", async function (){
+
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let b1,b2,b3;
+      let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "1035000000000000000")
+      let t2Balance = await web3.eth.getBalance(TEAM_MEMBER_2);
+      try {
+        await payoutPromise();
+        await colonyMultisig.submitTransaction(colonySale.address, 100000000, "", { FROM: COLONY_ACCOUNT })
+        process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
+        await payoutConfirmPromise();
+      } catch (err){
+        assert(false, err.message);
+      }
+
+      b1 = await token.balanceOf(BUYER_ONE);
+      assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
+      b2 = await token.balanceOf(BUYER_TWO);
+      assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
+      b3 = await token.balanceOf(BUYER_THREE);
+      assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
+      let t2BalanceAfterwards = await web3.eth.getBalance(TEAM_MEMBER_2);
+      assert.equal(t2Balance.toString(), t2BalanceAfterwards.toString())
+      let extraTxStatus = await colonyMultisig.transactions.call(3)
+      assert.equal(extraTxStatus[3],false);
+    })
+
+    it("The second script does not confirm transactions going to the crowdsale address executing the wrong function", async function (){
+
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let b1,b2,b3;
+      let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "1035000000000000000")
+      let t2Balance = await web3.eth.getBalance(TEAM_MEMBER_2);
+
+      try {
+        await payoutPromise();
+        let txData = await colonySale.contract.finalize.getData();
+        await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT, gasPrice: 4e9 });
+        process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
+        await payoutConfirmPromise();
+      } catch (err){
+        assert(false, err.message);
+      }
+
+      b1 = await token.balanceOf(BUYER_ONE);
+      assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
+      b2 = await token.balanceOf(BUYER_TWO);
+      assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
+      b3 = await token.balanceOf(BUYER_THREE);
+      assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
+      let t2BalanceAfterwards = await web3.eth.getBalance(TEAM_MEMBER_2);
+      assert.equal(t2Balance.toString(), t2BalanceAfterwards.toString())
+      let extraTxStatus = await colonyMultisig.transactions.call(3)
+      assert.equal(extraTxStatus[3],false);
+    })
+
+    it("The second script does not confirm duplicate payout transactions", async function (){
+
+      process.env['MULTISIG_SIGNEE'] = COLONY_ACCOUNT;
+      let b1,b2,b3;
+      let multisigBalance = await web3.eth.getBalance(colonyMultisig.address);
+      assert.equal(multisigBalance.toString(), "1035000000000000000")
+      let t2Balance = await web3.eth.getBalance(TEAM_MEMBER_2);
+
+      try {
+        await payoutPromise();
+        let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
+        await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT, gasPrice: 4e9 });
+        process.env['MULTISIG_SIGNEE'] = TEAM_MEMBER_1;
+        await payoutConfirmPromise();
+      } catch (err){
+        assert(false, err.message);
+      }
+
+      b1 = await token.balanceOf(BUYER_ONE);
+      assert.equal(b1.toString(10), web3.toBigNumber(1000).times(web3.toWei(1,'ether')).toString(10), "Wrong balance");
+      b2 = await token.balanceOf(BUYER_TWO);
+      assert.equal(b2.toString(10), web3.toBigNumber(1000).times(web3.toWei(23,'finney')).toString(10), "Wrong balance");
+      b3 = await token.balanceOf(BUYER_THREE);
+      assert.equal(b3.toString(10), web3.toBigNumber(1000).times(web3.toWei(12,'finney')).toString(10), "Wrong balance");
+      let t2BalanceAfterwards = await web3.eth.getBalance(TEAM_MEMBER_2);
+      assert.equal(t2Balance.toString(), t2BalanceAfterwards.toString())
+      let extraTxStatus = await colonyMultisig.transactions.call(3)
+      assert.equal(extraTxStatus[3],false);
+    })
+
 
 
   })
