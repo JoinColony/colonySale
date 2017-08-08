@@ -10,7 +10,7 @@ dependencies:
     - "~/.yarn-cache"
 
   override:
-    - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 0.24.6
+    - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 0.27.5
     - yarn global add mkdirp gulp@3.9.1
     - yarn --pure-lockfile --cache-folder ~/.yarn-cache
     - git submodule update --init --recursive --remote
