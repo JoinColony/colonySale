@@ -29,7 +29,7 @@ const cleanUpgradeTempContracts = () => {
   });
 };
 
-gulp.task('lint:contracts', () => {
+gulp.task('lint:contracts', 'Lint contracts', () => {
   return execute('solium --dir . || true');
 });
 
@@ -100,6 +100,11 @@ gulp.task('geth', () => {
 
 gulp.task('test:contracts', 'Run contract tests', ['deploy:contracts', 'lint:contracts'], () => {
   const cmd = makeCmd(`truffle test`);
+  return execute(cmd);
+});
+
+gulp.task('test:contracts:gasCosts', 'Run gas cost tests', ['deploy:contracts'], () => {
+  const cmd = makeCmd(`truffle test gasCosts/gasCosts.js`);
   return execute(cmd);
 });
 
