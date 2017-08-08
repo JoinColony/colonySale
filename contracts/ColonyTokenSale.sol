@@ -51,9 +51,9 @@ contract ColonyTokenSale is DSMath {
   address public STRATEGY_FUND = 0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F;
 
   // Colony Token wei allocation for each team member
-  uint constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** 18;
-  uint constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
-  uint constant public ALLOCATION_TEAM_MEMBERS_TOTAL = 110 * 10 ** 18;
+  uint128 constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** 18;
+  uint128 constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
+  uint128 constant public ALLOCATION_TEAM_MEMBERS_TOTAL = 110 * 10 ** 18;
 
   mapping (address => uint) public userBuys;
   mapping (address => uint128) public tokenGrants;
