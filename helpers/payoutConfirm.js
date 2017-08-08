@@ -49,6 +49,7 @@ module.exports = function(callback) {
     //Iterate through pending transactions on the multisig
     let transactionCount = await colonyMultisig.transactionCount.call();
     transactionCount = transactionCount.toNumber();
+    let txToConfirm = [];
 
     for (let idx = 0; idx < transactionCount; idx++){
       let tx = await colonyMultisig.transactions.call(idx);
@@ -61,21 +62,21 @@ module.exports = function(callback) {
         console.log("Unexpected transaction to not token sale address")
         console.log("Transaction " + idx + " goes to address " + tx[0])
         console.log("Investigate before going any further");
-        return callback(1)
+        continue;
       }
       //Check tx is valueless
       if (!tx[1].equals(0)){
         console.log("Unexpected transfer of ether")
         console.log("Transaction " + idx + " wishes to move " + tx[1].toString() + " wei")
         console.log("Investigate before going any further");
-        return callback(1)
+        continue;
       }
       // Check the tx calls the right function i.e. bytes4(sha3(claimPurchase(address)))===0xcc967ba1
       if (tx[2].substr(0,10)!=="0xcc967ba1"){
         console.log("Unexpected function signature")
         console.log("Transaction " + idx + " wishes to call " + tx[2].substr(0,10))
         console.log("Investigate before going any further");
-        return callback(1)
+        continue;
       }
       //Check the tx is paying out an address we expect
       const payoutAddress = '0x' + tx[2].substr(34);
@@ -85,29 +86,24 @@ module.exports = function(callback) {
         console.log("Transaction " + idx + " wishes to pay out " + payoutAddress)
         console.log("But they have no balance to be paid out")
         console.log("Investigate before going any further");
-        callback(1)
+        continue;
       }
       // Check the tx isn't paying out an address we've already confirmed this run
       if (confirmedPayoutAddresses[payoutAddress]){
         console.log("Duplicate payout")
         console.log("Transaction " + idx + " wishes to pay out " + payoutAddress)
-        console.log("But we have already paid them out")
+        console.log("But we have already paid them out (or are going to)")
         console.log("Investigate before going any further");
-        return callback(1)
+        continue;
       }
-      //If we got this far, I guess we should confirm!
-      if (!DRY_RUN){
-        await colonyMultisig.confirmTransaction(idx, {gasPrice: 4e9, from: MULTISIG_SIGNEE})
-        console.log("Tansaction to pay out ", payoutAddress, " confirmed");
-      } else {
-        console.log("DRY RUN: Would confirm transaction to pay out ", payoutAddress);
-      }
+      //If we got this far, then we want to confirm that tx
+      txToConfirm.push(idx);
       confirmedPayoutAddresses[payoutAddress] = true;
     }
-    if (DRY_RUN){
-      console.log('No issues with pending transactions detected');
-    } else {
-      console.log('All pending claim transactions successfully confirmed')
+
+    //Now confirm the txs we decided were acceptable
+    for (let idx = 0; idx < txToConfirm.length; idx++){
+      await colonyMultisig.confirmTransaction(txToConfirm[idx], {gasPrice: 4e9, from: MULTISIG_SIGNEE})
     }
     return callback()
   })

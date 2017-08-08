@@ -21,6 +21,7 @@ module.exports = function(callback) {
     let colonyMultisig = MultiSigWallet.at(MULTISIG_ADDRESS)
     var cs = ColonyTokenSale.at(TOKEN_SALE_ADDRESS)
     let confirmedPayoutAddresses = {}
+    let txToConfirm = [];
 
     cs.Purchase({}, {fromBlock: FROM_BLOCK, toBlock: TO_BLOCK}).get(async (err, res) => {
       if (err){
@@ -84,11 +85,17 @@ module.exports = function(callback) {
         }
 
         if (!payoutsThisRun[tx[0]].paidOut){
-          console.log('Approving transaction to refund ether to ', tx[0]);
+          console.log('Will approve transaction to refund ether to ', tx[0]);
+          txToConfirm.push(idx);
           payoutsThisRun[tx[0]].paidOut = true;
-          await colonyMultisig.confirmTransaction(idx, {gasPrice: 4e9, from: MULTISIG_SIGNEE})
-          console.log('Transaction approved to refund ether to', tx[0]);
         }
+      }
+      //Now confirm the txs we decided were acceptable
+      for (let idx = 0; idx < txToConfirm.length; idx++){
+        let tx = await colonyMultisig.transactions.call(txToConfirm[idx]);
+        console.log('Approving transaction to refund ether to', tx[0]);
+        await colonyMultisig.confirmTransaction(txToConfirm[idx], {gasPrice: 4e9, from: MULTISIG_SIGNEE})
+        console.log('Transaction approved to refund ether to', tx[0]);
       }
       callback();
     })
