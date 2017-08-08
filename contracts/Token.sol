@@ -11,8 +11,8 @@
 
 pragma solidity ^0.4.13;
 
-import "./dappsys/erc20.sol";
-import "./dappsys/math.sol";
+import "../lib/erc20/src/erc20.sol";
+import "../lib/ds-math/src/math.sol";
 import "./Ownable.sol";
 
 

@@ -4,4 +4,4 @@ migrations
 test
 installed_contracts
 contracts/Migrations.sol
-contracts/dappsys
+lib
