@@ -60,7 +60,7 @@ module.exports = function(callback) {
         payoutsThisRun[buyerAddress].expectedAmount = amount;
       }
 
-      //Now iterate over pending transactions
+      //Now iterate over pending/completed transactions
       //Iterate through pending transactions on the multisig
       let transactionCount = await colonyMultisig.transactionCount.call();
       transactionCount = transactionCount.toNumber();
@@ -77,7 +77,7 @@ module.exports = function(callback) {
           console.log("There is a payment to address ", tx[0], " already at txid ", idx)
           console.log("But for an unexpected amount")
           console.log("Investigate before continuing")
-          return callback(1);
+          return callback(new Error('Unexpected amount already paid to an expected address'));
         } else {
           // Record that they've already been paid out
           payoutsThisRun[tx[0]].paidOut = true;
