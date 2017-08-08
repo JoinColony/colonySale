@@ -188,7 +188,7 @@ contract ColonyTokenSale is DSMath {
     uint amount = userBuys[_owner];
     uint tokens = mul(amount, TOKEN_PRICE_MULTIPLIER);
     userBuys[_owner] = 0;
-    assert(token.transfer(_owner, tokens));
+    token.transfer(_owner, tokens);
 
     Claim(_owner, amount, tokens);
   }
@@ -210,7 +210,7 @@ contract ColonyTokenSale is DSMath {
     if (monthsSinceSaleFinalised >= 24) {
       uint128 remainingGrant = hsub(grant, totalClaimed);
       grantClaimTotals[msg.sender] = GrantClaimTotal(24, grant);
-      assert(token.transfer(msg.sender, remainingGrant));
+      token.transfer(msg.sender, remainingGrant);
     } else {
       // Get the time period for which we claim
       uint64 monthsPendingClaim = uint64(sub(monthsSinceSaleFinalised, monthsClaimed));
@@ -218,7 +218,7 @@ contract ColonyTokenSale is DSMath {
       uint128 amountVestedPerMonth = hdiv(grant, 24);
       uint128 amountVested = hmul(monthsPendingClaim, amountVestedPerMonth);
       grantClaimTotals[msg.sender] = GrantClaimTotal(monthsSinceSaleFinalised, hadd(totalClaimed, amountVested));
-      assert(token.transfer(msg.sender, amountVested));
+      token.transfer(msg.sender, amountVested);
     }
   }
 
@@ -238,16 +238,16 @@ contract ColonyTokenSale is DSMath {
 
     // 5% allocated to Investor
     uint128 earlyInvestorAllocation = wmul(wdiv(totalSupply, 100), 5);
-    assert(token.transfer(INVESTOR_1, earlyInvestorAllocation));
+    token.transfer(INVESTOR_1, earlyInvestorAllocation);
     AllocatedReservedTokens(INVESTOR_1, earlyInvestorAllocation);
 
     // 10% allocated to Team
     uint128 totalTeamAllocation = wmul(wdiv(totalSupply, 100), 10);
 
     // Allocate to team members
-    assert(token.transfer(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1));
+    token.transfer(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1);
     AllocatedReservedTokens(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1);
-    assert(token.transfer(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2));
+    token.transfer(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
     AllocatedReservedTokens(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
 
     // Vest remainder to team multisig
@@ -260,7 +260,7 @@ contract ColonyTokenSale is DSMath {
 
     // 19% allocated to Strategy fund
     uint128 strategyFundAllocation = hsub(totalSupply, hadd(hadd(hadd(earlyInvestorAllocation, totalTeamAllocation), foundationAllocation), cast(purchasedSupply)));
-    assert(token.transfer(STRATEGY_FUND, strategyFundAllocation));
+    token.transfer(STRATEGY_FUND, strategyFundAllocation);
     AllocatedReservedTokens(STRATEGY_FUND, strategyFundAllocation);
 
     saleFinalized = true;
