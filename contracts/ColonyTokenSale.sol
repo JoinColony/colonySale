@@ -197,7 +197,7 @@ contract ColonyTokenSale is DSMath {
     // Check cliff was reached
     uint elapsedTime = sub(now, saleFinalizedTime);
     uint64 monthsSinceSaleFinalized = uint64(div(elapsedTime, SECONDS_PER_MONTH));
-    assert(monthsSinceSaleFinalized >= 6);
+    require(monthsSinceSaleFinalized >= 6);
 
     // If over 24 months, all tokens vested
     if (monthsSinceSaleFinalized >= 24) {
