@@ -44,7 +44,7 @@ contract('ColonyTokenSale', function(accounts) {
   const r_maxSaleDuration = 60480;
 
   // Sale test properties
-  const t_minAmountToRaise = web3.toWei(10, 'finney');;
+  const t_minAmountToRaise = web3.toWei(30, 'finney');
   const t_softCap = web3.toWei(3, 'ether');
   const t_minContribution = web3.toWei(10, 'finney');
   const t_postSoftCapMinBlocks = 5;
@@ -89,65 +89,94 @@ contract('ColonyTokenSale', function(accounts) {
     testHelper.forwardToBlock(startBlock.toNumber());
   };
 
-  describe('sale initialisation', () => {
+  describe('when initialising sale', () => {
+    beforeEach(async function () {
+      colonyMultisig = await MultiSigWallet.new([COLONY_ACCOUNT], 1);
+      etherRouter = await EtherRouter.new();
+      await etherRouter.setResolver(resolver.address);
+      token = await Token.at(etherRouter.address);
+    });
+
+    it("should throw if initialised with startBlock from the past", async function () {
+      let saleContract = '';
+      const startBlock = web3.eth.blockNumber - 2;
+      try {
+        saleContract = await ColonyTokenSale.new(startBlock, r_minAmountToRaise, r_softCap, r_postSoftCapMinBlocks, r_postSoftCapMaxBlocks, r_maxSaleDuration, etherRouter.address, colonyMultisig.address);
+      } catch (e) {
+        testHelper.ifUsingTestRPC(e);
+      }
+      assert.equal(saleContract, '');
+    });
+
+    it("should throw if initialised with a zero postSoftCapMinBlocks value", async function () {
+      let saleContract = '';
+      try {
+        saleContract = await ColonyTokenSale.new(r_startBlock, r_minAmountToRaise, r_softCap, 0, r_postSoftCapMaxBlocks, r_maxSaleDuration, etherRouter.address, colonyMultisig.address);
+      } catch (e) {
+        testHelper.ifUsingTestRPC(e);
+      }
+      assert.equal(saleContract, '');
+    });
+
+    it("should throw if initialised with the same postSoftCap Min and Max Blocks", async function () {
+      let saleContract = '';
+      try {
+        saleContract = await ColonyTokenSale.new(r_startBlock, r_minAmountToRaise, r_softCap, r_postSoftCapMinBlocks, r_postSoftCapMinBlocks, r_maxSaleDuration, etherRouter.address, colonyMultisig.address);
+      } catch (e) {
+        testHelper.ifUsingTestRPC(e);
+      }
+      assert.equal(saleContract, '');
+    });
+
+    it("should throw if initialised with zero address for Token", async function () {
+      let saleContract = '';
+      try {
+        saleContract = await ColonyTokenSale.new(r_startBlock, r_minAmountToRaise, r_softCap, r_postSoftCapMinBlocks, r_postSoftCapMaxBlocks, r_maxSaleDuration, 0, colonyMultisig.address);
+      } catch (e) {
+        testHelper.ifUsingTestRPC(e);
+      }
+      assert.equal(saleContract, '');
+    });
+
+    it("should throw if initialised with zero address for MultiSig", async function () {
+      let saleContract = '';
+      try {
+        saleContract = await ColonyTokenSale.new(r_startBlock, r_minAmountToRaise, r_softCap, r_postSoftCapMinBlocks, r_postSoftCapMaxBlocks, r_maxSaleDuration, etherRouter.address, 0);
+      } catch (e) {
+        testHelper.ifUsingTestRPC(e);
+      }
+      assert.equal(saleContract, '');
+    });
+  });
+
+  describe('when sale initialized successfully', () => {
     beforeEach(async function () {
       await createSale_realValues();
     });
 
     it("should have correct sale start block", async function () {
       const startBlock = await colonySale.startBlock.call();
-      assert.equal(startBlock.toNumber(), 4000000);
+      assert.equal(startBlock.toNumber(), r_startBlock);
     });
 
     it("should have correct initial sale end block", async function () {
       const endBlock = await colonySale.endBlock.call();
-      assert.equal(endBlock.toNumber(), 4060480);
+      assert.equal(endBlock.toNumber(), r_startBlock + r_maxSaleDuration);
     });
 
     it("should have correct minimum amount to raise", async function () {
       const endBlock = await colonySale.minToRaise.call();
-      assert.equal(endBlock.toNumber(), web3.toWei(20000, 'ether'));
+      assert.equal(endBlock.toNumber(), r_minAmountToRaise);
     });
 
     it("should have correct min post soft cap blocks duration", async function () {
       const postSoftCapMinBlocks = await colonySale.postSoftCapMinBlocks.call();
-      assert.equal(postSoftCapMinBlocks.toNumber(), 540);
+      assert.equal(postSoftCapMinBlocks.toNumber(), r_postSoftCapMinBlocks);
     });
 
     it("should have correct max post soft cap blocks duration", async function () {
       const postSoftCapMaxBlocks = await colonySale.postSoftCapMaxBlocks.call();
-      assert.equal(postSoftCapMaxBlocks.toNumber(), 4320);
-    });
-
-    it("should throw if initialised with invalid block duration parameters", async function () {
-      try {
-        await ColonyTokenSale.new(4000000, 20000, testSoftCap, 0, 4320, 60480, etherRouter.address, colonyMultisig.address);
-      } catch (e) {
-        testHelper.ifUsingTestRPC(e);
-      }
-
-      try {
-        await ColonyTokenSale.new(4000000, 20000, testSoftCap, 540, 540, 60480, etherRouter.address, colonyMultisig.address);
-      } catch (e) {
-        testHelper.ifUsingTestRPC(e);
-      }
-    });
-
-    it("should throw if initialised with zero address parameters", async function () {
-      let saleContract = '';
-      try {
-        saleContract = await ColonyTokenSale.new(4000000, 20000, testSoftCap, 0, 4320, 60480, 0, colonyMultisig.address);
-      } catch (e) {
-        testHelper.ifUsingTestRPC(e);
-      }
-      assert.equal(saleContract, '');
-
-      try {
-        saleContract = await ColonyTokenSale.new(4000000, 20000, testSoftCap, 540, 540, 60480, etherRouter.address, 0x0);
-      } catch (e) {
-        testHelper.ifUsingTestRPC(e);
-      }
-      assert.equal(saleContract, '');
+      assert.equal(postSoftCapMaxBlocks.toNumber(), r_postSoftCapMaxBlocks);
     });
 
     it("should have CLNY token wei price multiplier of 1000", async function () {
@@ -162,7 +191,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("should have correct soft cap", async function () {
       const softCap = await colonySale.softCap.call();
-      assert.equal(softCap.toNumber(), web3.toWei('50000', 'ether'));
+      assert.equal(softCap.toNumber(), r_softCap);
     });
 
     it("should have set the Token address", async function () {
@@ -298,6 +327,32 @@ contract('ColonyTokenSale', function(accounts) {
       assert.equal(colonySaleBalanceAfter.toNumber(), t_minContribution * 2);
       const userBuy = await colonySale.userBuys.call(BUYER_ONE);
       assert.equal(userBuy.toNumber(), t_minContribution * 2);
+    });
+
+    it("should NOT be able to STOP the sale, if not colonyMultisig", async function () {
+      try {
+        await colonySale.stop({ from: BUYER_FOUR });
+      } catch(err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+
+      const saleStopped = await colonySale.saleStopped.call();
+      console.log('saleStopped', saleStopped);
+      assert.isFalse(saleStopped);
+    });
+
+    it("should be able to START a stopped sale, if not colonyMultisig", async function () {
+      let txData = await colonySale.contract.stop.getData();
+      await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
+
+      try {
+        await colonySale.start({ from: BUYER_FOUR });
+      } catch(err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+
+      const saleStopped = await colonySale.saleStopped.call();
+      assert.isTrue(saleStopped);
     });
   });
 
@@ -596,7 +651,7 @@ contract('ColonyTokenSale', function(accounts) {
   });
 
   describe('when sale is unsuccessful, i.e. endBlock reached without raising minimum amount', () => {
-    beforeEach('setup unsuccessful sale', async () => {
+    beforeEach('setup an unsuccessful sale', async () => {
       await createSale_testValues();
       await forwardToStartBlock();
       testHelper.sendWei(BUYER_ONE, colonySale.address, t_minContribution);

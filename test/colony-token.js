@@ -79,6 +79,17 @@ contract('CLNY Token', function (accounts) {
       assert.equal(300000, balanceAccount2.toNumber());
     });
 
+    it('should NOT be able to transfer more tokens than they have', async function () {
+      try {
+        await token.transfer(ACCOUNT_TWO, 1500001);
+      } catch (err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+
+      const balanceAccount2 = await token.balanceOf.call(ACCOUNT_TWO);
+      assert.equal(0, balanceAccount2.toNumber());
+    });
+
     it('should be able to transfer pre-approved tokens from address different than own', async function () {
       await token.approve(ACCOUNT_TWO, 300000);
       const success = await token.transferFrom.call(COINBASE_ACCOUNT, ACCOUNT_TWO, 300000, { from: ACCOUNT_TWO });
@@ -92,6 +103,41 @@ contract('CLNY Token', function (accounts) {
       assert.equal(300000, balanceAccount2.toNumber());
       var allowance = await token.allowance.call(COINBASE_ACCOUNT, ACCOUNT_TWO);
       assert.equal(0, allowance.toNumber());
+    });
+
+    it('should NOT be able to transfer tokens from another address if NOT pre-approved', async function () {
+      try {
+        await token.transferFrom.call(COINBASE_ACCOUNT, ACCOUNT_TWO, 300000, { from: ACCOUNT_TWO });
+      } catch(err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+      const balanceAccount2 = await token.balanceOf.call(ACCOUNT_TWO);
+      assert.equal(0, balanceAccount2.toNumber());
+    });
+
+    it('should NOT be able to transfer from another address more tokens than pre-approved', async function () {
+      await token.approve(ACCOUNT_TWO, 300000);
+
+      try {
+        await token.transferFrom.call(COINBASE_ACCOUNT, ACCOUNT_TWO, 300001, { from: ACCOUNT_TWO });
+      } catch(err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+      const balanceAccount2 = await token.balanceOf.call(ACCOUNT_TWO);
+      assert.equal(0, balanceAccount2.toNumber());
+    });
+
+    it('should NOT be able to transfer from another address more tokens than the source balance', async function () {
+      await token.approve(ACCOUNT_TWO, 300000);
+      await token.transfer(ACCOUNT_THREE, 1500000);
+
+      try {
+        await token.transferFrom.call(COINBASE_ACCOUNT, ACCOUNT_TWO, 300000, { from: ACCOUNT_TWO });
+      } catch(err) {
+        testHelper.ifUsingTestRPC(err);
+      }
+      const balanceAccount2 = await token.balanceOf.call(ACCOUNT_TWO);
+      assert.equal(0, balanceAccount2.toNumber());
     });
 
     it('should be able to approve token transfer for other accounts', async function () {
