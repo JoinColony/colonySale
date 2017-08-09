@@ -12,5 +12,6 @@ coverage.json
 coverageEnv
 scTopics
 allFiredEvents
+lib/ds-auth
 lib/ds-math
 lib/erc20
