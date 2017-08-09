@@ -11,12 +11,12 @@
 
 pragma solidity ^0.4.13;
 
+import "../lib/ds-auth/src/auth.sol";
 import "../lib/erc20/src/erc20.sol";
 import "../lib/ds-math/src/math.sol";
-import "./Ownable.sol";
 
 
-contract Token is ERC20, DSMath, Ownable {
+contract Token is ERC20, DSMath, DSAuth {
     address resolver;
     bytes32 public symbol;
     uint256 public decimals;
@@ -74,7 +74,7 @@ contract Token is ERC20, DSMath, Ownable {
     }
 
     function mint(uint128 wad)
-    onlyOwner
+    auth
     {
         _balances[msg.sender] = add(_balances[msg.sender], wad);
         _supply = add(_supply, wad);

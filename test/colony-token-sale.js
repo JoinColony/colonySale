@@ -2,7 +2,6 @@ var ColonyTokenSale = artifacts.require("./ColonyTokenSale.sol");
 var Token = artifacts.require("./Token.sol");
 var Resolver = artifacts.require("./Resolver.sol");
 var EtherRouter = artifacts.require('./EtherRouter.sol');
-var Ownable = artifacts.require('./Ownable.sol');
 var MultiSigWallet = artifacts.require('multisig-wallet/MultiSigWallet.sol');
 
 import BigNumber from 'bignumber.js';
@@ -24,7 +23,6 @@ contract('ColonyTokenSale', function(accounts) {
   const STRATEGY_FUND = '0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F';
 
   // Initialised at the start of test in `before` call
-  let ownable;
   let tokenDeployed;
   let resolver;
 
@@ -52,7 +50,6 @@ contract('ColonyTokenSale', function(accounts) {
   const t_maxSaleDuration = 22;
 
   before(async function () {
-    ownable = await Ownable.deployed();
     tokenDeployed = await Token.deployed();
     resolver = await Resolver.new(tokenDeployed.address);
   });
@@ -73,7 +70,7 @@ contract('ColonyTokenSale', function(accounts) {
     etherRouter = await EtherRouter.new();
     await etherRouter.setResolver(resolver.address);
     token = await Token.at(etherRouter.address);
-    await _createColonyTokenSale(currentBlock + 10, t_minAmountToRaise, t_softCap, t_postSoftCapMinBlocks, t_postSoftCapMaxBlocks, t_maxSaleDuration, ownable.address);
+    await _createColonyTokenSale(currentBlock + 10, t_minAmountToRaise, t_softCap, t_postSoftCapMinBlocks, t_postSoftCapMaxBlocks, t_maxSaleDuration, resolver.address);
   };
 
   const _createColonyTokenSale = async function (_startBlock, _minAmountToRaise, _softCap, _postSoftCapMinBlocks, _postSoftCapMaxBlocks, _maxSaleDuration, _colonyMultisig) {
@@ -81,7 +78,7 @@ contract('ColonyTokenSale', function(accounts) {
     await etherRouter.setResolver(resolver.address);
     token = await Token.at(etherRouter.address);
     colonySale = await ColonyTokenSale.new(_startBlock, _minAmountToRaise, _softCap, _postSoftCapMinBlocks, _postSoftCapMaxBlocks, _maxSaleDuration, etherRouter.address, _colonyMultisig);
-    await etherRouter.changeOwner(colonySale.address);
+    await etherRouter.setOwner(colonySale.address);
   };
 
   const forwardToStartBlock = async function () {

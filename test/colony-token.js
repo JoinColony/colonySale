@@ -1,6 +1,5 @@
 /* globals artifacts */
 
-const Ownable = artifacts.require('Ownable');
 const EtherRouter = artifacts.require('EtherRouter');
 const Resolver = artifacts.require('Resolver');
 const Token = artifacts.require('Token');

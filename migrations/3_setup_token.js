@@ -81,7 +81,7 @@ module.exports = function (deployer, network, accounts) {
   })
   .then(function(instance) {
     routerOwnerMultiSig = instance;
-    return etherRouterDeployed.changeOwner(instance.address);
+    return etherRouterDeployed.setOwner(instance.address);
   })
   .then(function () {
     return etherRouterDeployed.owner.call();

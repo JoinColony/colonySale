@@ -34,7 +34,7 @@ contract('ColonyTokenSale', function(accounts) {
     token = await Token.at(etherRouter.address);
     colonyMultisig = await MultiSigWallet.new([COINBASE_ACCOUNT], 1);
     colonySale = await ColonyTokenSale.new(startBlock, minToRaise, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration, etherRouter.address, colonyMultisig.address);
-    await etherRouter.changeOwner(colonySale.address);
+    await etherRouter.setOwner(colonySale.address);
   };
 
   describe('gas costs', async () => {
