@@ -479,17 +479,37 @@ contract('ColonyTokenSale', function(accounts) {
   });
 
   describe('when sale is successful, i.e. endBlock reached and raised minimum amount', () => {
+    const BUYER_ONE_PURCHASE = web3.toWei(new BigNumber(998), 'finney');
+    const BUYER_TWO_PURCHASE1 = web3.toWei(new BigNumber(10), 'finney');
+    const BUYER_TWO_PURCHASE2 = web3.toWei(new BigNumber(2), 'ether');
+    const BUYER_THREE_PURCHASE = web3.toWei(new BigNumber(10001), 'szabo');
+
+    let _totalRaised;
+    let _totalSupply;
+    let TOKEN_PRICE_MULTIPLIER;
+
     beforeEach('setup a closed sale', async () => {
       await createSale_testValues();
       await forwardToStartBlock();
       // Add purchases for 3 ether 18 finney 1 szabo in total
-      testHelper.sendEther(BUYER_ONE, colonySale.address, 998, 'finney');
-      testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
-      testHelper.sendEther(BUYER_THREE, colonySale.address, 10001, 'szabo');
-      testHelper.sendEther(BUYER_TWO, colonySale.address, 2, 'ether');
+      testHelper.sendWei(BUYER_ONE, colonySale.address, BUYER_ONE_PURCHASE);
+      testHelper.sendWei(BUYER_TWO, colonySale.address, BUYER_TWO_PURCHASE1);
+      testHelper.sendWei(BUYER_THREE, colonySale.address, BUYER_THREE_PURCHASE);
+      testHelper.sendWei(BUYER_TWO, colonySale.address, BUYER_TWO_PURCHASE2);
       // Get the endBlock and fast forward to it
       const endBlock = await colonySale.endBlock.call();
       testHelper.forwardToBlock(endBlock.toNumber());
+
+      // Total raised is the sum of all contributions
+      _totalRaised = BUYER_ONE_PURCHASE
+      .add(BUYER_TWO_PURCHASE1)
+      .add(BUYER_TWO_PURCHASE2)
+      .add(BUYER_THREE_PURCHASE);
+
+      // 51% of the totalSupply = totalRaised * TOKEN_PRICE_MULTIPLIER
+      // Total number of tokens (wei) is 5917649019607843137254
+      TOKEN_PRICE_MULTIPLIER = await colonySale.TOKEN_PRICE_MULTIPLIER.call();
+      _totalSupply = _totalRaised.mul(TOKEN_PRICE_MULTIPLIER).div(0.51);
     });
 
     it("should NOT accept contributions", async function () {
@@ -543,8 +563,7 @@ contract('ColonyTokenSale', function(accounts) {
     it("when sale finalized, should mint correct total retained tokens", async function () {
       await colonySale.finalize();
       const tokenSupply = await token.totalSupply.call();
-      const expected = new BigNumber('5917649019607843137254'); // = 3018001 * 1e15 * CLNY tokens sold / 0.51
-      assert.isTrue(tokenSupply.equals(expected));
+      assert.equal(tokenSupply.toNumber(), _totalSupply.toNumber());
     });
 
     it("when sale finalized, should transfer token ownership to Colony MultiSig", async function () {
@@ -558,35 +577,42 @@ contract('ColonyTokenSale', function(accounts) {
     it("when sale finalized, should assign correct retained allocations", async function () {
       await colonySale.finalize();
 
-      // Total number of tokens (wei) is 5917649019607843137254
       // Investor balance = 5% of total
       const investorTokenWeiBalance = await token.balanceOf.call(INVESTOR_1);
-      const expectedInvestorAllocation = new BigNumber('295882450980392156862');
-      assert.isTrue(investorTokenWeiBalance.equals(expectedInvestorAllocation), 'Investor allocation incorrect');
+      const expectedInvestorAllocation = _totalSupply.mul(0.05);
+      assert.equal(investorTokenWeiBalance.toNumber(), expectedInvestorAllocation.toNumber()); //295882450980392156862
 
       // Team balance = 10% of total
       const teamMember1TokenWeiBalance = await token.balanceOf.call(TEAM_MEMBER_1);
-      const expectedTeamMember1Allocation = new BigNumber('30000000000000000000');
-      assert.isTrue(teamMember1TokenWeiBalance.equals(expectedTeamMember1Allocation));
+      const expectedTeamMember1Allocation = await colonySale.ALLOCATION_TEAM_MEMBER_1.call();
+      assert.equal(teamMember1TokenWeiBalance.toNumber(), expectedTeamMember1Allocation.toNumber());
 
       const teamMember2TokenWeiBalance = await token.balanceOf.call(TEAM_MEMBER_2);
-      const expectedTeamMember2Allocation = new BigNumber('80000000000000000000');
-      assert.isTrue(teamMember2TokenWeiBalance.equals(expectedTeamMember2Allocation));
+      const expectedTeamMember2Allocation = await colonySale.ALLOCATION_TEAM_MEMBER_2.call();
+      assert.equal(teamMember2TokenWeiBalance.toNumber(), expectedTeamMember2Allocation.toNumber());
 
-      // Strategy fund balance = 19% of total
+      // Strategy fund balance = 19% of total, calculated as the remainder tokens left
+      const totalTeamAllocation = _totalSupply.mul(0.1);
+      const foundationAllocation = _totalSupply.mul(0.15);
+      const purchasedSupply = _totalRaised.mul(TOKEN_PRICE_MULTIPLIER);
       const strategyFundTokenWeiBalance = await token.balanceOf.call(STRATEGY_FUND);
-      const expectedStrategyFundAllocation = new BigNumber('1124353313725490196079');
-      assert.isTrue(strategyFundTokenWeiBalance.equals(expectedStrategyFundAllocation), 'StrategyFund allocation incorrect');
+      const expectedStrategyFundAllocation = _totalSupply.sub(expectedInvestorAllocation).sub(totalTeamAllocation).sub(foundationAllocation).sub(purchasedSupply);
+      assert.equal(strategyFundTokenWeiBalance.toNumber(), expectedStrategyFundAllocation.toNumber()); //1124353313725490196079
     });
 
     it("when sale finalized, should generate correct token grants", async function () {
       await colonySale.finalize();
 
       const teamGrantAmount = await colonySale.tokenGrants.call(TEAM_MULTISIG);
-      assert.equal(teamGrantAmount.toNumber(), new BigNumber('481764901960784313725').toNumber());
+
+      const teamMember1Allocation = await colonySale.ALLOCATION_TEAM_MEMBER_1.call();
+      const teamMember2Allocation = await colonySale.ALLOCATION_TEAM_MEMBER_2.call();
+      const totalTeamAllocation = _totalSupply.mul(0.1).sub(teamMember1Allocation).sub(teamMember2Allocation);
+      assert.equal(teamGrantAmount.toNumber(), totalTeamAllocation.toNumber()); //481764901960784313725
 
       const foundationGrantAmount = await colonySale.tokenGrants.call(FOUNDATION);
-      assert.equal(foundationGrantAmount.toNumber(), new BigNumber('887647352941176470588').toNumber());
+      const foundationAllocation = _totalSupply.mul(0.15);
+      assert.equal(foundationGrantAmount.toNumber(), foundationAllocation.toNumber()); //887647352941176470588
     });
 
     it("when sale finalized, buyers should be able to claim their tokens", async function () {
@@ -603,17 +629,17 @@ contract('ColonyTokenSale', function(accounts) {
       let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance2 = await token.balanceOf.call(BUYER_ONE);
-      assert.equal(tokenBalance2.toNumber(), 998 * 1e18);
+      assert.equal(tokenBalance2.toNumber(), BUYER_ONE_PURCHASE.mul(TOKEN_PRICE_MULTIPLIER).toNumber());
 
       txData = await colonySale.contract.claimPurchase.getData(BUYER_TWO);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance3 = await token.balanceOf.call(BUYER_TWO);
-      assert.equal(tokenBalance3.toNumber(), 2010 * 1e18);
+      assert.equal(tokenBalance3.toNumber(), BUYER_TWO_PURCHASE1.add(BUYER_TWO_PURCHASE2).mul(TOKEN_PRICE_MULTIPLIER).toNumber());
 
       txData = await colonySale.contract.claimPurchase.getData(BUYER_THREE);
       await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       const tokenBalance4 = await token.balanceOf.call(BUYER_THREE);
-      assert.equal(tokenBalance4.toNumber(), 10001 * 1e15);
+      assert.equal(tokenBalance4.toNumber(), BUYER_THREE_PURCHASE.mul(TOKEN_PRICE_MULTIPLIER).toNumber());
     });
 
     it("when sale is finalized and tokens claimed, that account balance in userBuys should be set to 0", async function () {
@@ -688,22 +714,42 @@ contract('ColonyTokenSale', function(accounts) {
   });
 
   describe('6-24 months after public sale is finalized', () => {
-    let foundationTotal = new BigNumber('887647352941176470588');
-    let teamTotal = new BigNumber('481764901960784313725');
+    const BUYER_ONE_PURCHASE = web3.toWei(new BigNumber(998), 'finney');
+    const BUYER_TWO_PURCHASE1 = web3.toWei(new BigNumber(10), 'finney');
+    const BUYER_TWO_PURCHASE2 = web3.toWei(new BigNumber(2), 'ether');
+    const BUYER_THREE_PURCHASE = web3.toWei(new BigNumber(10001), 'szabo');
+
+    let _totalRaised;
+    let _totalSupply;
+    let _foundationTotal;
+    let _teamTotal
     const secondsPerMonth = 2628000;
 
     beforeEach('setup a finalized sale', async () => {
       await createSale_testValues();
       await forwardToStartBlock();
       // Add purchases for 3 ether 18 finney 1 szabo in total
-      testHelper.sendEther(BUYER_ONE, colonySale.address, 998, 'finney');
-      testHelper.sendEther(BUYER_TWO, colonySale.address, 10, 'finney');
-      testHelper.sendEther(BUYER_THREE, colonySale.address, 10001, 'szabo');
-      testHelper.sendEther(BUYER_TWO, colonySale.address, 2, 'ether');
+      testHelper.sendWei(BUYER_ONE, colonySale.address, BUYER_ONE_PURCHASE);
+      testHelper.sendWei(BUYER_TWO, colonySale.address, BUYER_TWO_PURCHASE1);
+      testHelper.sendWei(BUYER_THREE, colonySale.address, BUYER_THREE_PURCHASE);
+      testHelper.sendWei(BUYER_TWO, colonySale.address, BUYER_TWO_PURCHASE2);
       // Get the endBlock and fast forward to it
       const endBlock = await colonySale.endBlock.call();
       testHelper.forwardToBlock(endBlock.toNumber());
       await colonySale.finalize();
+
+      // Total raised is the sum of all contributions
+      _totalRaised = BUYER_ONE_PURCHASE
+      .add(BUYER_TWO_PURCHASE1)
+      .add(BUYER_TWO_PURCHASE2)
+      .add(BUYER_THREE_PURCHASE);
+
+      // 51% of the totalSupply = totalRaised * TOKEN_PRICE_MULTIPLIER
+      const TOKEN_PRICE_MULTIPLIER = await colonySale.TOKEN_PRICE_MULTIPLIER.call();
+      _totalSupply = _totalRaised.mul(TOKEN_PRICE_MULTIPLIER).div(0.51); //5917649019607843137254
+      _foundationTotal = _totalSupply.mul(0.15); //887647352941176470588
+      const teamMemberAllocationsTotal = await colonySale.ALLOCATION_TEAM_MEMBERS_TOTAL.call();
+      _teamTotal = _totalSupply.mul(0.1).sub(teamMemberAllocationsTotal); // 481764901960784313725
     });
 
     it("Less than 6 months after sale finalized, team should NOT be able to claim token grant", async function () {
@@ -744,10 +790,10 @@ contract('ColonyTokenSale', function(accounts) {
 
       await colonySale.claimVestedTokens({ from: TEAM_MULTISIG });
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
-      assert.equal(balanceAfter.toNumber(), teamTotal.div(24).mul(6).toNumber());
+      assert.equal(balanceAfter.toNumber(), _teamTotal.div(24).mul(6).toNumber());
 
       const tokenGrantClaimed = await colonySale.grantClaimTotals.call(TEAM_MULTISIG);
-      assert.equal(tokenGrantClaimed[1].toNumber(), teamTotal.div(24).mul(6).toNumber());
+      assert.equal(tokenGrantClaimed[1].toNumber(), _teamTotal.div(24).mul(6).toNumber());
     });
 
     it("6 months after sale finalized, foundation should be able to claim 25% of their total token grant", async function () {
@@ -757,121 +803,121 @@ contract('ColonyTokenSale', function(accounts) {
 
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
-      assert.equal(balanceAfter.toNumber(), foundationTotal.div(4).toNumber());
+      assert.equal(balanceAfter.toNumber(), _foundationTotal.div(4).toNumber());
 
       const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
-      assert.equal(tokenGrantClaimed[1].toNumber(), foundationTotal.div(4).toNumber());
+      assert.equal(tokenGrantClaimed[1].toNumber(), _foundationTotal.div(4).toNumber());
     });
 
     it("12 months after sale finalized, team should be able to claim 50% of their total token grant", async function () {
       testHelper.forwardTime(secondsPerMonth * 12);
       await colonySale.claimVestedTokens({ from: TEAM_MULTISIG });
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
-      assert.equal(balanceAfter.toNumber(), teamTotal.div(2).toNumber());
+      assert.equal(balanceAfter.toNumber(), _teamTotal.div(2).toNumber());
 
       const tokenGrantClaimed = await colonySale.grantClaimTotals.call(TEAM_MULTISIG);
-      assert.equal(tokenGrantClaimed[1].toNumber(), teamTotal.div(2).toNumber());
+      assert.equal(tokenGrantClaimed[1].toNumber(), _teamTotal.div(2).toNumber());
     });
 
     it("12 months after sale finalized, foundation should be able to claim 50% of their total token grant", async function () {
       testHelper.forwardTime(secondsPerMonth * 12);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
-      assert.equal(balanceAfter.toNumber(), foundationTotal.div(2).toNumber());
+      assert.equal(balanceAfter.toNumber(), _foundationTotal.div(2).toNumber());
 
       const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
-      assert.equal(tokenGrantClaimed[1].toNumber(), foundationTotal.div(2).toNumber());
+      assert.equal(tokenGrantClaimed[1].toNumber(), _foundationTotal.div(2).toNumber());
     });
 
     it("18 months after sale finalized, team should be able to claim 75% of their total token grant", async function () {
       testHelper.forwardTime(secondsPerMonth * 18);
       await colonySale.claimVestedTokens({ from: TEAM_MULTISIG });
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
-      assert.equal(balanceAfter.toNumber(), teamTotal.div(4).mul(3).toNumber());
+      assert.equal(balanceAfter.toNumber(), _teamTotal.div(4).mul(3).toNumber());
 
       const tokenGrantClaimed = await colonySale.grantClaimTotals.call(TEAM_MULTISIG);
-      assert.equal(tokenGrantClaimed[1].toNumber(), teamTotal.div(4).mul(3).toNumber());
+      assert.equal(tokenGrantClaimed[1].toNumber(), _teamTotal.div(4).mul(3).toNumber());
     });
 
     it("18 months after sale finalized, foundation should be able to claim 75% of their total token grant", async function () {
       testHelper.forwardTime(secondsPerMonth * 18);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
-      assert.equal(balanceAfter.toNumber(), foundationTotal.div(4).mul(3).toNumber());
+      assert.equal(balanceAfter.toNumber(), _foundationTotal.div(4).mul(3).toNumber());
 
       const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
-      assert.equal(tokenGrantClaimed[1].toNumber(), foundationTotal.div(4).mul(3).toNumber());
+      assert.equal(tokenGrantClaimed[1].toNumber(), _foundationTotal.div(4).mul(3).toNumber());
     });
 
     it("21 months after sale finalized, foundation should be able to claim 87.5% of their total token grant", async function () {
       testHelper.forwardTime(secondsPerMonth * 21 + 2000);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
-      assert.equal(balanceAfter.toNumber(), foundationTotal.div(24).mul(21).toNumber());
+      assert.equal(balanceAfter.toNumber(), _foundationTotal.div(24).mul(21).toNumber());
 
       const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
-      assert.equal(tokenGrantClaimed[1].toNumber(), foundationTotal.div(24).mul(21).toNumber());
+      assert.equal(tokenGrantClaimed[1].toNumber(), _foundationTotal.div(24).mul(21).toNumber());
     });
 
     it("24 months after sale finalized, team should be able to claim 100% of their total token grant", async function () {
       testHelper.forwardTime(secondsPerMonth * 24);
       await colonySale.claimVestedTokens({ from: TEAM_MULTISIG });
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
-      assert.equal(balanceAfter.toNumber(), teamTotal.toNumber());
+      assert.equal(balanceAfter.toNumber(), _teamTotal.toNumber());
 
       const tokenGrantClaimed = await colonySale.grantClaimTotals.call(TEAM_MULTISIG);
-      assert.equal(tokenGrantClaimed[1].toNumber(), teamTotal.toNumber());
+      assert.equal(tokenGrantClaimed[1].toNumber(), _teamTotal.toNumber());
     });
 
     it("24 months after sale finalized, foundation should be able to claim 100% of their total token grant", async function () {
       testHelper.forwardTime(secondsPerMonth * 24);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
-      assert.equal(balanceAfter.toNumber(), foundationTotal.toNumber());
+      assert.equal(balanceAfter.toNumber(), _foundationTotal.toNumber());
 
       const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
-      assert.equal(tokenGrantClaimed[1].toNumber(), foundationTotal.toNumber());
+      assert.equal(tokenGrantClaimed[1].toNumber(), _foundationTotal.toNumber());
     });
 
     it("token grants should be claimed correctly over time", async function () {
       testHelper.forwardTime(secondsPerMonth * 6.9);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       let foundationBalance = await token.balanceOf.call(FOUNDATION);
-      assert.equal(foundationBalance.toNumber(), foundationTotal.div(24).mul(6).toNumber());
+      assert.equal(foundationBalance.toNumber(), _foundationTotal.div(24).mul(6).toNumber());
 
       testHelper.forwardTime(secondsPerMonth * 0.2);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       foundationBalance = await token.balanceOf.call(FOUNDATION);
-      assert.equal(foundationBalance.toNumber(), foundationTotal.div(24).mul(7).toNumber());
+      assert.equal(foundationBalance.toNumber(), _foundationTotal.div(24).mul(7).toNumber());
 
       testHelper.forwardTime(secondsPerMonth * 16.6);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       foundationBalance = await token.balanceOf.call(FOUNDATION);
-      assert.equal(foundationBalance.toNumber(), foundationTotal.div(24).mul(23).toNumber());
+      assert.equal(foundationBalance.toNumber(), _foundationTotal.div(24).mul(23).toNumber());
 
       testHelper.forwardTime(secondsPerMonth);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       foundationBalance = await token.balanceOf.call(FOUNDATION);
-      assert.equal(foundationBalance.toNumber(), foundationTotal.toNumber());
+      assert.equal(foundationBalance.toNumber(), _foundationTotal.toNumber());
     });
 
     it("token grants should be claimed correctly over long periods of time", async function () {
       testHelper.forwardTime(secondsPerMonth * 10);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       let foundationBalance = await token.balanceOf.call(FOUNDATION);
-      assert.equal(foundationBalance.toNumber(), foundationTotal.div(24).mul(10).toNumber());
+      assert.equal(foundationBalance.toNumber(), _foundationTotal.div(24).mul(10).toNumber());
 
       testHelper.forwardTime(secondsPerMonth * (256 -2));
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       foundationBalance = await token.balanceOf.call(FOUNDATION);
-      assert.equal(foundationBalance.toNumber(), foundationTotal.toNumber());
+      assert.equal(foundationBalance.toNumber(), _foundationTotal.toNumber());
     });
 
     it("when submitting multiple successive claims, token grants should be claimed correctly", async function () {
       testHelper.forwardTime(secondsPerMonth * 10);
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const foundationBalanceBefore = await token.balanceOf.call(FOUNDATION);
-      assert.equal(foundationBalanceBefore.toNumber(), foundationTotal.div(24).mul(10).toNumber());
+      assert.equal(foundationBalanceBefore.toNumber(), _foundationTotal.div(24).mul(10).toNumber());
 
       await colonySale.claimVestedTokens({ from: FOUNDATION });
       const foundationBalanceAfter = await token.balanceOf.call(FOUNDATION);
