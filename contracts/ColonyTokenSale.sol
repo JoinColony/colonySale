@@ -7,12 +7,10 @@ import "../lib/ds-math/src/math.sol";
 contract ColonyTokenSale is DSMath {
   // Block number in which the sale starts. Inclusive. Sale will be opened at start block.
   uint public startBlock;
-  // Sale will continue for a maximum of 60480 blocks (~14 days). Initialised as the latest possible block number at which the sale ends.
-  // Updated if softCap reached to the number of blocks it took to reach the soft cap and it is a min of 540 and max 4320.
-  // Exclusive. Sale will be closed at end block.
+  // Block number at which the sale ends. Exclusive. Sale will be closed at end block.
   uint public endBlock;
   // Once softCap is reached, the remaining sale duration is set to the same amount of blocks it's taken the sale to reach the softCap
-  // minumum and maximum are 540 and 4320 blocks corresponding to roughly 3 and 24 hours.
+  // where the minimum is `postSoftCapMinBlocks` and the maximum is `postSoftCapMaxBlocks`
   uint public postSoftCapMinBlocks;
   uint public postSoftCapMaxBlocks;
   // CLNY token price = 1 finney
@@ -31,14 +29,14 @@ contract ColonyTokenSale is DSMath {
   address public colonyMultisig;
   // The address of the Colony Network Token
   Token public token;
-  // endBlock updated once after softCap met
+  // Has `endBlock` been updated after softCap met
   bool endBlockUpdatedAtSoftCap = false;
   // Has Colony stopped the sale
   bool public saleStopped = false;
   // Has the sale been finalized
   bool public saleFinalized = false;
-  // The block time when sale was finalized. Used in token vesting calculations.
-  uint public saleFinalisedTime;
+  // The block time when sale was finalized. (Used in token vesting calculations)
+  uint public saleFinalizedTime;
   // Seconds per month, calculated as seconds in a (non-leap) year divided by 12, i.e. 31536000 / 12
   uint constant internal SECONDS_PER_MONTH = 2628000;
 
@@ -51,22 +49,22 @@ contract ColonyTokenSale is DSMath {
   address public STRATEGY_FUND = 0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F;
 
   // Colony Token wei allocation for each team member
-  uint128 constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** 18;
-  uint128 constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
-  uint128 constant public ALLOCATION_TEAM_MEMBERS_TOTAL = 110 * 10 ** 18;
+  uint constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** 18;
+  uint constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
+  uint constant public ALLOCATION_TEAM_MEMBERS_TOTAL = 110 * 10 ** 18;
 
   mapping (address => uint) public userBuys;
-  mapping (address => uint128) public tokenGrants;
+  mapping (address => uint) public tokenGrants;
   struct GrantClaimTotal {
     uint64 monthsClaimed;
-    uint128 totalClaimed;
+    uint totalClaimed;
   }
   mapping (address => GrantClaimTotal) public grantClaimTotals;
 
   event Purchase(address buyer, uint amount);
   event Claim(address buyer, uint amount, uint tokens);
   event UpdatedSaleEndBlock(uint endblockNumber);
-  event SaleFinalized(address user, uint totalRaised, uint128 totalSupply);
+  event SaleFinalized(address user, uint totalRaised, uint totalSupply);
   event AllocatedReservedTokens(address user, uint tokens);
 
   modifier onlyColonyMultisig {
@@ -75,33 +73,29 @@ contract ColonyTokenSale is DSMath {
   }
 
   modifier saleOpen {
-    assert(block.number >= startBlock);
-    assert(block.number < endBlock);
+    require(block.number >= startBlock);
+    require(block.number < endBlock);
+    require (!saleStopped);
     _;
   }
 
   modifier saleClosed {
-    assert(block.number >= endBlock);
-    _;
-  }
-
-  modifier saleNotStopped {
-    assert (!saleStopped);
+    require(block.number >= endBlock);
     _;
   }
 
   modifier raisedMinimumAmount {
-    assert(totalRaised >= minToRaise);
+    require(totalRaised >= minToRaise);
     _;
   }
 
-  modifier saleFinalised {
-    assert(saleFinalized);
+  modifier saleIsFinalized {
+    require(saleFinalized);
     _;
   }
 
-  modifier saleNotFinalised {
-    assert(!saleFinalized);
+  modifier saleNotFinalized {
+    require(!saleFinalized);
     _;
   }
 
@@ -144,7 +138,6 @@ contract ColonyTokenSale is DSMath {
 
   function buy(address _owner) internal
   saleOpen
-  saleNotStopped
   contributionMeetsMinimum
   {
     // Send funds to multisig, revert op performed on failure
@@ -182,7 +175,7 @@ contract ColonyTokenSale is DSMath {
 
   function claimPurchase(address _owner) external
   onlyColonyMultisig
-  saleFinalised
+  saleIsFinalized
   {
     // Calculate token amount for given value and transfer tokens
     uint amount = userBuys[_owner];
@@ -194,30 +187,30 @@ contract ColonyTokenSale is DSMath {
   }
 
   function claimVestedTokens() external
-  saleFinalised
+  saleIsFinalized
   {
-    uint128 grant = tokenGrants[msg.sender];
+    uint grant = tokenGrants[msg.sender];
     GrantClaimTotal memory grantClaimTotal = grantClaimTotals[msg.sender];
     uint64 monthsClaimed = grantClaimTotal.monthsClaimed;
-    uint128 totalClaimed = grantClaimTotal.totalClaimed;
+    uint totalClaimed = grantClaimTotal.totalClaimed;
 
     // Check cliff was reached
-    uint elapsedTime = sub(now, saleFinalisedTime);
-    uint64 monthsSinceSaleFinalised = uint64(div(elapsedTime, SECONDS_PER_MONTH));
-    assert(monthsSinceSaleFinalised >= 6);
+    uint elapsedTime = sub(now, saleFinalizedTime);
+    uint64 monthsSinceSaleFinalized = uint64(div(elapsedTime, SECONDS_PER_MONTH));
+    require(monthsSinceSaleFinalized >= 6);
 
     // If over 24 months, all tokens vested
-    if (monthsSinceSaleFinalised >= 24) {
-      uint128 remainingGrant = hsub(grant, totalClaimed);
+    if (monthsSinceSaleFinalized >= 24) {
+      uint remainingGrant = sub(grant, totalClaimed);
       grantClaimTotals[msg.sender] = GrantClaimTotal(24, grant);
       token.transfer(msg.sender, remainingGrant);
     } else {
       // Get the time period for which we claim
-      uint64 monthsPendingClaim = uint64(sub(monthsSinceSaleFinalised, monthsClaimed));
+      uint64 monthsPendingClaim = uint64(sub(monthsSinceSaleFinalized, monthsClaimed));
       // Calculate vested tokens and transfer them to recipient
-      uint128 amountVestedPerMonth = hdiv(grant, 24);
-      uint128 amountVested = hmul(monthsPendingClaim, amountVestedPerMonth);
-      grantClaimTotals[msg.sender] = GrantClaimTotal(monthsSinceSaleFinalised, hadd(totalClaimed, amountVested));
+      uint amountVestedPerMonth = div(grant, 24);
+      uint amountVested = mul(monthsPendingClaim, amountVestedPerMonth);
+      grantClaimTotals[msg.sender] = GrantClaimTotal(monthsSinceSaleFinalized, add(totalClaimed, amountVested));
       token.transfer(msg.sender, amountVested);
     }
   }
@@ -225,24 +218,24 @@ contract ColonyTokenSale is DSMath {
   function finalize() external
   saleClosed
   raisedMinimumAmount
-  saleNotFinalised
+  saleNotFinalized
   {
     // Deduct initial 1 finney, see note on `totalRaised` prop
     totalRaised = sub(totalRaised, 10 ** 15);
 
     // Mint as much retained tokens as raised in sale, i.e. 51% is sold, 49% retained
     uint purchasedSupply = mul(totalRaised, TOKEN_PRICE_MULTIPLIER);
-    uint128 totalSupply = cast(div(mul(purchasedSupply, 100), 51));
-    token.mint(totalSupply);
+    uint totalSupply = div(mul(purchasedSupply, 100), 51);
+    token.mint(cast(totalSupply));
     token.changeOwner(colonyMultisig);
 
     // 5% allocated to Investor
-    uint128 earlyInvestorAllocation = wmul(wdiv(totalSupply, 100), 5);
+    uint earlyInvestorAllocation = div(mul(totalSupply, 5), 100);
     token.transfer(INVESTOR_1, earlyInvestorAllocation);
     AllocatedReservedTokens(INVESTOR_1, earlyInvestorAllocation);
 
     // 10% allocated to Team
-    uint128 totalTeamAllocation = wmul(wdiv(totalSupply, 100), 10);
+    uint totalTeamAllocation = div(mul(totalSupply, 10), 100);
 
     // Allocate to team members
     token.transfer(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1);
@@ -251,20 +244,20 @@ contract ColonyTokenSale is DSMath {
     AllocatedReservedTokens(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
 
     // Vest remainder to team multisig
-    uint128 teamRemainderAmount = hsub(totalTeamAllocation, ALLOCATION_TEAM_MEMBERS_TOTAL);
+    uint teamRemainderAmount = sub(totalTeamAllocation, ALLOCATION_TEAM_MEMBERS_TOTAL);
     tokenGrants[TEAM_MULTISIG] = teamRemainderAmount;
 
     // 15% allocated to Foundation
-    uint128 foundationAllocation = wmul(wdiv(totalSupply, 100), 15);
+    uint foundationAllocation = div(mul(totalSupply, 15), 100);
     tokenGrants[FOUNDATION] = foundationAllocation;
 
     // 19% allocated to Strategy fund
-    uint128 strategyFundAllocation = hsub(totalSupply, hadd(hadd(hadd(earlyInvestorAllocation, totalTeamAllocation), foundationAllocation), cast(purchasedSupply)));
+    uint strategyFundAllocation = sub(totalSupply, add(add(add(earlyInvestorAllocation, totalTeamAllocation), foundationAllocation), purchasedSupply));
     token.transfer(STRATEGY_FUND, strategyFundAllocation);
     AllocatedReservedTokens(STRATEGY_FUND, strategyFundAllocation);
 
     saleFinalized = true;
-    saleFinalisedTime = now;
+    saleFinalizedTime = now;
     SaleFinalized(msg.sender, totalRaised, totalSupply);
   }
 
