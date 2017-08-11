@@ -245,7 +245,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("contributions should log Puchase events", async function () {
       const tx = await colonySale.send(t_minContribution);
-      assert.equal(tx.logs[0].event, 'Purchase');
+      assert.equal(tx.logs[0].event, 'LogPurchase');
     });
 
     it("should NOT accept contributions less than the minimum", async function () {
@@ -401,11 +401,11 @@ contract('ColonyTokenSale', function(accounts) {
       const currentBlock = web3.eth.blockNumber;
       const endBlock = await colonySale.endBlock.call();
       assert.equal(endBlock.toNumber(), currentBlock + t_postSoftCapMinBlocks);
-      assert.equal(tx1.logs[0].event, 'UpdatedSaleEndBlock');
+      assert.equal(tx1.logs[0].event, 'LogUpdatedSaleEndBlock');
 
       // Execute another buy tx and check endBlock hasn't been updated
       const tx2 = await colonySale.send(t_minContribution, { from: BUYER_TWO });
-      assert.notEqual(tx2.logs[0].event, 'UpdatedSaleEndBlock');
+      assert.notEqual(tx2.logs[0].event, 'LogUpdatedSaleEndBlock');
       const endBlockNew = await colonySale.endBlock.call();
       assert.equal(endBlockNew.toNumber(), endBlock.toNumber());
     });
@@ -539,7 +539,7 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("when minToRaise has been reached, should be able to finalize sale", async function () {
       const tx = await colonySale.finalize();
-      assert.equal(tx.logs[4].event, 'SaleFinalized');
+      assert.equal(tx.logs[4].event, 'LogSaleFinalized');
       const saleFinalized = await colonySale.saleFinalized.call();
       assert.isTrue(saleFinalized);
     });
@@ -653,7 +653,7 @@ contract('ColonyTokenSale', function(accounts) {
       let txData = await colonySale.contract.claimPurchase.getData(BUYER_ONE);
       const tx = await colonyMultisig.submitTransaction(colonySale.address, 0, txData, { from: COLONY_ACCOUNT });
       // Cannot get the logs below the multisig parent transaction
-      assert.equal(tx.logs[2].event, 'Claim');
+      assert.equal(tx.logs[2].event, 'LogClaim');
       const userBuy = await colonySale.userBuys.call(BUYER_ONE);
       assert.equal(userBuy.toNumber(), 0);
     });

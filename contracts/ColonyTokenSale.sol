@@ -47,11 +47,11 @@ contract ColonyTokenSale is DSMath {
   uint64 constant VESTING_CLIFF = 6;
   uint64 constant VESTING_DURATION = 24;
 
-  event Purchase(address buyer, uint amount);
-  event Claim(address buyer, uint amount, uint tokens);
-  event UpdatedSaleEndBlock(uint endblockNumber);
-  event SaleFinalized(address user, uint totalRaised, uint totalSupply);
-  event AllocatedReservedTokens(address user, uint tokens);
+  event LogPurchase(address buyer, uint amount);
+  event LogClaim(address buyer, uint amount, uint tokens);
+  event LogUpdatedSaleEndBlock(uint endblockNumber);
+  event LogSaleFinalized(address user, uint totalRaised, uint totalSupply);
+  event LogAllocatedReservedTokens(address user, uint tokens);
 
   modifier onlyColonyMultisig {
     require(msg.sender == colonyMultisig);
@@ -145,10 +145,10 @@ contract ColonyTokenSale is DSMath {
 
       endBlock = min(updatedEndBlock, endBlock);
       endBlockUpdatedAtSoftCap = true;
-      UpdatedSaleEndBlock(endBlock);
+      LogUpdatedSaleEndBlock(endBlock);
     }
 
-    Purchase(_owner, msg.value);
+    LogPurchase(_owner, msg.value);
   }
 
   function () public payable {
@@ -164,7 +164,7 @@ contract ColonyTokenSale is DSMath {
     userBuys[_owner] = 0;
     token.transfer(_owner, tokens);
 
-    Claim(_owner, amount, tokens);
+    LogClaim(_owner, amount, tokens);
   }
 
   function claimVestedTokens() external
@@ -186,7 +186,7 @@ contract ColonyTokenSale is DSMath {
       grantClaimTotals[msg.sender] = GrantClaimTotal(VESTING_DURATION, grant);
       token.transfer(msg.sender, remainingGrant);
     } else {
-      // Get the time period for which we claim
+      // Get the time period for which we LogClaim
       uint64 monthsPendingClaim = uint64(sub(monthsSinceSaleFinalized, monthsClaimed));
       // Calculate vested tokens and transfer them to recipient
       uint amountVestedPerMonth = div(grant, VESTING_DURATION);
@@ -212,16 +212,16 @@ contract ColonyTokenSale is DSMath {
     // 5% allocated to Investor
     uint earlyInvestorAllocation = div(mul(totalSupply, 5), 100);
     token.transfer(INVESTOR_1, earlyInvestorAllocation);
-    AllocatedReservedTokens(INVESTOR_1, earlyInvestorAllocation);
+    LogAllocatedReservedTokens(INVESTOR_1, earlyInvestorAllocation);
 
     // 10% allocated to Team
     uint totalTeamAllocation = div(mul(totalSupply, 10), 100);
 
     // Allocate to team members
     token.transfer(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1);
-    AllocatedReservedTokens(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1);
+    LogAllocatedReservedTokens(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1);
     token.transfer(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
-    AllocatedReservedTokens(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
+    LogAllocatedReservedTokens(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
 
     // Send remainder as token grant to team multisig
     uint teamRemainderAmount = sub(totalTeamAllocation, ALLOCATION_TEAM_MEMBERS_TOTAL);
@@ -234,11 +234,11 @@ contract ColonyTokenSale is DSMath {
     // 19% allocated to Strategy fund
     uint strategyFundAllocation = sub(totalSupply, add(add(add(earlyInvestorAllocation, totalTeamAllocation), foundationAllocation), purchasedSupply));
     token.transfer(STRATEGY_FUND, strategyFundAllocation);
-    AllocatedReservedTokens(STRATEGY_FUND, strategyFundAllocation);
+    LogAllocatedReservedTokens(STRATEGY_FUND, strategyFundAllocation);
 
     saleFinalized = true;
     saleFinalizedTime = now;
-    SaleFinalized(msg.sender, totalRaised, totalSupply);
+    LogSaleFinalized(msg.sender, totalRaised, totalSupply);
   }
 
   function stop()
