@@ -122,12 +122,12 @@ contract ColonyTokenSale is DSMath {
     colonyMultisig = _colonyMultisig;
   }
 
-  function buy(address _owner) internal
+  function buy(address _user) internal
   saleOpen
   contributionMeetsMinimum
   {
     colonyMultisig.transfer(msg.value);
-    userBuys[_owner] = add(msg.value, userBuys[_owner]);
+    userBuys[_user] = add(msg.value, userBuys[_user]);
     totalRaised = add(msg.value, totalRaised);
 
     // When softCap is reached, calculate the remainder sale duration in blocks
@@ -148,23 +148,23 @@ contract ColonyTokenSale is DSMath {
       LogUpdatedSaleEndBlock(endBlock);
     }
 
-    LogPurchase(_owner, msg.value);
+    LogPurchase(_user, msg.value);
   }
 
   function () public payable {
     return buy(msg.sender);
   }
 
-  function claimPurchase(address _owner) external
+  function claimPurchase(address _user) external
   onlyColonyMultisig
   saleIsFinalized
   {
-    uint amount = userBuys[_owner];
+    uint amount = userBuys[_user];
     uint tokens = mul(amount, TOKEN_PRICE_MULTIPLIER);
-    userBuys[_owner] = 0;
-    token.transfer(_owner, tokens);
+    userBuys[_user] = 0;
+    token.transfer(_user, tokens);
 
-    LogClaim(_owner, amount, tokens);
+    LogClaim(_user, amount, tokens);
   }
 
   function claimVestedTokens() external
