@@ -9,35 +9,20 @@ contract ColonyTokenSale is DSMath {
   uint public startBlock;
   // Block number at which the sale ends. Exclusive. Sale will be closed at end block.
   uint public endBlock;
-  // Once softCap is reached, the remaining sale duration is set to the same amount of blocks it's taken the sale to reach the softCap
-  // where the minimum is `postSoftCapMinBlocks` and the maximum is `postSoftCapMaxBlocks`
   uint public postSoftCapMinBlocks;
   uint public postSoftCapMaxBlocks;
-  // CLNY token price = 1 finney
-  // 1 Wei = 1000 CLNY Wei
-  uint constant public TOKEN_PRICE_MULTIPLIER = 1000;
-  // Minimum contribution amount
-  uint constant public MIN_CONTRIBUTION = 10 finney;
-  // Minimum amount to raise for sale to be successful
   uint public minToRaise;
-  // Total amount raised in sale
-  // Contains a small starting amount which gets deducted in `finalize()` in order to bring down the cost of very first `buy()` transaction
   uint public totalRaised = 1 finney;
-  // Sale soft cap
   uint public softCap;
-  // The address to hold the funds donated
-  address public colonyMultisig;
-  // The address of the Colony Network Token
-  Token public token;
-  // Has `endBlock` been updated after softCap met
   bool endBlockUpdatedAtSoftCap = false;
-  // Has Colony stopped the sale
   bool public saleStopped = false;
-  // Has the sale been finalized
   bool public saleFinalized = false;
-  // The block time when sale was finalized. (Used in token vesting calculations)
   uint public saleFinalizedTime;
-  // Seconds per month, calculated as seconds in a (non-leap) year divided by 12, i.e. 31536000 / 12
+  address public colonyMultisig;
+  Token public token;
+
+  uint constant public TOKEN_PRICE_MULTIPLIER = 1000;
+  uint constant public MIN_CONTRIBUTION = 10 finney;
   uint constant internal SECONDS_PER_MONTH = 2628000;
 
   address public INVESTOR_1 = 0x3a965407cEd5E62C5aD71dE491Ce7B23DA5331A4;
@@ -48,7 +33,6 @@ contract ColonyTokenSale is DSMath {
   address public FOUNDATION = 0x4e7DBb49018489a27088FE304b18849b02F708F6;
   address public STRATEGY_FUND = 0x2304aD70cAA2e8D4BE0665E4f49AD1eDe56F3e8F;
 
-  // Colony Token wei allocation for each team member
   uint constant public ALLOCATION_TEAM_MEMBER_1 = 30 * 10 ** 18;
   uint constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
   uint constant public ALLOCATION_TEAM_MEMBERS_TOTAL = 110 * 10 ** 18;
@@ -142,11 +126,8 @@ contract ColonyTokenSale is DSMath {
   saleOpen
   contributionMeetsMinimum
   {
-    // Send funds to multisig, revert op performed on failure
     colonyMultisig.transfer(msg.value);
     userBuys[_owner] = add(msg.value, userBuys[_owner]);
-
-    // Up the total raised with given value
     totalRaised = add(msg.value, totalRaised);
 
     // When softCap is reached, calculate the remainder sale duration in blocks
@@ -162,7 +143,6 @@ contract ColonyTokenSale is DSMath {
         updatedEndBlock = add(currentBlock, blocksInSale);
       }
 
-      // We cannot exceed the longest sale duration
       endBlock = min(updatedEndBlock, endBlock);
       endBlockUpdatedAtSoftCap = true;
       UpdatedSaleEndBlock(endBlock);
@@ -179,7 +159,6 @@ contract ColonyTokenSale is DSMath {
   onlyColonyMultisig
   saleIsFinalized
   {
-    // Calculate token amount for given value and transfer tokens
     uint amount = userBuys[_owner];
     uint tokens = mul(amount, TOKEN_PRICE_MULTIPLIER);
     userBuys[_owner] = 0;
@@ -222,7 +201,6 @@ contract ColonyTokenSale is DSMath {
   raisedMinimumAmount
   saleNotFinalized
   {
-    // Deduct initial 1 finney, see note on `totalRaised` prop
     totalRaised = sub(totalRaised, 10 ** 15);
 
     // Mint as much retained tokens as raised in sale, i.e. 51% is sold, 49% retained
@@ -245,11 +223,11 @@ contract ColonyTokenSale is DSMath {
     token.transfer(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
     AllocatedReservedTokens(TEAM_MEMBER_2, ALLOCATION_TEAM_MEMBER_2);
 
-    // Vest remainder to team multisig
+    // Send remainder as token grant to team multisig
     uint teamRemainderAmount = sub(totalTeamAllocation, ALLOCATION_TEAM_MEMBERS_TOTAL);
     tokenGrants[TEAM_MULTISIG] = teamRemainderAmount;
 
-    // 15% allocated to Foundation
+    // 15% allocated as token grant to Foundation
     uint foundationAllocation = div(mul(totalSupply, 15), 100);
     tokenGrants[FOUNDATION] = foundationAllocation;
 
