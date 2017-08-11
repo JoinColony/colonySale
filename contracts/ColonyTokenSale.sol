@@ -60,6 +60,8 @@ contract ColonyTokenSale is DSMath {
     uint totalClaimed;
   }
   mapping (address => GrantClaimTotal) public grantClaimTotals;
+  uint64 constant VESTING_CLIFF = 6;
+  uint64 constant VESTING_DURATION = 24;
 
   event Purchase(address buyer, uint amount);
   event Claim(address buyer, uint amount, uint tokens);
@@ -197,18 +199,18 @@ contract ColonyTokenSale is DSMath {
     // Check cliff was reached
     uint elapsedTime = sub(now, saleFinalizedTime);
     uint64 monthsSinceSaleFinalized = uint64(div(elapsedTime, SECONDS_PER_MONTH));
-    require(monthsSinceSaleFinalized >= 6);
+    require(monthsSinceSaleFinalized >= VESTING_CLIFF);
 
     // If over 24 months, all tokens vested
-    if (monthsSinceSaleFinalized >= 24) {
+    if (monthsSinceSaleFinalized >= VESTING_DURATION) {
       uint remainingGrant = sub(grant, totalClaimed);
-      grantClaimTotals[msg.sender] = GrantClaimTotal(24, grant);
+      grantClaimTotals[msg.sender] = GrantClaimTotal(VESTING_DURATION, grant);
       token.transfer(msg.sender, remainingGrant);
     } else {
       // Get the time period for which we claim
       uint64 monthsPendingClaim = uint64(sub(monthsSinceSaleFinalized, monthsClaimed));
       // Calculate vested tokens and transfer them to recipient
-      uint amountVestedPerMonth = div(grant, 24);
+      uint amountVestedPerMonth = div(grant, VESTING_DURATION);
       uint amountVested = mul(monthsPendingClaim, amountVestedPerMonth);
       grantClaimTotals[msg.sender] = GrantClaimTotal(monthsSinceSaleFinalized, add(totalClaimed, amountVested));
       token.transfer(msg.sender, amountVested);
