@@ -599,17 +599,14 @@ contract('ColonyTokenSale', function(accounts) {
 
     it("when sale finalized, should generate correct token grants", async function () {
       await colonySale.finalize();
+      var t_tokenGrant = await colonySale.tokenGrants.call(TEAM_MULTISIG);
+      const teamMembersAllocation = await colonySale.ALLOCATION_TEAM_MEMBERS_TOTAL.call();
+      const totalTeamAllocation = _totalSupply.mul(0.1).sub(teamMembersAllocation)
+      assert.equal(t_tokenGrant[0].toNumber(), totalTeamAllocation.toNumber()); //481764901960784313725
 
-      const teamGrantAmount = await colonySale.tokenGrants.call(TEAM_MULTISIG);
-
-      const teamMember1Allocation = await colonySale.ALLOCATION_TEAM_MEMBER_1.call();
-      const teamMember2Allocation = await colonySale.ALLOCATION_TEAM_MEMBER_2.call();
-      const totalTeamAllocation = _totalSupply.mul(0.1).sub(teamMember1Allocation).sub(teamMember2Allocation);
-      assert.equal(teamGrantAmount.toNumber(), totalTeamAllocation.toNumber()); //481764901960784313725
-
-      const foundationGrantAmount = await colonySale.tokenGrants.call(FOUNDATION);
+      var f_tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
       const foundationAllocation = _totalSupply.mul(0.15);
-      assert.equal(foundationGrantAmount.toNumber(), foundationAllocation.toNumber()); //887647352941176470588
+      assert.equal(f_tokenGrant[0].toNumber(), foundationAllocation.toNumber()); //887647352941176470588
     });
 
     it("when sale finalized, buyers should be able to claim their tokens", async function () {
@@ -789,8 +786,8 @@ contract('ColonyTokenSale', function(accounts) {
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
       assert.equal(balanceAfter.toNumber(), _teamTotal.div(24).mul(6).toNumber());
 
-      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(TEAM_MULTISIG);
-      assert.equal(tokenGrantClaimed[1].toNumber(), _teamTotal.div(24).mul(6).toNumber());
+      const tokenGrant = await colonySale.tokenGrants.call(TEAM_MULTISIG);
+      assert.equal(tokenGrant[2].toNumber(), _teamTotal.div(24).mul(6).toNumber());
     });
 
     it("6 months after sale finalized, foundation should be able to claim 25% of their total token grant", async function () {
@@ -802,8 +799,8 @@ contract('ColonyTokenSale', function(accounts) {
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceAfter.toNumber(), _foundationTotal.div(4).toNumber());
 
-      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
-      assert.equal(tokenGrantClaimed[1].toNumber(), _foundationTotal.div(4).toNumber());
+      const tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
+      assert.equal(tokenGrant[2].toNumber(), _foundationTotal.div(4).toNumber());
     });
 
     it("12 months after sale finalized, team should be able to claim 50% of their total token grant", async function () {
@@ -812,8 +809,8 @@ contract('ColonyTokenSale', function(accounts) {
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
       assert.equal(balanceAfter.toNumber(), _teamTotal.div(2).toNumber());
 
-      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(TEAM_MULTISIG);
-      assert.equal(tokenGrantClaimed[1].toNumber(), _teamTotal.div(2).toNumber());
+      const tokenGrant = await colonySale.tokenGrants.call(TEAM_MULTISIG);
+      assert.equal(tokenGrant[2].toNumber(), _teamTotal.div(2).toNumber());
     });
 
     it("12 months after sale finalized, foundation should be able to claim 50% of their total token grant", async function () {
@@ -822,8 +819,8 @@ contract('ColonyTokenSale', function(accounts) {
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceAfter.toNumber(), _foundationTotal.div(2).toNumber());
 
-      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
-      assert.equal(tokenGrantClaimed[1].toNumber(), _foundationTotal.div(2).toNumber());
+      const tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
+      assert.equal(tokenGrant[2].toNumber(), _foundationTotal.div(2).toNumber());
     });
 
     it("18 months after sale finalized, team should be able to claim 75% of their total token grant", async function () {
@@ -832,8 +829,8 @@ contract('ColonyTokenSale', function(accounts) {
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
       assert.equal(balanceAfter.toNumber(), _teamTotal.div(4).mul(3).toNumber());
 
-      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(TEAM_MULTISIG);
-      assert.equal(tokenGrantClaimed[1].toNumber(), _teamTotal.div(4).mul(3).toNumber());
+      const tokenGrant = await colonySale.tokenGrants.call(TEAM_MULTISIG);
+      assert.equal(tokenGrant[2].toNumber(), _teamTotal.div(4).mul(3).toNumber());
     });
 
     it("18 months after sale finalized, foundation should be able to claim 75% of their total token grant", async function () {
@@ -842,8 +839,8 @@ contract('ColonyTokenSale', function(accounts) {
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceAfter.toNumber(), _foundationTotal.div(4).mul(3).toNumber());
 
-      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
-      assert.equal(tokenGrantClaimed[1].toNumber(), _foundationTotal.div(4).mul(3).toNumber());
+      const tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
+      assert.equal(tokenGrant[2].toNumber(), _foundationTotal.div(4).mul(3).toNumber());
     });
 
     it("21 months after sale finalized, foundation should be able to claim 87.5% of their total token grant", async function () {
@@ -852,8 +849,8 @@ contract('ColonyTokenSale', function(accounts) {
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceAfter.toNumber(), _foundationTotal.div(24).mul(21).toNumber());
 
-      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
-      assert.equal(tokenGrantClaimed[1].toNumber(), _foundationTotal.div(24).mul(21).toNumber());
+      const tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
+      assert.equal(tokenGrant[2].toNumber(), _foundationTotal.div(24).mul(21).toNumber());
     });
 
     it("24 months after sale finalized, team should be able to claim 100% of their total token grant", async function () {
@@ -862,8 +859,8 @@ contract('ColonyTokenSale', function(accounts) {
       const balanceAfter = await token.balanceOf.call(TEAM_MULTISIG);
       assert.equal(balanceAfter.toNumber(), _teamTotal.toNumber());
 
-      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(TEAM_MULTISIG);
-      assert.equal(tokenGrantClaimed[1].toNumber(), _teamTotal.toNumber());
+      const tokenGrant = await colonySale.tokenGrants.call(TEAM_MULTISIG);
+      assert.equal(tokenGrant[2].toNumber(), _teamTotal.toNumber());
     });
 
     it("24 months after sale finalized, foundation should be able to claim 100% of their total token grant", async function () {
@@ -872,8 +869,8 @@ contract('ColonyTokenSale', function(accounts) {
       const balanceAfter = await token.balanceOf.call(FOUNDATION);
       assert.equal(balanceAfter.toNumber(), _foundationTotal.toNumber());
 
-      const tokenGrantClaimed = await colonySale.grantClaimTotals.call(FOUNDATION);
-      assert.equal(tokenGrantClaimed[1].toNumber(), _foundationTotal.toNumber());
+      const tokenGrant = await colonySale.tokenGrants.call(FOUNDATION);
+      assert.equal(tokenGrant[2].toNumber(), _foundationTotal.toNumber());
     });
 
     it("token grants should be claimed correctly over time", async function () {

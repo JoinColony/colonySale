@@ -37,15 +37,16 @@ contract ColonyTokenSale is DSMath {
   uint constant public ALLOCATION_TEAM_MEMBER_2 = 80 * 10 ** 18;
   uint constant public ALLOCATION_TEAM_MEMBERS_TOTAL = 110 * 10 ** 18;
 
-  mapping (address => uint) public userBuys;
-  mapping (address => uint) public tokenGrants;
-  struct GrantClaimTotal {
+  uint64 constant VESTING_CLIFF = 6;
+  uint64 constant VESTING_DURATION = 24;
+
+  struct Grant {
+    uint amount;
     uint64 monthsClaimed;
     uint totalClaimed;
   }
-  mapping (address => GrantClaimTotal) public grantClaimTotals;
-  uint64 constant VESTING_CLIFF = 6;
-  uint64 constant VESTING_DURATION = 24;
+  mapping (address => Grant) public tokenGrants;
+  mapping (address => uint) public userBuys;
 
   event LogPurchase(address buyer, uint amount);
   event LogClaim(address buyer, uint amount, uint tokens);
@@ -170,10 +171,10 @@ contract ColonyTokenSale is DSMath {
   function claimVestedTokens() external
   saleIsFinalized
   {
-    uint grant = tokenGrants[msg.sender];
-    GrantClaimTotal memory grantClaimTotal = grantClaimTotals[msg.sender];
-    uint64 monthsClaimed = grantClaimTotal.monthsClaimed;
-    uint totalClaimed = grantClaimTotal.totalClaimed;
+    Grant storage tokenGrant = tokenGrants[msg.sender];
+    uint amount = tokenGrant.amount;
+    uint64 monthsClaimed = tokenGrant.monthsClaimed;
+    uint totalClaimed = tokenGrant.totalClaimed;
 
     // Check cliff was reached
     uint elapsedTime = sub(now, saleFinalizedTime);
@@ -182,16 +183,18 @@ contract ColonyTokenSale is DSMath {
 
     // If over 24 months, all tokens vested
     if (monthsSinceSaleFinalized >= VESTING_DURATION) {
-      uint remainingGrant = sub(grant, totalClaimed);
-      grantClaimTotals[msg.sender] = GrantClaimTotal(VESTING_DURATION, grant);
+      uint remainingGrant = sub(amount, totalClaimed);
+      tokenGrant.monthsClaimed = VESTING_DURATION;
+      tokenGrant.totalClaimed = amount;
       token.transfer(msg.sender, remainingGrant);
     } else {
       // Get the time period for which we LogClaim
       uint64 monthsPendingClaim = uint64(sub(monthsSinceSaleFinalized, monthsClaimed));
       // Calculate vested tokens and transfer them to recipient
-      uint amountVestedPerMonth = div(grant, VESTING_DURATION);
+      uint amountVestedPerMonth = div(amount, VESTING_DURATION);
       uint amountVested = mul(monthsPendingClaim, amountVestedPerMonth);
-      grantClaimTotals[msg.sender] = GrantClaimTotal(monthsSinceSaleFinalized, add(totalClaimed, amountVested));
+      tokenGrant.monthsClaimed = monthsSinceSaleFinalized;
+      tokenGrant.totalClaimed = add(totalClaimed, amountVested);
       token.transfer(msg.sender, amountVested);
     }
   }
@@ -225,11 +228,11 @@ contract ColonyTokenSale is DSMath {
 
     // Send remainder as token grant to team multisig
     uint teamRemainderAmount = sub(totalTeamAllocation, ALLOCATION_TEAM_MEMBERS_TOTAL);
-    tokenGrants[TEAM_MULTISIG] = teamRemainderAmount;
+    tokenGrants[TEAM_MULTISIG] = Grant(teamRemainderAmount, 0, 0);
 
     // 15% allocated as token grant to Foundation
     uint foundationAllocation = div(mul(totalSupply, 15), 100);
-    tokenGrants[FOUNDATION] = foundationAllocation;
+    tokenGrants[FOUNDATION] = Grant(foundationAllocation, 0, 0);
 
     // 19% allocated to Strategy fund
     uint strategyFundAllocation = sub(totalSupply, add(add(add(earlyInvestorAllocation, totalTeamAllocation), foundationAllocation), purchasedSupply));
