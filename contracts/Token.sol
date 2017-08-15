@@ -11,9 +11,9 @@
 
 pragma solidity ^0.4.13;
 
-import "../lib/ds-auth/src/auth.sol";
-import "../lib/erc20/src/erc20.sol";
-import "../lib/ds-math/src/math.sol";
+import "../lib/dappsys/auth.sol";
+import "../lib/dappsys/erc20.sol";
+import "../lib/dappsys/math.sol";
 
 
 contract Token is ERC20, DSMath, DSAuth {

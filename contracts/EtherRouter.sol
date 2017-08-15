@@ -1,6 +1,6 @@
 pragma solidity ^0.4.13;
 import "./Resolver.sol";
-import "../lib/ds-auth/src/auth.sol";
+import "../lib/dappsys/auth.sol";
 
 
 contract EtherRouter is DSAuth {
