@@ -34,7 +34,7 @@ contract('ColonyTokenSale', function(accounts) {
     token = await Token.at(etherRouter.address);
     colonyMultisig = await MultiSigWallet.new([COINBASE_ACCOUNT], 1);
     colonySale = await ColonyTokenSale.new(startBlock, minToRaise, softCap, postSoftCapMinBlocks, postSoftCapMaxBlocks, maxSaleDuration, etherRouter.address, colonyMultisig.address);
-    await etherRouter.changeOwner(colonySale.address);
+    await etherRouter.setOwner(colonySale.address);
   };
 
   describe('gas costs', async () => {
@@ -60,7 +60,7 @@ contract('ColonyTokenSale', function(accounts) {
       // Reach the soft cap
       const txBuySoftCapSet = await colonySale.send(softCap, { from: ACCOUNT_THREE });
       // Check it's the right transaction we're measuring
-      assert.equal(txBuySoftCapSet.logs[0].event, 'UpdatedSaleEndBlock');
+      assert.equal(txBuySoftCapSet.logs[0].event, 'LogUpdatedSaleEndBlock');
       console.error('buy() cost when endBlock updated', txBuySoftCapSet.receipt.gasUsed);
 
       const txBuy3 = await colonySale.send(tenFinney, { FROM: ACCOUNT_TWO });

@@ -1,9 +1,9 @@
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.15;
 import "./Resolver.sol";
-import "./Ownable.sol";
+import "../lib/dappsys/auth.sol";
 
 
-contract EtherRouter is Ownable {
+contract EtherRouter is DSAuth {
   Resolver public resolver;
   bytes32 public symbol = "CLNY";
   uint256 public decimals = 18;
@@ -31,7 +31,7 @@ contract EtherRouter is Ownable {
   }
 
   function setResolver(Resolver _resolver)
-  onlyOwner
+  auth
   {
     resolver = _resolver;
   }

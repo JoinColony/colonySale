@@ -9,14 +9,14 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
 
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.15;
 
-import "../lib/erc20/src/erc20.sol";
-import "../lib/ds-math/src/math.sol";
-import "./Ownable.sol";
+import "../lib/dappsys/auth.sol";
+import "../lib/dappsys/erc20.sol";
+import "../lib/dappsys/math.sol";
 
 
-contract Token is ERC20, DSMath, Ownable {
+contract Token is ERC20, DSMath, DSAuth {
     address resolver;
     bytes32 public symbol;
     uint256 public decimals;
@@ -74,7 +74,7 @@ contract Token is ERC20, DSMath, Ownable {
     }
 
     function mint(uint128 wad)
-    onlyOwner
+    auth
     {
         _balances[msg.sender] = add(_balances[msg.sender], wad);
         _supply = add(_supply, wad);

@@ -12,5 +12,4 @@ coverage.json
 coverageEnv
 scTopics
 allFiredEvents
-lib/ds-math
-lib/erc20
+lib/dappsys
