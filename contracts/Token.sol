@@ -9,7 +9,7 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
 
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.15;
 
 import "../lib/dappsys/auth.sol";
 import "../lib/dappsys/erc20.sol";
