@@ -3,8 +3,9 @@
 
 ```
 git clone https://github.com/JoinColony/colonySale.git
-npm install -g ethereumjs-testrpc@4.0.0
-yarn
+yarn global add mkdirp gulp@3.9.1
+yarn --pure-lockfile
+git submodule update --init --recursive --remote
 ```
 
 ## Contracts
