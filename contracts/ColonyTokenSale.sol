@@ -191,7 +191,7 @@ contract ColonyTokenSale is DSMath {
       // Get the time period for which we LogClaim
       uint64 monthsPendingClaim = uint64(sub(monthsSinceSaleFinalized, monthsClaimed));
       // Calculate vested tokens and transfer them to recipient
-      uint amountVestedPerMonth = div(amount, VESTING_DURATION);
+      uint amountVestedPerMonth = amount / VESTING_DURATION;
       uint amountVested = mul(monthsPendingClaim, amountVestedPerMonth);
       tokenGrant.monthsClaimed = monthsSinceSaleFinalized;
       tokenGrant.totalClaimed = add(totalClaimed, amountVested);
@@ -213,12 +213,12 @@ contract ColonyTokenSale is DSMath {
     token.setOwner(colonyMultisig);
 
     // 5% allocated to Investor
-    uint earlyInvestorAllocation = div(mul(totalSupply, 5), 100);
+    uint earlyInvestorAllocation = mul(totalSupply, 5) / 100;
     token.transfer(INVESTOR_1, earlyInvestorAllocation);
     LogAllocatedReservedTokens(INVESTOR_1, earlyInvestorAllocation);
 
     // 10% allocated to Team
-    uint totalTeamAllocation = div(mul(totalSupply, 10), 100);
+    uint totalTeamAllocation = mul(totalSupply, 10) / 100;
 
     // Allocate to team members
     token.transfer(TEAM_MEMBER_1, ALLOCATION_TEAM_MEMBER_1);
@@ -231,7 +231,7 @@ contract ColonyTokenSale is DSMath {
     tokenGrants[TEAM_MULTISIG] = Grant(teamRemainderAmount, 0, 0);
 
     // 15% allocated as token grant to Foundation
-    uint foundationAllocation = div(mul(totalSupply, 15), 100);
+    uint foundationAllocation = mul(totalSupply, 15) / 100;
     tokenGrants[FOUNDATION] = Grant(foundationAllocation, 0, 0);
 
     // 19% allocated to Strategy fund
