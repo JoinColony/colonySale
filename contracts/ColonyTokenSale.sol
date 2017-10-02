@@ -178,7 +178,7 @@ contract ColonyTokenSale is DSMath {
 
     // Check cliff was reached
     uint elapsedTime = sub(now, saleFinalizedTime);
-    uint64 monthsSinceSaleFinalized = uint64(div(elapsedTime, SECONDS_PER_MONTH));
+    uint64 monthsSinceSaleFinalized = uint64(elapsedTime / SECONDS_PER_MONTH);
     require(monthsSinceSaleFinalized >= VESTING_CLIFF);
 
     // If over 24 months, all tokens vested
@@ -208,7 +208,7 @@ contract ColonyTokenSale is DSMath {
 
     // Mint as much retained tokens as raised in sale, i.e. 51% is sold, 49% retained
     uint purchasedSupply = mul(totalRaised, TOKEN_PRICE_MULTIPLIER);
-    uint totalSupply = div(mul(purchasedSupply, 100), 51);
+    uint totalSupply = mul(purchasedSupply, 100) / 51;
     token.mint(cast(totalSupply));
     token.setOwner(colonyMultisig);
 
