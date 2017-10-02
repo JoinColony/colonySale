@@ -120,7 +120,7 @@ contract('EtherRouter / Resolver', function (accounts) {
       assert.equal(response[1], 32);
 
       // Check `mint` function is registered successfully
-      response = await resolver.lookup.call('0x69d3e20e');
+      response = await resolver.lookup.call('0xa0712d68');
       assert.equal(response[0], tokenDeployed.address);
       assert.equal(response[1], 0);
     });

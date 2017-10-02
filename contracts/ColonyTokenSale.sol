@@ -209,7 +209,7 @@ contract ColonyTokenSale is DSMath {
     // Mint as much retained tokens as raised in sale, i.e. 51% is sold, 49% retained
     uint purchasedSupply = mul(totalRaised, TOKEN_PRICE_MULTIPLIER);
     uint totalSupply = mul(purchasedSupply, 100) / 51;
-    token.mint(cast(totalSupply));
+    token.mint(totalSupply);
     token.setOwner(colonyMultisig);
 
     // 5% allocated to Investor

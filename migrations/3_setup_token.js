@@ -70,7 +70,7 @@ module.exports = function (deployer, network, accounts) {
     // Check `approve` function is registered successfully
     assert.equal(response[0], tokenDeployed.address);
     assert.equal(response[1], 32);
-    return resolverDeployed.lookup.call('0x69d3e20e');
+    return resolverDeployed.lookup.call('0xa0712d68');
   })
   .then(function(response) {
     // Check `mint` function is registered successfully

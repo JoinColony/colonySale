@@ -15,7 +15,7 @@ contract Resolver {
     pointers[stringToSig("transfer(address,uint256)")] = Pointer(destination, 32);
     pointers[stringToSig("transferFrom(address,address,uint256)")] = Pointer(destination, 32);
     pointers[stringToSig("approve(address,uint256)")] = Pointer(destination, 32);
-    pointers[stringToSig("mint(uint128)")] = Pointer(destination, 0);
+    pointers[stringToSig("mint(uint256)")] = Pointer(destination, 0);
   }
 
   // Public API
