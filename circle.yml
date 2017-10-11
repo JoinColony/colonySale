@@ -1,6 +1,6 @@
 machine:
   node:
-    version: 6.10.3
+    version: 8.4.0
 
 dependencies:
   pre:
@@ -13,7 +13,7 @@ dependencies:
     - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.1.0
     - yarn global add mkdirp gulp@3.9.1
     - yarn --pure-lockfile --cache-folder ~/.yarn-cache
-    - git submodule update --init --recursive --remote
+    - git submodule update
 
 test:
   pre:

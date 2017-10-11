@@ -28,12 +28,12 @@
     "gulp": "^3.9.1",
     "gulp-help": "^1.6.1",
     "istanbul": "^0.4.5",
-    "mocha": "^3.5.3",
+    "mocha": "^4.0.1",
     "mocha-circleci-reporter": "^0.0.2",
     "pshell": "^1.1.0",
     "request": "^2.83.0",
     "rimraf": "^2.6.2",
-    "solidity-coverage": "^0.2.4",
+    "solidity-coverage": "^0.2.5",
     "solium": "^0.5.5",
     "truffle": "^3.4.11"
   }
