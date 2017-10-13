@@ -14,13 +14,14 @@ contract ColonyTokenSale is DSMath {
   uint public minToRaise;
   uint public totalRaised = 1 finney;
   uint public softCap;
+  uint public saleFinalizedTime;
+
   bool endBlockUpdatedAtSoftCap = false;
   bool public saleStopped = false;
   bool public saleFinalized = false;
-  uint public saleFinalizedTime;
-  address public colonyMultisig;
   Token public token;
 
+  address public colonyMultisig;
   uint constant public TOKEN_PRICE_MULTIPLIER = 1000;
   uint constant public MIN_CONTRIBUTION = 10 finney;
   uint constant internal SECONDS_PER_MONTH = 2628000;
